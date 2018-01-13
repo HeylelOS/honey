@@ -22,8 +22,9 @@ int hny_connect(int flags) {
 	int wait_ret;
 
 	if(hive == NULL) {
-		if((hive = malloc(sizeof(*hive))) == NULL)
+		if((hive = malloc(sizeof(*hive))) == NULL) {
 			return HNY_ERROR_UNAVAILABLE;
+		}
 	}
 
 	snprintf(hive->sem_name, sizeof(hive->sem_name),
@@ -46,8 +47,10 @@ int hny_connect(int flags) {
 	}
 
 	if(wait_ret == -1) {
-		if(errno != EAGAIN)
+		if(errno != EAGAIN) {
 			perror("hny error sem_open");
+		}
+
 		return HNY_ERROR_UNAVAILABLE;
 	}
 
@@ -80,9 +83,9 @@ int hny_check_geister(struct hny_geist *geister, size_t n) {
 		return HNY_ERROR_INVALIDARGS;
 
 	while(i < n
-			&& geister[i].name != NULL
-			&& *(geister[i].name) != '\0'
-			&& strchr(geister[i].name, '-') == NULL) {
+		&& geister[i].name != NULL
+		&& *(geister[i].name) != '\0'
+		&& strchr(geister[i].name, '-') == NULL) {
 		i++;
 	}
 
@@ -98,8 +101,8 @@ int hny_compare_versions(const char **p1, const char **p2) {
 
 	if(m1 == m2
 		&& (*endptr1 == '.' && *endptr2 == '.')) {
-			m1 = strtoul(++endptr1, NULL, 10);
-			m2 = strtoul(++endptr2, NULL, 10);
+		m1 = strtoul(++endptr1, NULL, 10);
+		m2 = strtoul(++endptr2, NULL, 10);
 	}
 
 	return m1 - m2;
