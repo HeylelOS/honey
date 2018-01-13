@@ -2,8 +2,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char **argv) {
+
+	if(argc < 2) {
+		fprintf(stderr, "error: expected action\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if(strcmp(argv[1], "install") == 0) {
+	} else if(strcmp(argv[1], "list") == 0) {
+	} else if(strcmp(argv[1], "remove") == 0) {
+	} else if(strcmp(argv[1], "update") == 0) {
+	}
+
 	atexit(hny_disconnect);
 
 	/* if(hny_connect(HNY_CONNECT_WAIT) == HNY_ERROR_UNAVAILABLE) { */

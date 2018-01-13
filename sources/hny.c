@@ -3,13 +3,12 @@
 /* snprintf requires _BSD_SOURCE */
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <semaphore.h>
-
 #include <unistd.h>
-
 #include <errno.h>
 
 struct hny_hive {
@@ -32,21 +31,17 @@ int hny_connect(int flags) {
 	/* effective user id because the semaphore gets ownership from
 		effective user id */
 
-	printf("%s\n", hive->sem_name);
-
 	hive->semaphore = sem_open(hive->sem_name, O_CREAT, S_IRUSR | S_IWUSR, 1);
 	if(hive->semaphore == SEM_FAILED) {
 		free(hive);
 		hive = NULL;
-		perror("hny error sem_open");
+
 		return HNY_ERROR_UNAVAILABLE;
 	}
 
 	if(flags & HNY_CONNECT_WAIT) {
-		printf("Waiting for semaphore\n");
 		wait_ret = sem_wait(hive->semaphore);
 	} else {
-		printf("Not waiting for semaphore\n");
 		wait_ret = sem_trywait(hive->semaphore);
 	}
 
@@ -59,30 +54,54 @@ int hny_connect(int flags) {
 	return HNY_OK;
 }
 
-size_t hny_fetch(const char *name, const char *version, struct hny_package **packages, int flags) {
-	if(name == NULL
-		|| packages == NULL
-		|| !(flags & HNY_STANDARD
-			|| flags & HNY_GEIST)) {
-		return 0;
-	}
-
-	return 0;
-}
-
-int hny_compare_versions(const char **p1, const char **p2) {
-	return 0;
-}
-
 void hny_disconnect() {
 	if(hive != NULL) {
-		printf("Disconnecting\n");
-
 		sem_post(hive->semaphore);
 		sem_close(hive->semaphore);
 
 		free(hive);
 		hive = NULL;
 	}
+}
+
+int hny_provider_add(const char *url, int flags) {
+	return HNY_OK;
+}
+
+int hny_fetch_list(struct hny_geist geist, struct hny_geist **packages, size_t *fetched, int flags) {
+	return HNY_OK;
+}
+
+int hny_check_geister(struct hny_geist *geister, size_t n) {
+	size_t i = 0;
+
+	if(geister == NULL
+		|| n == 0)
+		return HNY_ERROR_INVALIDARGS;
+
+	while(i < n
+			&& geister[i].name != NULL
+			&& *(geister[i].name) != '\0'
+			&& strchr(geister[i].name, '-') == NULL) {
+		i++;
+	}
+
+	return i == n ? HNY_OK : HNY_ERROR_INVALIDARGS;
+}
+
+int hny_compare_versions(const char **p1, const char **p2) {
+	unsigned long m1, m2;
+	char *endptr1, *endptr2;
+
+	m1 = strtoul(*p1, &endptr1, 10);
+	m2 = strtoul(*p2, &endptr2, 10);
+
+	if(m1 == m2
+		&& (*endptr1 == '.' && *endptr2 == '.')) {
+			m1 = strtoul(++endptr1, NULL, 10);
+			m2 = strtoul(++endptr2, NULL, 10);
+	}
+
+	return m1 - m2;
 }
 
