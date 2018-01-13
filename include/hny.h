@@ -50,7 +50,6 @@ struct hny_geist {
 
 /**
 	hny_connect locks the honey semaphore associated to the current user
-	it then connects to every providers given by the system configuration,
 	therefore:
 		hny-$UID-sem : wait acquire if flags = HNY_CONNECT_WAIT
 			returns HNY_ERROR_UNAVAILABLE if cannot acquire
@@ -65,7 +64,7 @@ void hny_disconnect();
 
 /**
 	Adds provider url to the list of current providers
-	returns 1 if added, 0 elsewhere
+	returns HNY_OK if added, HNY_NONEXISTANT elsewhere
 **/
 int hny_provider_add(const char *url, int flags);
 
