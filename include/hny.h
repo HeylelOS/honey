@@ -5,11 +5,7 @@
 #define HNY_ERROR_INVALIDARGS	1
 #define HNY_ERROR_UNAVAILABLE	2
 #define HNY_ERROR_NONEXISTANT	3
-
-#define HNY_CONNECT_WAIT	1 << 0
-
-#define HNY_STANDARD	1 << 0
-#define HNY_GEIST		1 << 1
+#define HNY_ERROR_UNAUTHORIZED	4
 
 #define _BSD_SOURCE
 /* _BSD_SOURCE is for internal build */
@@ -24,19 +20,15 @@ enum hny_action {
 	HNY_REMOVE_TOTAL,	/* Total removal of packages' data */
 	HNY_REMOVE_PARTIAL,	/* Partial removal of packages' data */
 	HNY_STATUS,			/* Status of package (installed, active, latest) */
-	HNY_REPAIR			/* Repair package installation (cleanup and file check) */
+	HNY_REPAIR_ALL,		/* Repair package installation (cleanup, files check and config) */
+	HNY_REPAIR_CLEAN	/* Repair package installation (only clean) */
+	HNY_REPAIR_CHECK	/* Repair package installation (only files check) */
+	HNY_REPAIR_CONFIG	/* Repair package installation (only config) */
 };
 
 enum hny_synchronicity {
-	HNY_ASYNC = 0,
-	HNY_SYNC = 1
-};
-
-struct hny_callback {
-	union {
-		void (*fetch_list)(const hny_info_fetch_t);
-		void (*fetch)(const hny_info_fetch_t);
-	} handler;
+	HNY_SYNC = 0,
+	HNY_ASYNC = 1
 };
 
 struct hny_geist {
@@ -54,6 +46,7 @@ struct hny_geist {
 		hny-$UID-sem : wait acquire if flags = HNY_CONNECT_WAIT
 			returns HNY_ERROR_UNAVAILABLE if cannot acquire
 **/
+#define HNY_CONNECT_WAIT	1 << 0
 int hny_connect(int flags);
 
 /**
@@ -62,23 +55,31 @@ int hny_connect(int flags);
 **/
 void hny_disconnect();
 
-/**
-	Adds provider url to the list of current providers
-	returns HNY_OK if added, HNY_NONEXISTANT elsewhere
-**/
-int hny_provider_add(const char *url, int flags);
-
 /********************
   OPERATIONS SECTION
 *********************/
 
 /**
-	Tries to fetch all packages referencing geist with flags
-	returns all packages in packages, which is a pointer to a valid realloc pointer
-	and must be free afterwards,
+	Tries to fetch all packages referencing geist
+	with flags, from provider
 	returns the number of packages fetched in fetched
+		and the list, NULL if empty, list must be freed afterward
 **/
-int hny_list_provider(struct hny_geist geist, struct hny_geist **packages, size_t *fetched, int flags);
+#define HNY_GEISTER			1 << 0
+#define HNY_PACKAGES		1 << 1
+#define HNY_DEPENDENCIES	1 << 2
+struct hny_geist *hny_fetch(const struct hny_geist *geist, const char *provider, size_t *fetched, int flags);
+
+/**
+	Tries to install file package
+	with flags, stealth means it only installs the package, it
+	doesn't replace the current version
+	return HNY_OK on success,
+		HNY_NONEXISTANT if one of the file doesn't exist
+		HNY_UNAUTHORIZED if a permission stops the install
+**/
+#define HNY_STEALTH		1 << 0
+int hny_install(const char *file, const char *directory, int flags);
 
 /********************
   UTILITIES SECTION

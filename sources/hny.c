@@ -67,14 +67,6 @@ void hny_disconnect() {
 	}
 }
 
-int hny_provider_add(const char *url, int flags) {
-	return HNY_OK;
-}
-
-int hny_fetch_list(struct hny_geist geist, struct hny_geist **packages, size_t *fetched, int flags) {
-	return HNY_OK;
-}
-
 int hny_check_geister(struct hny_geist *geister, size_t n) {
 	size_t i = 0;
 
