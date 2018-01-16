@@ -21,14 +21,9 @@ enum hny_action {
 	HNY_REMOVE_PARTIAL,	/* Partial removal of packages' data */
 	HNY_STATUS,			/* Status of package (installed, active, latest) */
 	HNY_REPAIR_ALL,		/* Repair package installation (cleanup, files check and config) */
-	HNY_REPAIR_CLEAN	/* Repair package installation (only clean) */
-	HNY_REPAIR_CHECK	/* Repair package installation (only files check) */
+	HNY_REPAIR_CLEAN,	/* Repair package installation (only clean) */
+	HNY_REPAIR_CHECK,	/* Repair package installation (only files check) */
 	HNY_REPAIR_CONFIG	/* Repair package installation (only config) */
-};
-
-enum hny_synchronicity {
-	HNY_SYNC = 0,
-	HNY_ASYNC = 1
 };
 
 struct hny_geist {
@@ -78,16 +73,44 @@ struct hny_geist *hny_fetch(const struct hny_geist *geist, const char *provider,
 		HNY_NONEXISTANT if one of the file doesn't exist
 		HNY_UNAUTHORIZED if a permission stops the install
 **/
-#define HNY_STEALTH		1 << 0
+#define HNY_STEALTH			1 << 0
 int hny_install(const char *file, const char *directory, int flags);
+
+/**
+**/
+enum hny_listing {
+	HoneyListProvider,
+	HoneyListAll,
+	HoneyListActive
+};
+struct hny_geist *hny_list(enum hny_listing listing, size_t *listed);
+
+/**
+**/
+enum hny_removal {
+	HoneyRemoveTotal,
+	HoneyRemovePartial
+};
+int hny_remove(enum hny_removal removal, const struct hny_geist *geister, size_t count);
+
+/**
+**/
+int hny_status(const struct hny_geist *geist);
+
+/**
+**/
+#define HNY_REPAIR_CLEAN	1 << 0
+#define HNY_REPAIR_CHECK	1 << 1
+#define HNY_REPAIR_CONFIG	1 << 2
+int hny_repair(const struct hny_geist *geist, int flags);
 
 /********************
   UTILITIES SECTION
 *********************/
 
 /**
-	Both following check for errors in the structures
-	like if a geist has a name set at NULL
+	The following check for errors in the structures
+	like if a geist name is invalid
 **/
 int hny_check_geister(struct hny_geist *geister, size_t n);
 

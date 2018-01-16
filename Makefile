@@ -24,3 +24,9 @@ $(LIB): $(OBJECTS)
 
 $(BIN): $(LIB) $(wildcard main.c)
 	$(CC) $(CFLAGS) $(HEADERS) -o $@ $^ -l$(LIBNAME) -L./lib
+
+clean:
+	rm -rf bin/*
+	rm -rf lib/*
+	rm -rf objects/*
+

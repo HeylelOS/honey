@@ -67,12 +67,36 @@ void hny_disconnect() {
 	}
 }
 
+struct hny_geist *hny_fetch(const struct hny_geist *geist, const char *provider, size_t *fetched, int flags) {
+	if(hny_check_geister(geist, 1) != HNY_OK) {
+		return NULL;
+	}
+}
+
+int hny_install(const char *file, const char *directory, int flags) {
+}
+
+struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
+}
+
+int hny_remove(enum hny_removal removal, const struct hny_geist *geister, size_t count) {
+	if(hny_check_geister(geister, count) != HNY_OK) {
+		return HNY_ERROR_INVALIDARGS;
+	}
+}
+
+int hny_status(const struct hny_geist *geist) {
+}
+
+int hny_repair(const struct hny_geist *geist, int flags) {
+}
+
 int hny_check_geister(struct hny_geist *geister, size_t n) {
 	size_t i = 0;
 
-	if(geister == NULL
-		|| n == 0)
+	if(geister == NULL || n == 0) {
 		return HNY_ERROR_INVALIDARGS;
+	}
 
 	while(i < n
 		&& geister[i].name != NULL
