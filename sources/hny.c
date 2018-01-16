@@ -70,9 +70,9 @@ void hny_disconnect() {
 int hny_check_geister(struct hny_geist *geister, size_t n) {
 	size_t i = 0;
 
-	if(geister == NULL
-		|| n == 0)
+	if(geister == NULL || n == 0) {
 		return HNY_ERROR_INVALIDARGS;
+	}
 
 	while(i < n
 		&& geister[i].name != NULL

@@ -24,3 +24,9 @@ $(LIB): $(OBJECTS)
 
 $(BIN): $(LIB) $(wildcard main.c)
 	$(CC) $(CFLAGS) $(HEADERS) -o $@ $^ -l$(LIBNAME) -L./lib
+
+clean:
+	rm $(BIN)
+	rm $(LIB)
+	rm $(OBJECTS)
+

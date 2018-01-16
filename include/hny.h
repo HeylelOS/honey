@@ -21,8 +21,8 @@ enum hny_action {
 	HNY_REMOVE_PARTIAL,	/* Partial removal of packages' data */
 	HNY_STATUS,			/* Status of package (installed, active, latest) */
 	HNY_REPAIR_ALL,		/* Repair package installation (cleanup, files check and config) */
-	HNY_REPAIR_CLEAN	/* Repair package installation (only clean) */
-	HNY_REPAIR_CHECK	/* Repair package installation (only files check) */
+	HNY_REPAIR_CLEAN,	/* Repair package installation (only clean) */
+	HNY_REPAIR_CHECK,	/* Repair package installation (only files check) */
 	HNY_REPAIR_CONFIG	/* Repair package installation (only config) */
 };
 
