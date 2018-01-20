@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <signal.h>
 
 void honey_fatal(const char *format, ...) {
 	va_list args;
@@ -15,6 +16,28 @@ void honey_fatal(const char *format, ...) {
 	exit(EXIT_FAILURE);
 }
 
+void signal_exit(int signal) {
+	honey_fatal("Exited on signal %d\n", signal);
+}
+
+void setup_sigexits(void) {
+	struct sigaction sa;
+
+	sigfillset(&sa.sa_mask);
+	sa.sa_handler = signal_exit;
+
+	sigaction(SIGHUP, &sa, NULL);
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
+	sigaction(SIGTRAP, &sa, NULL);
+	sigaction(SIGABRT, &sa, NULL);
+	sigaction(SIGSEGV, &sa, NULL);
+	sigaction(SIGALRM, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+}
+
 void honey_fetch(int count, char **names) {
 	int i;
 
@@ -23,24 +46,40 @@ void honey_fetch(int count, char **names) {
 	}
 }
 
+void honey_shift(char *geist, char *replacement) {
+	printf("shift %s to %s\n", geist, replacement);
+}
+
 void honey_install(int count, char **files) {
 	int i;
 
 	for(i = 0; i < count; i++) {
-		printf("install file %s\n", files[i]);
+		hny_install(files[i]);
 	}
 }
 
 void honey_list(char *method) {
-	if(strcmp(method, "providers") == 0) {
-		printf("list providers\n");
-	} else if(strcmp(method, "all") == 0) {
-		printf("list all\n");
+	enum hny_listing listing = HnyListAll;
+	struct hny_geist *list;
+	size_t i, count;
+
+	if(strcmp(method, "all") == 0) {
+		/* Default declared All */
 	} else if(strcmp(method, "active") == 0) {
-		printf("list active\n");
+		listing = HnyListActive;
+	} else if(strcmp(method, "links") == 0) {
+		listing = HnyListLinks;
 	} else {
 		honey_fatal("error: list, \"%s\" is invalid\n", method);
 	}
+
+	list = hny_list(listing, &count);
+
+	for(i = 0; i < count; i++) {
+		printf("%s-%s\n", list[i].name, list[i].version);
+	}
+
+	hny_free_geister(list, count);
 }
 
 void honey_remove(char *method, int count, char **names) {
@@ -48,8 +87,10 @@ void honey_remove(char *method, int count, char **names) {
 
 	if(strcmp(method, "total") == 0) {
 		printf("remove total\n");
-	} else if(strcmp(method, "partial") == 0) {
-		printf("remove partial\n");
+	} else if(strcmp(method, "data") == 0) {
+		printf("remove data\n");
+	} else if(strcmp(method, "links") == 0) {
+		printf("remove links\n");
 	} else {
 		honey_fatal("error: hny remove, \"%s\" is invalid\n", method);
 	}
@@ -89,12 +130,14 @@ void honey_repair(char *method, int count, char **names) {
 
 int main(int argc, char **argv) {
 	int i = 1;
-	atexit(hny_disconnect);
+
+	setup_sigexits();
 
 	/* if(hny_connect(HNY_CONNECT_WAIT) == HNY_ERROR_UNAVAILABLE) { */
 	if(hny_connect(0) == HNY_ERROR_UNAVAILABLE) {
 		honey_fatal("hny error: unable to connect\n");
 	}
+	atexit(hny_disconnect);
 
 	if(argc < 2) {
 		honey_fatal("error: expected action\n");
@@ -106,6 +149,12 @@ int main(int argc, char **argv) {
 		} else {
 			honey_fatal("error: %s fetch [packages names...]\n", argv[0]);
 		}
+	} else if(strcmp(argv[i], "shift") == 0) {
+		if(++i == argc - 2) {
+			honey_shift(argv[i], argv[i + 1]);
+		} else {
+			honey_fatal("error: %s shift [geist name] [replacement name]\n", argv[0]);
+		}
 	} else if(strcmp(argv[i], "install") == 0) {
 		if(++i != argc) {
 			honey_install(argc - i, &argv[i]);
@@ -116,13 +165,13 @@ int main(int argc, char **argv) {
 		if(++i == argc - 1) {
 			honey_list(argv[i]);
 		} else {
-			honey_fatal("error: %s list [providers | all | active]\n", argv[0]);
+			honey_fatal("error: %s list [all | active]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "remove") == 0) {
 		if(++i < argc - 1) {
 			honey_remove(argv[i], argc - i - 1, &argv[i + 1]);
 		} else {
-			honey_fatal("error: %s remove [total | partial] [packages names...]\n", argv[0]);
+			honey_fatal("error: %s remove [total | data | links] [packages names...]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "status") == 0) {
 		if(++i != argc) {

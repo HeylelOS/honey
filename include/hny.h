@@ -11,21 +11,6 @@
 /* _BSD_SOURCE is for internal build */
 #include <sys/types.h>
 
-enum hny_action {
-	HNY_FETCH,			/* Fetch the latest or specified package */
-	HNY_INSTALL,		/* Install the archive */
-	HNY_LIST_PROVIDER,	/* List all packages following condition from provider */
-	HNY_LIST_ALL,		/* List all packages installed */
-	HNY_LIST_ACTIVE,	/* List all active packages */
-	HNY_REMOVE_TOTAL,	/* Total removal of packages' data */
-	HNY_REMOVE_PARTIAL,	/* Partial removal of packages' data */
-	HNY_STATUS,			/* Status of package (installed, active, latest) */
-	HNY_REPAIR_ALL,		/* Repair package installation (cleanup, files check and config) */
-	HNY_REPAIR_CLEAN,	/* Repair package installation (only clean) */
-	HNY_REPAIR_CHECK,	/* Repair package installation (only files check) */
-	HNY_REPAIR_CONFIG	/* Repair package installation (only config) */
-};
-
 struct hny_geist {
 	char *name;
 	char *version;
@@ -55,41 +40,36 @@ void hny_disconnect();
 *********************/
 
 /**
-	Tries to fetch all packages referencing geist
-	with flags, from provider
-	returns the number of packages fetched in fetched
-		and the list, NULL if empty, list must be freed afterward
-**/
-#define HNY_GEISTER			1 << 0
-#define HNY_PACKAGES		1 << 1
-#define HNY_DEPENDENCIES	1 << 2
-struct hny_geist *hny_fetch(const struct hny_geist *geist, const char *provider, size_t *fetched, int flags);
-
-/**
-	Tries to install file package
-	with flags, stealth means it only installs the package, it
-	doesn't replace the current version
+	Tries to install file package in the user package
+	directory
 	return HNY_OK on success,
-		HNY_NONEXISTANT if one of the file doesn't exist
+		HNY_NONEXISTANT if file doesn't exist
+		HNY_UNAVAILABLE if a package of the same name already exists
 		HNY_UNAUTHORIZED if a permission stops the install
 **/
-#define HNY_STEALTH			1 << 0
-int hny_install(const char *file, const char *directory, int flags);
+int hny_install(const char *file);
+
+/**
+	Shift replaces the geist named geist
+	by the package or geist described in packages
+**/
+int hny_shift(const char *geist, const struct hny_geist *package);
 
 /**
 **/
 enum hny_listing {
-	HoneyListProvider,
-	HoneyListAll,
-	HoneyListActive
+	HnyListAll,
+	HnyListActive,
+	HnyListLinks
 };
 struct hny_geist *hny_list(enum hny_listing listing, size_t *listed);
 
 /**
 **/
 enum hny_removal {
-	HoneyRemoveTotal,
-	HoneyRemovePartial
+	HnyRemoveTotal,
+	HnyRemoveData,
+	HnyRemoveLinks
 };
 int hny_remove(enum hny_removal removal, const struct hny_geist *geister, size_t count);
 
@@ -109,10 +89,16 @@ int hny_repair(const struct hny_geist *geist, int flags);
 *********************/
 
 /**
+	Free all geister values (names and optionnaly version)
+	then frees the vector
+**/
+void hny_free_geister(struct hny_geist *geister, size_t count);
+
+/**
 	The following check for errors in the structures
 	like if a geist name is invalid
 **/
-int hny_check_geister(struct hny_geist *geister, size_t n);
+int hny_check_geister(const struct hny_geist *geister, size_t n);
 
 /**
 	Compare two versions together, qsort compatible
