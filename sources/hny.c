@@ -1,3 +1,10 @@
+/*
+	hny.c
+	Copyright (c) 2017, Valentin Debon
+
+	This file is part of the Honey package manager
+	subject the BSD 3-Clause License, see LICENSE.txt
+*/
 #include <hny.h>
 
 /* snprintf requires _BSD_SOURCE */
@@ -221,10 +228,10 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
 				} else if(listing == HnyListLinks
 					&& entry->d_type == DT_LNK
 					&& strchr(entry->d_name, '-') == NULL) {
-						list[*listed].name = strdup(entry->d_name);
-						list[*listed].version = NULL;
+					list[*listed].name = strdup(entry->d_name);
+					list[*listed].version = NULL;
 
-						(*listed)++;
+					(*listed)++;
 				}
 			}
 		}
