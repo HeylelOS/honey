@@ -47,7 +47,20 @@ void honey_fetch(int count, char **names) {
 }
 
 void honey_shift(char *geist, char *replacement) {
-	printf("shift %s to %s\n", geist, replacement);
+	struct hny_geist repl;
+	repl.name = strsep(&replacement, "-");
+	repl.version = replacement;
+
+	switch(hny_shift(geist, &repl)) {
+		case HNY_OK:
+			exit(EXIT_SUCCESS);
+		case HNY_ERROR_NONEXISTANT:
+			honey_fatal("honey: unable to shift %s to %s-%s, file doesn't exist\n",
+				geist, repl.name, repl.version);
+		case HNY_ERROR_UNAUTHORIZED:
+			honey_fatal("honey: unauthorized to shift %s to %s-%s\n",
+				geist, repl.name, repl.version);
+	}
 }
 
 void honey_install(int count, char **files) {
@@ -76,7 +89,11 @@ void honey_list(char *method) {
 	list = hny_list(listing, &count);
 
 	for(i = 0; i < count; i++) {
-		printf("%s-%s\n", list[i].name, list[i].version);
+		if(list[i].version != NULL) {
+			printf("%s-%s\n", list[i].name, list[i].version);
+		} else {
+			printf("%s\n", list[i].name);
+		}
 	}
 
 	hny_free_geister(list, count);
@@ -133,11 +150,11 @@ int main(int argc, char **argv) {
 
 	setup_sigexits();
 
+	atexit(hny_disconnect);
 	/* if(hny_connect(HNY_CONNECT_WAIT) == HNY_ERROR_UNAVAILABLE) { */
 	if(hny_connect(0) == HNY_ERROR_UNAVAILABLE) {
 		honey_fatal("hny error: unable to connect\n");
 	}
-	atexit(hny_disconnect);
 
 	if(argc < 2) {
 		honey_fatal("error: expected action\n");
@@ -165,7 +182,7 @@ int main(int argc, char **argv) {
 		if(++i == argc - 1) {
 			honey_list(argv[i]);
 		} else {
-			honey_fatal("error: %s list [all | active]\n", argv[0]);
+			honey_fatal("error: %s list [all | active | links]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "remove") == 0) {
 		if(++i < argc - 1) {

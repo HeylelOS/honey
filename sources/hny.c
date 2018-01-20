@@ -95,16 +95,78 @@ int hny_install(const char *file) {
 }
 
 int hny_shift(const char *geist, const struct hny_geist *package) {
+	int retval = HNY_OK;
+	DIR *dirp;
+
 	if(hny_check_geister(package, 1) != HNY_OK) {
 		return HNY_ERROR_INVALIDARGS;
 	}
 
 	pthread_mutex_lock(&hive->mutex);
 
-	printf("Shifting %s with %s version %s\n", geist, package->name, package->version);
+	if((dirp = opendir(hive->installdir)) != NULL) {
+		struct stat st;
+		char name[NAME_MAX];
+
+		if(package->version != NULL) {
+			snprintf(name, NAME_MAX,
+				"%s-%s", package->name, package->version);
+		} else {
+			strcpy(name, package->name);
+		}
+
+		/* We follow symlink, this is only to check if the file exists */
+		if(fstatat(dirfd(dirp), name, &st, 0) == 0) {
+			/* We check if the target exists, if it does, we unlink it */
+			if((fstatat(dirfd(dirp), geist, &st, 0) == 0)
+				&& (unlinkat(dirfd(dirp), geist, 0) == -1)) {
+				switch(errno) {
+					case ENOENT:
+						retval = HNY_ERROR_NONEXISTANT;
+						break;
+					case EACCES:
+						/* fallthrough */
+					case EPERM:
+						/* fallthrough */
+					default:
+						retval = HNY_ERROR_UNAUTHORIZED;
+						break;
+				}
+			}
+
+			if(retval == HNY_OK) {
+				if(symlinkat(name, dirfd(dirp), geist) == -1) {
+					switch(errno) {
+						case ENOENT:
+							retval = HNY_ERROR_NONEXISTANT;
+							break;
+						case EACCES:
+							/* fallthrough */
+						default:
+							retval = HNY_ERROR_UNAUTHORIZED;
+							break;
+					}
+				}
+			}
+		} else {
+			switch(errno) {
+				case ENOENT:
+					retval = HNY_ERROR_NONEXISTANT;
+					break;
+				case EACCES:
+					/* fallthrough */
+				default:
+					retval = HNY_ERROR_UNAUTHORIZED;
+					break;
+			}
+		}
+
+		closedir(dirp);
+	}
 
 	pthread_mutex_unlock(&hive->mutex);
-	return HNY_OK;
+
+	return retval;
 }
 
 struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
@@ -118,8 +180,7 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
 
 	if((dirp = opendir(hive->installdir)) != NULL) {
 		while((entry = readdir(dirp)) != NULL) {
-			if(entry->d_type == d_type
-				&& entry->d_name[0] != '.') {
+			if(entry->d_name[0] != '.') {
 				char *stringp;
 
 				if(*listed == alloced) {
@@ -130,9 +191,9 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
 				if(listing == HnyListActive
 					&& entry->d_type == DT_LNK) {
 					ssize_t length;
-					stringp = malloc(NAME_MAX + 1);
+					stringp = malloc(NAME_MAX);
 
-					length = readlinkat(dirfd(dirp), entry->d_name, stringp, NAME_MAX + 1);
+					length = readlinkat(dirfd(dirp), entry->d_name, stringp, NAME_MAX);
 
 					if(length != -1) {
 						stringp[length] = '\0';
@@ -157,6 +218,13 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
 					} else {
 						free(stringp);
 					}
+				} else if(listing == HnyListLinks
+					&& entry->d_type == DT_LNK
+					&& strchr(entry->d_name, '-') == NULL) {
+						list[*listed].name = strdup(entry->d_name);
+						list[*listed].version = NULL;
+
+						(*listed)++;
 				}
 			}
 		}
@@ -238,6 +306,7 @@ int hny_check_geister(const struct hny_geist *geister, size_t n) {
 	while(i < n
 		&& geister[i].name != NULL
 		&& *(geister[i].name) != '\0'
+		&& *(geister[i].name) != '.'
 		&& strchr(geister[i].name, '-') == NULL) {
 		i++;
 	}
