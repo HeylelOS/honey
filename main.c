@@ -59,13 +59,22 @@ void honey_shift(char *geist, char *replacement) {
 	repl.version = replacement;
 
 	switch(hny_shift(geist, &repl)) {
-		case HNY_OK:
+		case HnyErrorNone:
 			exit(EXIT_SUCCESS);
-		case HNY_ERROR_NONEXISTANT:
+		case HnyErrorNonExistant:
 			honey_fatal("honey: unable to shift %s to %s-%s, file doesn't exist\n",
 				geist, repl.name, repl.version);
-		case HNY_ERROR_UNAUTHORIZED:
+		case HnyErrorUnauthorized:
 			honey_fatal("honey: unauthorized to shift %s to %s-%s\n",
+				geist, repl.name, repl.version);
+		case HnyErrorUnavailable:
+			honey_fatal("honey: unable to shift %s to %s-%s, a ressource isn't available\n",
+				geist, repl.name, repl.version);
+		case HnyErrorInvalidArgs:
+			honey_fatal("honey: unable to shift %s to %s-%s, an argument is invalid\n",
+				geist, repl.name, repl.version);
+		default:
+			honey_fatal("honey: unable to shift %s to %s-%s, unknown error\n",
 				geist, repl.name, repl.version);
 	}
 }
@@ -159,7 +168,7 @@ int main(int argc, char **argv) {
 
 	atexit(hny_disconnect);
 	/* if(hny_connect(HNY_CONNECT_WAIT) == HNY_ERROR_UNAVAILABLE) { */
-	if(hny_connect(0) == HNY_ERROR_UNAVAILABLE) {
+	if(hny_connect(0) == HnyErrorUnavailable) {
 		honey_fatal("hny error: unable to connect\n");
 	}
 

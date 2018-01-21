@@ -4,7 +4,8 @@ LD=ld
 LDFLAGS= -lpthread
 HEADERS=-I./include/
 LIBNAME=hny
-OBJECT=./objects/$(LIBNAME).o
+SOURCES=$(wildcard sources/*.c)
+OBJECTS=$(patsubst sources/%.c, objects/%.o, $(SOURCES))
 ifeq ($(shell uname), Darwin)
 SHAREDFLAG=-dylib -macosx_version_min 10.13
 LIB=./lib/lib$(LIBNAME).dylib
@@ -16,10 +17,12 @@ BIN=./bin/$(LIBNAME)
 
 all: $(BIN)
 
-$(OBJECT): $(wildcard sources/*.c)
-	$(CC) $(CFLAGS) $(HEADERS) -c -fPIC -o $@ $^
+objects/%.o: sources/%.c
+	$(CC) $(CFLAGS) $(HEADERS) -c -fPIC -o $@ $<
 
-$(LIB): $(OBJECT)
+$(OBJECTS):	$(SOURCES)
+
+$(LIB): $(OBJECTS)
 	$(LD) $(SHAREDFLAG) -o $@ $^ $(LDFLAGS)
 
 $(BIN): $(LIB) $(wildcard main.c)

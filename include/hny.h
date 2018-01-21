@@ -8,11 +8,13 @@
 #ifndef _HNY_H
 #define _HNY_H
 
-#define HNY_OK			0
-#define HNY_ERROR_INVALIDARGS	1
-#define HNY_ERROR_UNAVAILABLE	2
-#define HNY_ERROR_NONEXISTANT	3
-#define HNY_ERROR_UNAUTHORIZED	4
+enum hny_error {
+	HnyErrorNone = 0,
+	HnyErrorInvalidArgs = 1,
+	HnyErrorUnavailable = 2,
+	HnyErrorNonExistant = 3,
+	HnyErrorUnauthorized = 4
+};
 
 #define _BSD_SOURCE
 /* _BSD_SOURCE is for internal build */
@@ -34,7 +36,7 @@ struct hny_geist {
 			returns HNY_ERROR_UNAVAILABLE if cannot acquire
 **/
 #define HNY_CONNECT_WAIT	1 << 0
-int hny_connect(int flags);
+enum hny_error hny_connect(int flags);
 
 /**
 	Frees all values of the library, release the semaphore and disconnects all connections
@@ -54,13 +56,13 @@ void hny_disconnect();
 		HNY_UNAVAILABLE if a package of the same name already exists
 		HNY_UNAUTHORIZED if a permission stops the install
 **/
-int hny_install(const char *file);
+enum hny_error hny_install(const char *file);
 
 /**
 	Shift replaces the geist named geist
 	by the package or geist described in packages
 **/
-int hny_shift(const char *geist, const struct hny_geist *package);
+enum hny_error hny_shift(const char *geist, const struct hny_geist *package);
 
 /**
 **/
@@ -78,18 +80,18 @@ enum hny_removal {
 	HnyRemoveData,
 	HnyRemoveLinks
 };
-int hny_remove(enum hny_removal removal, const struct hny_geist *geister, size_t count);
+enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geist);
 
 /**
 **/
-int hny_status(const struct hny_geist *geist);
+enum hny_error hny_status(struct hny_geist *target, const struct hny_geist *geist);
 
 /**
 **/
 #define HNY_REPAIR_CLEAN	1 << 0
 #define HNY_REPAIR_CHECK	1 << 1
 #define HNY_REPAIR_CONFIG	1 << 2
-int hny_repair(const struct hny_geist *geist, int flags);
+enum hny_error hny_repair(const struct hny_geist *geist, int flags);
 
 /********************
   UTILITIES SECTION
@@ -102,10 +104,10 @@ int hny_repair(const struct hny_geist *geist, int flags);
 void hny_free_geister(struct hny_geist *geister, size_t count);
 
 /**
-	The following check for errors in the structures
+	The following checks for errors in the structures
 	like if a geist name is invalid
 **/
-int hny_check_geister(const struct hny_geist *geister, size_t n);
+enum hny_error hny_check_geister(const struct hny_geist *geister, size_t n);
 
 /**
 	Compare two versions together, qsort compatible
@@ -113,4 +115,5 @@ int hny_check_geister(const struct hny_geist *geister, size_t n);
 #define HNY_CMP_QSORT(x)	((int (*)(const void *, const void *))(x))
 int hny_compare_versions(const char **p1, const char **p2);
 
+/* _HNY_H */
 #endif
