@@ -16,7 +16,9 @@ enum hny_error {
 	HnyErrorUnauthorized = 4
 };
 
+#ifdef __linux__
 #define _XOPEN_SOURCE 500
+#endif
 #define _BSD_SOURCE
 /* Above are for internal build */
 #include <sys/types.h>
