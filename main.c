@@ -89,16 +89,14 @@ void honey_install(int count, char **files) {
 }
 
 void honey_list(char *method) {
-	enum hny_listing listing = HnyListAll;
+	enum hny_listing listing = HnyListPackages;
 	struct hny_geist *list;
 	size_t i, count;
 
-	if(strcmp(method, "all") == 0) {
-		/* Default declared All */
+	if(strcmp(method, "packages") == 0) {
+		/* Default */
 	} else if(strcmp(method, "active") == 0) {
 		listing = HnyListActive;
-	} else if(strcmp(method, "links") == 0) {
-		listing = HnyListLinks;
 	} else {
 		honey_fatal("error: list, \"%s\" is invalid\n", method);
 	}
@@ -117,20 +115,30 @@ void honey_list(char *method) {
 }
 
 void honey_remove(char *method, int count, char **names) {
+	enum hny_removal removal = HnyRemovePackage;
 	int i;
 
-	if(strcmp(method, "total") == 0) {
-		printf("remove total\n");
+	if(strcmp(method, "package") == 0) {
+		/* Default */
 	} else if(strcmp(method, "data") == 0) {
-		printf("remove data\n");
-	} else if(strcmp(method, "links") == 0) {
-		printf("remove links\n");
+		removal = HnyRemoveData;
 	} else {
 		honey_fatal("error: hny remove, \"%s\" is invalid\n", method);
 	}
 
 	for(i = 0; i < count; i++) {
-		printf("remove %s package %s\n", method, names[i]);
+		struct hny_geist geist;
+
+		geist.name = strsep(&names[i], "-");
+		geist.version = names[i];
+
+		switch(hny_remove(removal, &geist)) {
+			case HnyErrorNone:
+				break;
+			default:
+				fprintf(stderr, "Couille dans le pathé\n");
+				break;
+		}
 	}
 }
 
@@ -214,13 +222,13 @@ int main(int argc, char **argv) {
 		if(++i == argc - 1) {
 			honey_list(argv[i]);
 		} else {
-			honey_fatal("error: %s list [all | active | links]\n", argv[0]);
+			honey_fatal("error: %s list [packages | active]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "remove") == 0) {
 		if(++i < argc - 1) {
 			honey_remove(argv[i], argc - i - 1, &argv[i + 1]);
 		} else {
-			honey_fatal("error: %s remove [total | data | links] [packages names...]\n", argv[0]);
+			honey_fatal("error: %s remove [package | data] [packages names...]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "status") == 0) {
 		if(++i == argc - 1) {
