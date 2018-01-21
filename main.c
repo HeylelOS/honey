@@ -62,7 +62,7 @@ void honey_shift(char *geist, char *replacement) {
 		case HnyErrorNone:
 			exit(EXIT_SUCCESS);
 		case HnyErrorNonExistant:
-			honey_fatal("honey: unable to shift %s to %s-%s, file doesn't exist\n",
+			honey_fatal("honey: unable to shift %s to %s-%s, a file is missing\n",
 				geist, repl.name, repl.version);
 		case HnyErrorUnauthorized:
 			honey_fatal("honey: unauthorized to shift %s to %s-%s\n",

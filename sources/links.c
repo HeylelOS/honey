@@ -53,6 +53,8 @@ enum hny_error hny_shift(const char *geist, const struct hny_geist *package) {
 		}
 
 		closedir(dirp);
+	} else {
+		error = hny_errno(errno);
 	}
 
 	pthread_mutex_unlock(&hive->mutex);

@@ -24,7 +24,7 @@ struct hny_hive {
 	char *prefixdir;
 };
 
-static struct hny_hive *hive;
+struct hny_hive *hive;
 
 enum hny_error hny_errno(int err);
 

@@ -1,6 +1,5 @@
 CC=clang
 CFLAGS= -g -ansi -pedantic -Wall
-LD=ld
 LDFLAGS= -lpthread
 HEADERS=-I./include/
 LIBNAME=hny
@@ -9,24 +8,29 @@ OBJECTS=$(patsubst sources/%.c, objects/%.o, $(SOURCES))
 ifeq ($(shell uname), Darwin)
 SHAREDFLAG=-dylib -macosx_version_min 10.13
 LIB=./lib/lib$(LIBNAME).dylib
+LD=ld
 else
 SHAREDFLAG=-shared
 LIB=./lib/lib$(LIBNAME).so
+# We cannot use ld as a linker, on macOS, no problem
+# but on linux there is a problem between dynamic and
+# static code
+LD=clang
 endif
 BIN=./bin/$(LIBNAME)
 
 all: $(BIN)
 
 objects/%.o: sources/%.c
-	$(CC) $(CFLAGS) $(HEADERS) -c -fPIC -o $@ $<
+	$(CC) $(CFLAGS) $(HEADERS) -fPIC -o $@ -c $<
 
-$(OBJECTS):	$(SOURCES)
+$(OBJECTS): $(SOURCES)
 
 $(LIB): $(OBJECTS)
 	$(LD) $(SHAREDFLAG) -o $@ $^ $(LDFLAGS)
 
-$(BIN): $(LIB) $(wildcard main.c)
-	$(CC) $(CFLAGS) $(HEADERS) -o $@ $^ -l$(LIBNAME) -L./lib
+$(BIN): $(wildcard main.c) $(LIB)
+	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(LIBNAME) -L./lib
 
 clean:
 	rm -rf bin/*
