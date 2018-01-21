@@ -76,37 +76,43 @@ struct hny_geist *hny_status(const struct hny_geist *geist) {
 	if((dirp = opendir(hive->installdir)) != NULL) {
 		/* NAME_MAX because of the package dir format */
 		char *path1, *path2, *swap;
-		ssize_t length;
+		ssize_t length = NAME_MAX - 1;
 
 		path1 = malloc(NAME_MAX);
 		path2 = malloc(NAME_MAX);
 
 		if(geist->version == NULL) {
-			path1 = strncpy(path1, geist->name, NAME_MAX);
+			path2 = strncpy(path2, geist->name, NAME_MAX);
 		} else {
-			snprintf(path1, NAME_MAX,
+			snprintf(path2, NAME_MAX,
 				"%s-%s", geist->name, geist->version);
 		}
 
 		do {
-			length = readlinkat(dirfd(dirp), path1,
-						path2, NAME_MAX);
+			path2[length] = '\0';
 			swap = path1;
 			path1 = path2;
 			path2 = swap;
+
+			length = readlinkat(dirfd(dirp), path1,
+						path2, NAME_MAX);
 		} while(length != -1);
 
 		if(errno == EINVAL) {
-			path2 = realloc(path2, strlen(path2));
+			path1 = realloc(path1, strlen(path1));
 			target = malloc(sizeof(*target));
 
-			target->name = strsep(&path2, "-");
-			target->version = path2;
+			target->name = strsep(&path1, "-");
+			target->version = path1;
 		} else {
-			free(path2);
+			if(errno == ENOENT) {
+				/* Clean broken symlink */
+				unlinkat(dirfd(dirp), path2, 0);
+			}
+			free(path1);
 		}
 
-		free(path1);
+		free(path2);
 		closedir(dirp);
 	}
 

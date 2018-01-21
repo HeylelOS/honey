@@ -32,25 +32,7 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
 					list = realloc(list, sizeof(*list) * alloced);
 				}
 
-				if(listing == HnyListActive
-					&& entry->d_type == DT_LNK) {
-					ssize_t length;
-					stringp = malloc(NAME_MAX);
-
-					length = readlinkat(dirfd(dirp), entry->d_name, stringp, NAME_MAX);
-
-					if(length != -1) {
-						stringp[length] = '\0';
-						stringp = realloc(stringp, length + 1);
-
-						list[*listed].name = strsep(&stringp, "-");
-						list[*listed].version = stringp;
-
-						(*listed)++;
-					} else {
-						perror("hny");
-					}
-				} else if(listing == HnyListAll
+				if(listing == HnyListPackages
 					&& entry->d_type == DT_DIR) {
 					stringp = strdup(entry->d_name);
 
@@ -62,7 +44,7 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
 					} else {
 						free(stringp);
 					}
-				} else if(listing == HnyListLinks
+				} else if(listing == HnyListActive
 					&& entry->d_type == DT_LNK
 					&& strchr(entry->d_name, '-') == NULL) {
 					list[*listed].name = strdup(entry->d_name);

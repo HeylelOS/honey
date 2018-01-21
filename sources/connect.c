@@ -52,18 +52,37 @@ enum hny_error hny_connect(int flags) {
 	}
 
 	hive->installdir = malloc(MAXPATHLEN);
-	hive->installdir = getcwd(hive->installdir, MAXPATHLEN);
-	hive->installdir = strcat(hive->installdir, "/packages");
-	hive->installdir = realloc(hive->installdir, strlen(hive->installdir));
+	if(hive->installdir == NULL) {
+		goto lbl_hny_connect_err1;
+	}
 
-	hive->prefixdir = malloc(MAXPATHLEN);
-	hive->prefixdir = getcwd(hive->prefixdir, MAXPATHLEN);
-	hive->prefixdir = strcat(hive->prefixdir, "/prefix");
-	hive->prefixdir = realloc(hive->prefixdir, strlen(hive->prefixdir));
+	if(getenv("HOME") != NULL) {
+		char *homedir = getenv("HOME");
+
+		snprintf(hive->installdir, MAXPATHLEN,
+			"%s/.local/packages", homedir);
+		hive->installdir = realloc(hive->installdir,
+			strlen(hive->installdir));
+
+		hive->prefixdir = malloc(MAXPATHLEN);
+		if(hive->prefixdir == NULL) {
+			goto lbl_hny_connect_err2;
+		}
+
+		snprintf(hive->prefixdir, MAXPATHLEN,
+			"%s/.local", homedir);
+		hive->prefixdir = realloc(hive->prefixdir,
+			strlen(hive->prefixdir));
+	} else {
+		goto lbl_hny_connect_err2;
+	}
 
 	pthread_mutex_init(&hive->mutex, NULL);
 
 	return HnyErrorNone;
+
+lbl_hny_connect_err2:
+	free(hive->installdir);
 
 lbl_hny_connect_err1:
 	free(hive);

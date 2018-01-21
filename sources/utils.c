@@ -22,6 +22,23 @@ void hny_free_geister(struct hny_geist *geister, size_t count) {
 	free(geister);
 }
 
+_Bool hny_equals_geister(const struct hny_geist *g1, const struct hny_geist *g2) {
+	if(hny_check_geister(g1, 1) == HnyErrorNone
+		&& hny_check_geister(g2, 1) == HnyErrorNone) {
+		if(strcmp(g1->name, g2->name) == 0) {
+			if(g1->version != NULL
+				&& g2->version != NULL) {
+				return (strcmp(g1->version, g2->version) == 0);
+			} else if(g1->version == NULL
+				&& g2->version == NULL) {
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 enum hny_error hny_check_geister(const struct hny_geist *geister, size_t n) {
 	size_t i = 0;
 

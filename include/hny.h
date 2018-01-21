@@ -16,8 +16,9 @@ enum hny_error {
 	HnyErrorUnauthorized = 4
 };
 
+#define _XOPEN_SOURCE 500
 #define _BSD_SOURCE
-/* _BSD_SOURCE is for internal build */
+/* Above are for internal build */
 #include <sys/types.h>
 
 struct hny_geist {
@@ -39,8 +40,7 @@ struct hny_geist {
 enum hny_error hny_connect(int flags);
 
 /**
-	Frees all values of the library, release the semaphore and disconnects all connections
-	from providers
+	Frees all values of the library, and releases the semaphore
 **/
 void hny_disconnect();
 
@@ -51,34 +51,30 @@ void hny_disconnect();
 /**
 	Tries to install file package in the user package
 	directory
-	return HNY_OK on success,
-		HNY_NONEXISTANT if file doesn't exist
-		HNY_UNAVAILABLE if a package of the same name already exists
-		HNY_UNAUTHORIZED if a permission stops the install
 **/
 enum hny_error hny_install(const char *file);
 
 /**
 	Shift replaces the geist named geist
-	by the package or geist described in packages
+	by the package or geist described in package
 **/
 enum hny_error hny_shift(const char *geist, const struct hny_geist *package);
 
 /**
+	Lists all geister which follow the listing
+	condition
 **/
 enum hny_listing {
-	HnyListAll,
-	HnyListActive,
-	HnyListLinks
+	HnyListPackages,
+	HnyListActive
 };
 struct hny_geist *hny_list(enum hny_listing listing, size_t *listed);
 
 /**
 **/
 enum hny_removal {
-	HnyRemoveTotal,
-	HnyRemoveData,
-	HnyRemoveLinks
+	HnyRemovePackage,
+	HnyRemoveData
 };
 enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geist);
 
@@ -102,6 +98,11 @@ enum hny_error hny_repair(const struct hny_geist *geist, int flags);
 	then frees the vector
 **/
 void hny_free_geister(struct hny_geist *geister, size_t count);
+
+/**
+	Checks if two geister are equals
+**/
+_Bool hny_equals_geister(const struct hny_geist *g1, const struct hny_geist *g2);
 
 /**
 	The following checks for errors in the structures

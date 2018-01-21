@@ -4,10 +4,12 @@ the following files:
 
 hny/ : the directory containing all package related files
 hny/links : file holding the lists of links to be created for the package
-hny/rmdata : executable file which removes every user-related data
+Optionnal:
+hny/repair : executable taking "all", "config", "files" as arguments
+hny/rmdata : executable which removes every user-related data
 	because the link removal is done through the hny/links file, this scripts
 	allows the package a more fine-grained removal than an extensive and heavy
 	file which would have to iterate every user and configurations on the system,
 	in the end, it's just a choice done for flexibility.
-hny/retail/ : A directory which is meant to contain platform specific files
+hny/retail/ : A directory which is meant to contain platform specific package files
 
