@@ -18,7 +18,7 @@ and obviously those not supported by pathnames
 A symbolic link must reference an existing package dir
 or symlink in the same directory, the value of the symlink
 must be strictly the same as the entry it references,
-which means no trailing '/' or characters. The symlink
+which means no trailing '/' or other characters. The symlink
 in itself only holds a name value, the same kind holded
 by directory entries:
 	[name]
