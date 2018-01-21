@@ -79,6 +79,12 @@ enum hny_removal {
 enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geist);
 
 /**
+	Status follows the symlinks and/or file in the
+	package dir until it finds a problem or a package
+	directory, if it finds a broken symlink it will unlink
+	it, if an error occurs, it returns NULL, otherwise
+	a pointer to the final geist, which can be freed with
+	hny_free_geister
 **/
 struct hny_geist *hny_status(const struct hny_geist *geist);
 
