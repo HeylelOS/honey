@@ -11,6 +11,7 @@
 #include <sys/dir.h>
 #include <limits.h> /* NAME_MAX */
 #include <unistd.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 
@@ -32,7 +33,7 @@ enum hny_error hny_shift(const char *geist, const struct hny_geist *package) {
 			snprintf(name, NAME_MAX,
 				"%s-%s", package->name, package->version);
 		} else {
-			strcpy(name, package->name);
+			strncpy(name, package->name, NAME_MAX);
 		}
 
 		/* We follow symlink, this is only to check if the file exists */
@@ -62,14 +63,55 @@ enum hny_error hny_shift(const char *geist, const struct hny_geist *package) {
 	return error;
 }
 
-enum hny_error hny_status(struct hny_geist *target, const struct hny_geist *geist) {
+struct hny_geist *hny_status(const struct hny_geist *geist) {
+	struct hny_geist *target = NULL;
+	DIR *dirp;
+
 	if(hny_check_geister(geist, 1) != HnyErrorNone) {
-		return HnyErrorInvalidArgs;
+		return NULL;
 	}
 
 	pthread_mutex_lock(&hive->mutex);
+
+	if((dirp = opendir(hive->installdir)) != NULL) {
+		/* NAME_MAX because of the package dir format */
+		char *path1, *path2, *swap;
+		ssize_t length;
+
+		path1 = malloc(NAME_MAX);
+		path2 = malloc(NAME_MAX);
+
+		if(geist->version == NULL) {
+			path1 = strncpy(path1, geist->name, NAME_MAX);
+		} else {
+			snprintf(path1, NAME_MAX,
+				"%s-%s", geist->name, geist->version);
+		}
+
+		do {
+			length = readlinkat(dirfd(dirp), path1,
+						path2, NAME_MAX);
+			swap = path1;
+			path1 = path2;
+			path2 = swap;
+		} while(length != -1);
+
+		if(errno == EINVAL) {
+			path2 = realloc(path2, strlen(path2));
+			target = malloc(sizeof(*target));
+
+			target->name = strsep(&path2, "-");
+			target->version = path2;
+		} else {
+			free(path2);
+		}
+
+		free(path1);
+		closedir(dirp);
+	}
+
 	pthread_mutex_unlock(&hive->mutex);
 
-	return HnyErrorNone;
+	return target;
 }
 

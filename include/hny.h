@@ -84,7 +84,7 @@ enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geis
 
 /**
 **/
-enum hny_error hny_status(struct hny_geist *target, const struct hny_geist *geist);
+struct hny_geist *hny_status(const struct hny_geist *geist);
 
 /**
 **/

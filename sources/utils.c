@@ -33,7 +33,8 @@ enum hny_error hny_check_geister(const struct hny_geist *geister, size_t n) {
 		&& geister[i].name != NULL
 		&& *(geister[i].name) != '\0'
 		&& *(geister[i].name) != '.'
-		&& strchr(geister[i].name, '-') == NULL) {
+		&& strchr(geister[i].name, '-') == NULL
+		&& strchr(geister[i].name, '/') == NULL) {
 		i++;
 	}
 
@@ -65,6 +66,7 @@ enum hny_error hny_errno(int err) {
 			return HnyErrorNonExistant;
 		case EAGAIN:
 		case ENFILE:
+		case ENOMEM:
 			return HnyErrorUnavailable;
 		case ELOOP:
 		case ENAMETOOLONG:

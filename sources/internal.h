@@ -15,16 +15,14 @@
 #include <semaphore.h>
 #include <pthread.h>
 
-struct hny_hive {
+struct {
 	char sem_name[32];
 	sem_t *semaphore;
 	pthread_mutex_t mutex;
 
 	char *installdir;
 	char *prefixdir;
-};
-
-struct hny_hive *hive;
+} *hive;
 
 enum hny_error hny_errno(int err);
 
