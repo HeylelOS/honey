@@ -8,6 +8,7 @@
 #include "internal.h"
 
 #include <sys/param.h> /* MAXPATHLEN */
+#include <fcntl.h> /* O_CREAT, S_ISRUSR, S_IWUSR */
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,14 +49,12 @@ enum hny_error hny_connect(int flags) {
 
 	hive->installdir = malloc(MAXPATHLEN);
 	hive->installdir = getcwd(hive->installdir, MAXPATHLEN);
-	snprintf(hive->installdir, MAXPATHLEN,
-		"%s/%s", hive->installdir, "packages/");
+	hive->installdir = strcat(hive->installdir, "/packages");
 	hive->installdir = realloc(hive->installdir, strlen(hive->installdir));
 
 	hive->prefixdir = malloc(MAXPATHLEN);
 	hive->prefixdir = getcwd(hive->prefixdir, MAXPATHLEN);
-	snprintf(hive->prefixdir, MAXPATHLEN,
-		"%s/%s", hive->prefixdir, "prefix/");
+	hive->prefixdir = strcat(hive->prefixdir, "/prefix");
 	hive->prefixdir = realloc(hive->prefixdir, strlen(hive->prefixdir));
 
 	pthread_mutex_init(&hive->mutex, NULL);
@@ -77,6 +76,7 @@ void hny_disconnect() {
 		sem_close(hive->semaphore);
 
 		free(hive->installdir);
+		free(hive->prefixdir);
 		free(hive);
 		hive = NULL;
 	}
