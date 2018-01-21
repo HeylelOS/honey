@@ -17,7 +17,7 @@
 
 static int hny_remove_fn(const char *path, const struct stat *st, int type, struct FTW* ftw) {
 	if(remove(path) == -1) {
-		perror("hny remove package: ");
+		perror("hny remove package");
 	}
 
 	return 0;
@@ -56,8 +56,7 @@ enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geis
 			pthread_mutex_lock(&hive->mutex);
 
 			if(target != NULL) {
-				if(hny_equals_geister(geist, target)
-					|| target->version == NULL) {
+				if(hny_equals_geister(geist, target)) {
 					snprintf(path, MAXPATHLEN,
 						"%s/%s", hive->installdir,
 						active[i].name);
@@ -75,6 +74,7 @@ enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geis
 			"%s/%s-%s", hive->installdir,
 			geist->name, geist->version);
 
+		/* indeed, with the current hny_remove_fn, errors are not checked */
 		if(nftw(path, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
 			error = hny_errno(errno);
 		}
