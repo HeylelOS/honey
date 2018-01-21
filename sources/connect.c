@@ -17,6 +17,10 @@
 enum hny_error hny_connect(int flags) {
 	int wait_ret;
 
+	/*
+	I'm not sure global non-static pointers are declared NULL
+	should check the standard
+	*/
 	hny_disconnect();
 
 	hive = malloc(sizeof(*hive));

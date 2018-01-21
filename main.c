@@ -31,6 +31,7 @@ void setup_sigexits(void) {
 	struct sigaction sa;
 
 	sigfillset(&sa.sa_mask);
+	sa.sa_flags = 0;
 	sa.sa_handler = signal_exit;
 
 	sigaction(SIGHUP, &sa, NULL);
@@ -133,11 +134,26 @@ void honey_remove(char *method, int count, char **names) {
 	}
 }
 
-void honey_status(int count, char **names) {
-	int i;
+void honey_status(char *geist) {
+	struct hny_geist *target, source;
 
-	for(i = 0; i < count; i++) {
-		printf("status package %s\n", names[i]);
+	source.name = strsep(&geist, "-");
+	source.version = geist;
+
+	target = hny_status(&source);
+
+	if(target != NULL) {
+		if(target->version != NULL) {
+			printf("%s-%s\n", target->name, target->version);
+		} else {
+			printf("%s\n", target->name);
+		}
+
+		hny_free_geister(target, 1);
+
+		exit(EXIT_SUCCESS);
+	} else {
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -207,10 +223,10 @@ int main(int argc, char **argv) {
 			honey_fatal("error: %s remove [total | data | links] [packages names...]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "status") == 0) {
-		if(++i != argc) {
-			honey_status(argc - i, &argv[i]);
+		if(++i == argc - 1) {
+			honey_status(argv[i]);
 		} else {
-			honey_fatal("error: %s status [packages files...]\n", argv[0]);
+			honey_fatal("error: %s status [geist name]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "repair") == 0) {
 		if(++i < argc - 1) {
