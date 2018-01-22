@@ -242,6 +242,8 @@ int main(int argc, char **argv) {
 		} else {
 			honey_fatal("error: %s repair [all | clean | check | config] [packages names...]\n", argv[0]);
 		}
+	} else {
+		honey_fatal("error: expected action\n");
 	}
 
 	exit(EXIT_SUCCESS);

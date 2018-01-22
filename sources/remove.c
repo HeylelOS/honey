@@ -8,10 +8,12 @@
 #include "internal.h"
 
 #include <sys/param.h> /* MAXPATHLEN */
+#include <sys/dir.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h> /* remove() */
 #include <stdlib.h>
+#include <string.h>
 #include <ftw.h>
 #include <errno.h>
 
@@ -34,52 +36,54 @@ enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geis
 
 	if(removal == HnyRemovePackage
 		&& geist->version != NULL) {
-		struct hny_geist *active;
-		size_t count, i;
-		char path[MAXPATHLEN];
+		DIR *dirp = opendir(hive->installdir);
 
-		pthread_mutex_unlock(&hive->mutex);
+		if(dirp != NULL) {
+			struct dirent *entry;
+			char *name1 = malloc(NAME_MAX);
+			char *name2 = malloc(NAME_MAX);
 
-		/* REMOVE LINKS HERE */
+			while((entry = readdir(dirp)) != NULL) {
+				if(entry->d_type == DT_LNK
+					&& hny_check_name(entry->d_name) == HnyErrorNone) {
+					char *targetname;
+					strncpy(name2, entry->d_name, NAME_MAX);
 
-		active = hny_list(HnyListActive, &count);
+					targetname = hny_target(dirfd(dirp), name2, name1, NAME_MAX);
+					if(targetname != NULL) {
+						struct hny_geist target;
 
-		pthread_mutex_lock(&hive->mutex);
+						target.name = strsep(&targetname, "-");
+						target.version = targetname;
 
-		for(i = 0; i < count; i++) {
-			struct hny_geist *target;
+						if(hny_equals_geister(&target, geist)
+							&& unlinkat(dirfd(dirp), entry->d_name, 0) == -1) {
+							perror("hny remove link");
+						}
 
-			pthread_mutex_unlock(&hive->mutex);
-
-			target = hny_status(&active[i]);
-
-			pthread_mutex_lock(&hive->mutex);
-
-			if(target != NULL) {
-				if(hny_equals_geister(geist, target)) {
-					snprintf(path, MAXPATHLEN,
-						"%s/%s", hive->installdir,
-						active[i].name);
-
-					if(unlink(path) == -1) {
-						perror("hny remove of active");
+						free(target.name);
 					}
 				}
-
-				hny_free_geister(target, 1);
 			}
+
+			/* Different use variable, I know this is evil */
+			name1 = realloc(name1, MAXPATHLEN);
+			free(name2);
+
+			snprintf(name1, MAXPATHLEN,
+				"%s/%s-%s", hive->installdir,
+				geist->name, geist->version);
+
+			/* indeed, with the current hny_remove_fn, errors are not checked */
+			if(nftw(name1, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
+				error = hny_errno(errno);
+			}
+
+			free(name1);
+			closedir(dirp);
+		} else {
+			error = HnyErrorUnavailable;
 		}
-
-		snprintf(path, MAXPATHLEN,
-			"%s/%s-%s", hive->installdir,
-			geist->name, geist->version);
-
-		/* indeed, with the current hny_remove_fn, errors are not checked */
-		if(nftw(path, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
-			error = hny_errno(errno);
-		}
-
-		hny_free_geister(active, count);
 	} else if(removal == HnyRemoveData) {
 		pid_t pid = fork();
 
