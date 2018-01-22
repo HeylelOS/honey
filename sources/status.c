@@ -7,7 +7,6 @@
 */
 #include "internal.h"
 
-#include <sys/stat.h>
 #include <sys/dir.h>
 #include <limits.h> /* NAME_MAX */
 #include <unistd.h>
@@ -27,44 +26,52 @@ struct hny_geist *hny_status(const struct hny_geist *geist) {
 
 	if((dirp = opendir(hive->installdir)) != NULL) {
 		/* NAME_MAX because of the package dir format */
-		char *path1, *path2, *swap;
-		ssize_t length = NAME_MAX - 1;
+		char *name1, *name2, *name;
 
-		path1 = malloc(NAME_MAX);
-		path2 = malloc(NAME_MAX);
+		name1 = malloc(NAME_MAX);
+		name2 = malloc(NAME_MAX);
 
-		hny_fill_packagename(path2, NAME_MAX, geist);
+		hny_fill_packagename(name2, NAME_MAX, geist);
 
-		do {
-			path2[length] = '\0';
-			swap = path1;
-			path1 = path2;
-			path2 = swap;
-
-			length = readlinkat(dirfd(dirp), path1,
-						path2, NAME_MAX);
-		} while(length != -1);
-
-		if(errno == EINVAL) {
-			path1 = realloc(path1, strlen(path1));
+		name = hny_target(dirfd(dirp), name2, name1, NAME_MAX);
+		if(name != NULL) {
 			target = malloc(sizeof(*target));
 
-			target->name = strsep(&path1, "-");
-			target->version = path1;
-		} else {
-			if(errno == ENOENT) {
-				/* Clean broken symlink */
-				unlinkat(dirfd(dirp), path2, 0);
-			}
-			free(path1);
+			target->name = strsep(&name, "-");
+			target->version = name;
 		}
 
-		free(path2);
+		free(name1);
+		free(name2);
 		closedir(dirp);
 	}
 
 	pthread_mutex_unlock(&hive->mutex);
 
 	return target;
+}
+
+char *hny_target(int dirfd, char *orig, char *target, size_t bufsize) {
+	size_t length = bufsize - 1;
+	char *swap;
+
+	do {
+		orig[length] = '\0';
+		swap = target;
+		target = orig;
+		orig = swap;
+
+		length = readlinkat(dirfd, target,
+					orig, bufsize);
+	} while(length != -1);
+
+	if(errno == EINVAL) {
+		return strdup(target);
+	} else if(errno == ENOENT) {
+		/* broken symlink */
+		unlinkat(dirfd, orig, 0);
+	}
+
+	return NULL;
 }
 
