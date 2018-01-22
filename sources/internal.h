@@ -24,7 +24,11 @@ struct {
 	char *prefixdir;
 } *hive;
 
+/* GIve the "corresponding" hny_error from the errno given */
 enum hny_error hny_errno(int err);
+
+/* Creates the package name in buf, every argument must be valid, no check done */
+void hny_fill_packagename(char *buf, size_t bufsize, const struct hny_geist *geist);
 
 /* _HNY_INTERNAL_H */
 #endif

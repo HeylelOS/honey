@@ -102,6 +102,12 @@ enum hny_error hny_repair(const struct hny_geist *geist, int flags);
 *********************/
 
 /**
+	Alloc geister for all names, or none
+	if one isn't valid
+**/
+struct hny_geist *hny_alloc_geister(const char **names, size_t count);
+
+/**
 	Free all geister values (names and optionnaly version)
 	then frees the vector
 **/
@@ -112,10 +118,9 @@ void hny_free_geister(struct hny_geist *geister, size_t count);
 **/
 _Bool hny_equals_geister(const struct hny_geist *g1, const struct hny_geist *g2);
 
-/**
-	The following checks for errors in the structures
-	like if a geist name is invalid
-**/
+enum hny_error hny_check_name(const char *name);
+enum hny_error hny_check_version(const char *version);
+enum hny_error hny_check_package(const char *packagename);
 enum hny_error hny_check_geister(const struct hny_geist *geister, size_t n);
 
 /**
