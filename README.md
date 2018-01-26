@@ -9,5 +9,5 @@ a command line utility for now, plus a guideline
 for future providers implementations.
 
 It keeps in mind the desire to stay embeddable without
-any compromise on its capacities.
+any compromise on its capabilities.
 
