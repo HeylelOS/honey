@@ -56,13 +56,19 @@ enum hny_error hny_connect(int flags) {
 		goto lbl_hny_connect_err1;
 	}
 
-	if(getenv("HOME") != NULL) {
+	if(geteuid() == 0) {
+		/*
+			euid because of semaphore's ownership
+			which means honey identifies uniquely
+			through euid and not real user id
+		 */
+
+		strcpy(hive->installdir, "/usr/local/packages");
+	} else if(getenv("HOME") != NULL) {
 		char *homedir = getenv("HOME");
 
 		snprintf(hive->installdir, MAXPATHLEN,
 			"%s/.local/packages", homedir);
-		hive->installdir = realloc(hive->installdir,
-			strlen(hive->installdir));
 	} else {
 		goto lbl_hny_connect_err2;
 	}
