@@ -9,7 +9,6 @@
 
 #include <sys/param.h> /* MAXPATHLEN */
 #include <sys/dir.h>
-#include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h> /* remove() */
 #include <stdlib.h>
@@ -25,7 +24,7 @@ static int hny_remove_fn(const char *path, const struct stat *st, int type, stru
 	return 0;
 }
 
-enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geist) {
+enum hny_error hny_remove(const struct hny_geist *geist) {
 	enum hny_error error = HnyErrorNone;
 
 	if(hny_check_geister(geist, 1) != HnyErrorNone) {
@@ -34,8 +33,7 @@ enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geis
 
 	pthread_mutex_lock(&hive->mutex);
 
-	if(removal == HnyRemovePackage
-		&& geist->version != NULL) {
+	if(geist->version != NULL) {
 		DIR *dirp = opendir(hive->installdir);
 
 		if(dirp != NULL) {
@@ -83,37 +81,6 @@ enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geis
 			closedir(dirp);
 		} else {
 			error = HnyErrorUnavailable;
-		}
-	} else if(removal == HnyRemoveData) {
-		pid_t pid = fork();
-
-		if(pid == 0) {
-			char filename[MAXPATHLEN];
-			char *argv[] = { "rmdata", NULL };
-			extern char **environ;
-
-			if(geist->version == NULL) {
-				snprintf(filename, MAXPATHLEN,
-					"%s/%s/hny/rmdata", hive->installdir,
-					geist->name);
-			} else {
-				snprintf(filename, MAXPATHLEN,
-					"%s/%s-%s/hny/rmdata", hive->installdir,
-					geist->name, geist->version);
-			}
-
-			execve(filename, argv, environ);
-
-			exit(EXIT_FAILURE);
-		} else {
-			int status;
-
-			if(waitpid(pid, &status, 0) == -1) {
-				error = HnyErrorUnavailable;
-			} else if(!WIFEXITED(status)
-				|| WEXITSTATUS(status) != 0) {
-				error = HnyErrorUnavailable;
-			}
 		}
 	} else {
 		error = HnyErrorInvalidArgs;

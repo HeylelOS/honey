@@ -63,16 +63,6 @@ enum hny_error hny_connect(int flags) {
 			"%s/.local/packages", homedir);
 		hive->installdir = realloc(hive->installdir,
 			strlen(hive->installdir));
-
-		hive->prefixdir = malloc(MAXPATHLEN);
-		if(hive->prefixdir == NULL) {
-			goto lbl_hny_connect_err2;
-		}
-
-		snprintf(hive->prefixdir, MAXPATHLEN,
-			"%s/.local", homedir);
-		hive->prefixdir = realloc(hive->prefixdir,
-			strlen(hive->prefixdir));
 	} else {
 		goto lbl_hny_connect_err2;
 	}
@@ -99,7 +89,6 @@ void hny_disconnect() {
 		sem_close(hive->semaphore);
 
 		free(hive->installdir);
-		free(hive->prefixdir);
 		free(hive);
 		hive = NULL;
 	}

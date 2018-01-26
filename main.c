@@ -114,25 +114,16 @@ void honey_list(char *method) {
 	hny_free_geister(list, count);
 }
 
-void honey_remove(char *method, int count, char **names) {
-	enum hny_removal removal = HnyRemovePackage;
+void honey_remove(int count, char **names) {
+	struct hny_geist geist;
 	int i;
 
-	if(strcmp(method, "package") == 0) {
-		/* Default */
-	} else if(strcmp(method, "data") == 0) {
-		removal = HnyRemoveData;
-	} else {
-		honey_fatal("error: hny remove, \"%s\" is invalid\n", method);
-	}
-
 	for(i = 0; i < count; i++) {
-		struct hny_geist geist;
 
 		geist.name = strsep(&names[i], "-");
 		geist.version = names[i];
 
-		switch(hny_remove(removal, &geist)) {
+		switch(hny_remove(&geist)) {
 			case HnyErrorNone:
 				break;
 			default:
@@ -165,23 +156,30 @@ void honey_status(char *geist) {
 	}
 }
 
-void honey_repair(char *method, int count, char **names) {
+void honey_execute(char *method, int count, char **names) {
+	enum hny_action action = HnyActionSetup;
+	struct hny_geist geist;
 	int i;
 
-	if(strcmp(method, "all") == 0) {
-		printf("repair all\n");
-	} else if(strcmp(method, "clean") == 0) {
-		printf("repair clean\n");
+	if(strcmp(method, "setup") == 0) {
+		/* Default */
+	} else if(strcmp(method, "drain") == 0) {
+		action = HnyActionDrain;
+	} else if(strcmp(method, "reset") == 0) {
+		action = HnyActionReset;
 	} else if(strcmp(method, "check") == 0) {
-		printf("repair check\n");
-	} else if(strcmp(method, "config") == 0) {
-		printf("repair config\n");
+		action = HnyActionCheck;
+	} else if(strcmp(method, "clean") == 0) {
+		action = HnyActionClean;
 	} else {
-		honey_fatal("error: repair, \"%s\" is invalid\n", method);
+		honey_fatal("error: execute, \"%s\" is invalid\n", method);
 	}
 
 	for(i = 0; i < count; i++) {
-		printf("repair %s package %s\n", method, names[i]);
+		geist.name = strsep(&names[i], "-");
+		geist.version = names[i];
+
+		hny_execute(action, &geist);
 	}
 }
 
@@ -191,7 +189,7 @@ int main(int argc, char **argv) {
 	setup_sigexits();
 
 	atexit(hny_disconnect);
-	/* if(hny_connect(HNY_CONNECT_WAIT) == HNY_ERROR_UNAVAILABLE) { */
+
 	if(hny_connect(0) == HnyErrorUnavailable) {
 		honey_fatal("hny error: unable to connect\n");
 	}
@@ -225,10 +223,10 @@ int main(int argc, char **argv) {
 			honey_fatal("error: %s list [packages | active]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "remove") == 0) {
-		if(++i < argc - 1) {
-			honey_remove(argv[i], argc - i - 1, &argv[i + 1]);
+		if(++i != argc - 1) {
+			honey_remove(argc - i, &argv[i]);
 		} else {
-			honey_fatal("error: %s remove [package | data] [packages names...]\n", argv[0]);
+			honey_fatal("error: %s remove [packages names...]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "status") == 0) {
 		if(++i == argc - 1) {
@@ -236,11 +234,11 @@ int main(int argc, char **argv) {
 		} else {
 			honey_fatal("error: %s status [geist name]\n", argv[0]);
 		}
-	} else if(strcmp(argv[i], "repair") == 0) {
+	} else if(strcmp(argv[i], "execute") == 0) {
 		if(++i < argc - 1) {
-			honey_repair(argv[i], argc - i - 1, &argv[i + 1]);
+			honey_execute(argv[i], argc - i - 1, &argv[i + 1]);
 		} else {
-			honey_fatal("error: %s repair [all | clean | check | config] [packages names...]\n", argv[0]);
+			honey_fatal("error: %s execute [setup | drain | reset | check | clean] [geister names...]\n", argv[0]);
 		}
 	} else {
 		honey_fatal("error: expected action\n");

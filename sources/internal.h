@@ -21,7 +21,6 @@ struct {
 	pthread_mutex_t mutex;
 
 	char *installdir;
-	char *prefixdir;
 } *hive;
 
 /* Gives the "corresponding" hny_error from the errno given */
@@ -38,6 +37,12 @@ void hny_fill_packagename(char *buf, size_t bufsize, const struct hny_geist *gei
  should be consider invalidated when the function returns
 */
 char *hny_target(int dirfd, char *orig, char *target, size_t bufsize);
+
+/*
+ runs the script located at path/name and returns
+ hny-like error
+*/
+enum hny_error hny_run(const struct hny_geist *geist, char *name);
 
 /* _HNY_INTERNAL_H */
 #endif

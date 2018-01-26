@@ -74,11 +74,7 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed);
 
 /**
 **/
-enum hny_removal {
-	HnyRemovePackage,
-	HnyRemoveData
-};
-enum hny_error hny_remove(enum hny_removal removal, const struct hny_geist *geist);
+enum hny_error hny_remove(const struct hny_geist *geist);
 
 /**
 	Status follows the symlinks and/or file in the
@@ -92,10 +88,14 @@ struct hny_geist *hny_status(const struct hny_geist *geist);
 
 /**
 **/
-#define HNY_REPAIR_CLEAN	1 << 0
-#define HNY_REPAIR_CHECK	1 << 1
-#define HNY_REPAIR_CONFIG	1 << 2
-enum hny_error hny_repair(const struct hny_geist *geist, int flags);
+enum hny_action {
+	HnyActionSetup,
+	HnyActionDrain,
+	HnyActionReset,
+	HnyActionCheck,
+	HnyActionClean
+};
+enum hny_error hny_execute(enum hny_action action, const struct hny_geist *geist);
 
 /********************
   UTILITIES SECTION
