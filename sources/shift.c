@@ -19,7 +19,8 @@ enum hny_error hny_shift(const char *geist, const struct hny_geist *package) {
 	enum hny_error error = HnyErrorNone;
 	DIR *dirp;
 
-	if(hny_check_geister(package, 1) != HnyErrorNone) {
+	if(hny_check_name(geist) != HnyErrorNone
+		|| hny_check_geister(package, 1) != HnyErrorNone) {
 		return HnyErrorInvalidArgs;
 	}
 
