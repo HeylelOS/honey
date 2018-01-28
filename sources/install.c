@@ -10,7 +10,10 @@
 #include <archive.h>
 #include <archive_entry.h>
 */
-enum hny_error hny_install(const char *file) {
+
+enum hny_error hny_install(const char *file, _Bool (*eula)(const char *, size_t)) {
+	enum hny_error error = HnyErrorNone;
+	static const char license[64] = "Do you agree?";
 /*
 	struct archive *a;
 	struct archive_entry *entry;
@@ -30,9 +33,13 @@ enum hny_error hny_install(const char *file) {
 
 	archive_read_free(a);
 */
+
+	if(!eula(license, sizeof(license))) {
+		error = HnyErrorUnavailable;
+	}
+
 	pthread_mutex_unlock(&hive->mutex);
 
-	return HnyErrorNone;
+	return error;
 }
-
 
