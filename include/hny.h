@@ -54,7 +54,7 @@ void hny_disconnect();
 	Tries to install file package in the user package
 	directory
 **/
-enum hny_error hny_install(const char *file);
+enum hny_error hny_install(const char *file, _Bool (*eula)(const char *, size_t));
 
 /**
 	Shift replaces the geist named geist

@@ -5,13 +5,11 @@ the following files:
 hny/ : the directory containing all package related files
 hny/setup : executable installing necessary files on the system
 hny/drain : executable which drains install files (not user data or config)
+hny/eula : file holding the license(s) of the package, must be displayed and
+agreed during the install process
 Optionnal:
 hny/reset : executable reseting packages' configuration
 hny/check : executable checking files from packages (not the one installed)
 hny/clean : executable which removes every user-related data
-	because the link removal is done through the hny/links file, this scripts
-	allows the package a more fine-grained removal than an extensive and heavy
-	file which would have to iterate every user and configurations on the system,
-	in the end, it's just a choice done for flexibility.
 hny/retail/ : A directory which is meant to contain platform specific package files
 

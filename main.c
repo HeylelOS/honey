@@ -46,6 +46,17 @@ void setup_sigexits(void) {
 	sigaction(SIGUSR2, &sa, NULL);
 }
 
+_Bool honey_eula(const char *text, size_t bufsize) {
+	char answer = 'y';
+	printf("Do you agree the following license?:\n%.*s\n[Y/n] ", (int)bufsize, text);
+
+	do {
+		scanf("%c", &answer);
+	} while(answer != 'y' && answer != 'n');
+
+	return answer == 'y';
+}
+
 void honey_fetch(int count, char **names) {
 	int i;
 
@@ -84,7 +95,9 @@ void honey_install(int count, char **files) {
 	int i;
 
 	for(i = 0; i < count; i++) {
-		hny_install(files[i]);
+		if(hny_install(files[i], honey_eula) == HnyErrorNone) {
+			printf("package %s successfully installed\n", files[i]);
+		}
 	}
 }
 
