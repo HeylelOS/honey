@@ -48,6 +48,12 @@ enum hny_error hny_execute(enum hny_action action, const struct hny_geist *geist
 	return error;
 }
 
+/*
+	This function is shit, must do a more advanced version later
+	- Signals reset
+	- Errors redirections
+	- advanced exit codes
+*/
 enum hny_error hny_run(const struct hny_geist *geist, char *name) {
 	enum hny_error error = HnyErrorNone;
 	pid_t pid = fork();

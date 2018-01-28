@@ -98,18 +98,26 @@ enum hny_error hny_check_version(const char *version) {
 }
 
 enum hny_error hny_check_package(const char *packagename) {
-	char *stringp = strdup(packagename);
-	char *name = strsep(&stringp, "-");
 	enum hny_error error;
+	const char *dash = strchr(packagename, '-');
 
-	if(hny_check_name(name) == HnyErrorNone
-		&& hny_check_version(stringp) == HnyErrorNone) {
-		error = HnyErrorNone;
+	if(dash == NULL) {
+		error = hny_check_name(packagename);
 	} else {
-		error = HnyErrorInvalidArgs;
+		if((error = hny_check_version(dash + 1)) == HnyErrorNone) {
+			if(*packagename != '.') {
+				while(packagename != dash
+					&& *packagename != '/') {
+					packagename++;
+				}
+			}
+
+			if(packagename != dash) {
+				error = HnyErrorInvalidArgs;
+			}
+		}
 	}
 
-	free(name);
 	return error;
 }
 
