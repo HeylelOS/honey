@@ -52,7 +52,10 @@ _Bool honey_eula(const char *text, size_t bufsize) {
 
 	do {
 		scanf("%c", &answer);
-	} while(answer != 'y' && answer != 'n');
+	} while(answer != 'y'
+			&& answer != 'n'
+			&& answer != 'Y'
+			&& answer != 'N');
 
 	return answer == 'y';
 }
@@ -72,7 +75,7 @@ void honey_shift(char *geist, char *replacement) {
 
 	switch(hny_shift(geist, &repl)) {
 		case HnyErrorNone:
-			exit(EXIT_SUCCESS);
+			break;
 		case HnyErrorNonExistant:
 			honey_fatal("honey: unable to shift %s to %s-%s, a file is missing\n",
 				geist, repl.name, repl.version);
@@ -139,9 +142,21 @@ void honey_remove(int count, char **names) {
 		switch(hny_remove(&geist)) {
 			case HnyErrorNone:
 				break;
+			case HnyErrorNonExistant:
+				honey_fatal("honey: unable to remove %s-%s, a file is missing\n",
+					geist.name, geist.version);
+			case HnyErrorUnauthorized:
+				honey_fatal("honey: unauthorized to remove %s-%s\n",
+					geist.name, geist.version);
+			case HnyErrorUnavailable:
+				honey_fatal("honey: unable to remove %s-%s, a ressource isn't available\n",
+					geist.name, geist.version);
+			case HnyErrorInvalidArgs:
+				honey_fatal("honey: unable to remove %s-%s, an argument is invalid\n",
+					geist.name, geist.version);
 			default:
-				fprintf(stderr, "Couille dans le pathé\n");
-				break;
+				honey_fatal("honey: unable to remove %s-%s, unknown error\n",
+					geist.name, geist.version);
 		}
 	}
 }
@@ -162,8 +177,6 @@ void honey_status(char *geist) {
 		}
 
 		hny_free_geister(target, 1);
-
-		exit(EXIT_SUCCESS);
 	} else {
 		exit(EXIT_FAILURE);
 	}
