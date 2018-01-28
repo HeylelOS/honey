@@ -24,7 +24,7 @@ struct hny_geist *hny_list(enum hny_listing listing, size_t *listed) {
 
 	if((dirp = opendir(hive->installdir)) != NULL) {
 		while((entry = readdir(dirp)) != NULL) {
-			if(hny_check_name(entry->d_name) == HnyErrorNone) {
+			if(hny_check_package(entry->d_name) == HnyErrorNone) {
 				char *stringp;
 
 				if(*listed == alloced) {

@@ -135,7 +135,6 @@ void honey_remove(int count, char **names) {
 	int i;
 
 	for(i = 0; i < count; i++) {
-
 		geist.name = strsep(&names[i], "-");
 		geist.version = names[i];
 
