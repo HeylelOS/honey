@@ -27,7 +27,10 @@ static enum hny_error hny_archive_install(struct archive *a, const char *name, c
 		int flags = ARCHIVE_EXTRACT_TIME
 			| ARCHIVE_EXTRACT_PERM
 			| ARCHIVE_EXTRACT_ACL
-			| ARCHIVE_EXTRACT_FFLAGS;
+			| ARCHIVE_EXTRACT_FFLAGS
+			| ARCHIVE_EXTRACT_NO_OVERWRITE;
+
+	printf("archive_install\n");
 /*
 		const void *buff;
 		size_t size;
@@ -102,12 +105,12 @@ static enum hny_error hny_archive_verify(struct archive *a, const char *file, _B
 
 				if(archive_read_data_block(a, &buff, &size, &offset) == ARCHIVE_OK) {
 					if(eula((const char *) buff, size)) {
-						archive_has |= HNY_ARCHIVE_HAS_SETUP;
+						archive_has |= HNY_ARCHIVE_HAS_EULA;
 					} else {
 						error = HnyErrorUnauthorized;
 					}
 				} else {
-					error = HnyErrorUnavailable;
+					error = HnyErrorNonExistant;
 				}
 			} else {
 				if(strcmp("hny/", entry_name) == 0) {
@@ -122,10 +125,10 @@ static enum hny_error hny_archive_verify(struct archive *a, const char *file, _B
 			}
 		}
 
-		if(archive_has != HNY_ARCHIVE_HAS_ALL
-			|| (error == HnyErrorNone
-				&& aerr != ARCHIVE_EOF)) {
-			error = HnyErrorUnavailable;
+		if(error == HnyErrorNone
+			&& (archive_has != HNY_ARCHIVE_HAS_ALL
+				|| aerr != ARCHIVE_EOF)) {
+			error = HnyErrorNonExistant;
 		}
 
 		archive_read_close(a);
