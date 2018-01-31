@@ -1,6 +1,6 @@
 CC=clang
 CFLAGS= -g -ansi -pedantic -Wall
-LDFLAGS= -lpthread
+LDFLAGS= -lpthread -larchive
 HEADERS=-I./include/
 LIBNAME=hny
 SOURCES=$(wildcard sources/*.c)

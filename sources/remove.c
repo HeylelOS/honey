@@ -16,14 +16,6 @@
 #include <ftw.h>
 #include <errno.h>
 
-static int hny_remove_fn(const char *path, const struct stat *st, int type, struct FTW* ftw) {
-	if(remove(path) == -1) {
-		perror("hny remove package");
-	}
-
-	return 0;
-}
-
 enum hny_error hny_remove(const struct hny_geist *geist) {
 	enum hny_error error = HnyErrorNone;
 
@@ -72,10 +64,7 @@ enum hny_error hny_remove(const struct hny_geist *geist) {
 				"%s/%s-%s", hive->installdir,
 				geist->name, geist->version);
 
-			/* indeed, with the current hny_remove_fn, errors are not checked */
-			if(nftw(name1, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
-				error = hny_errno(errno);
-			}
+			error = hny_rm_recur(name1);
 
 			free(name1);
 			closedir(dirp);
@@ -91,3 +80,21 @@ enum hny_error hny_remove(const struct hny_geist *geist) {
 	return error;
 }
 
+static int hny_remove_fn(const char *path, const struct stat *st, int type, struct FTW* ftw) {
+	if(remove(path) == -1) {
+		perror("hny remove package");
+	}
+
+	return 0;
+}
+
+enum hny_error hny_rm_recur(const char *path) {
+	enum hny_error error = HnyErrorNone;
+
+	/* indeed, with the current hny_remove_fn, errors are not checked */
+	if(nftw(path, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
+		error = hny_errno(errno);
+	}
+
+	return error;
+}

@@ -47,15 +47,14 @@ void setup_sigexits(void) {
 }
 
 _Bool honey_eula(const char *text, size_t bufsize) {
-	char answer = 'y';
-	printf("Do you agree the following license?:\n%.*s\n[Y/n] ", (int)bufsize, text);
+	char answer;
+	printf("Do you agree the following license?:\n%.*s\n", (int)bufsize, text);
 
 	do {
+		printf("\r[y/n] ");
 		scanf("%c", &answer);
 	} while(answer != 'y'
-			&& answer != 'n'
-			&& answer != 'Y'
-			&& answer != 'N');
+		&& answer != 'n');
 
 	return answer == 'y';
 }
@@ -98,8 +97,25 @@ void honey_install(int count, char **files) {
 	int i;
 
 	for(i = 0; i < count; i++) {
-		if(hny_install(files[i], honey_eula) == HnyErrorNone) {
-			printf("package %s successfully installed\n", files[i]);
+		switch(hny_install(files[i], honey_eula)) {
+			case HnyErrorNone:
+				printf("package %s successfully installed\n", files[i]);
+				break;
+			case HnyErrorNonExistant:
+				fprintf(stderr, "honey: unable to install %s, a file is missing\n", files[i]);
+				break;
+			case HnyErrorUnauthorized:
+				fprintf(stderr, "honey: unable to install %s, unauthorized\n", files[i]);
+				break;
+			case HnyErrorUnavailable:
+				fprintf(stderr, "honey: unable to install %s, the system lacked of ressources\n", files[i]);
+				break;
+			case HnyErrorInvalidArgs:
+				fprintf(stderr, "honey: unable to install %s, the archive doesn't exist or isn't valid\n", files[i]);
+				break;
+			default:
+				fprintf(stderr, "honey: unable to install %s, unknown error\n", files[i]);
+				break;
 		}
 	}
 }

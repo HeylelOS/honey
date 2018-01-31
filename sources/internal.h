@@ -35,14 +35,25 @@ void hny_fill_packagename(char *buf, size_t bufsize, const struct hny_geist *gei
  if it encounters a dead symlink, it will delete it orig and target are also
  buffers of the same, bufsize, size for the function and there content
  should be consider invalidated when the function returns
+
+ found in status.c
 */
 char *hny_target(int dirfd, char *orig, char *target, size_t bufsize);
 
 /*
  runs the script located at path/name and returns
  hny-like error
+
+ found in execute.c
 */
 enum hny_error hny_run(const struct hny_geist *geist, char *name);
+
+/*
+ recursivly delete the files located at path
+
+ found in remove.c
+*/
+enum hny_error hny_rm_recur(const char *path);
 
 /* _HNY_INTERNAL_H */
 #endif
