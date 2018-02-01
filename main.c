@@ -158,7 +158,7 @@ void honey_remove(int count, char **names) {
 			case HnyErrorNone:
 				break;
 			case HnyErrorNonExistant:
-				honey_fatal("honey: unable to remove %s-%s, a file is missing\n",
+				honey_fatal("honey: unable to remove %s-%s, invalid file\n",
 					geist.name, geist.version);
 			case HnyErrorUnauthorized:
 				honey_fatal("honey: unauthorized to remove %s-%s\n",
@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
 			honey_fatal("error: %s list [packages | active]\n", argv[0]);
 		}
 	} else if(strcmp(argv[i], "remove") == 0) {
-		if(++i != argc - 1) {
+		if(++i != argc) {
 			honey_remove(argc - i, &argv[i]);
 		} else {
 			honey_fatal("error: %s remove [packages names...]\n", argv[0]);
