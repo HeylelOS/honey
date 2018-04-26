@@ -5,13 +5,14 @@
 	This file is part of the Honey package manager
 	subject the BSD 3-Clause License, see LICENSE.txt
 */
-#include "internal.h"
+#include <hny.h>
 
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
-struct hny_geist *hny_alloc_geister(const char **names, size_t count) {
+struct hny_geist *
+hny_alloc_geister(const char **names,
+	size_t count) {
 	size_t i = 0;
 
 	while(i < count
@@ -36,7 +37,9 @@ struct hny_geist *hny_alloc_geister(const char **names, size_t count) {
 	return NULL;
 }
 
-void hny_free_geister(struct hny_geist *geister, size_t count) {
+void
+hny_free_geister(struct hny_geist *geister,
+	size_t count) {
 	size_t i;
 
 	for(i = 0; i < count; i++) {
@@ -47,7 +50,10 @@ void hny_free_geister(struct hny_geist *geister, size_t count) {
 	free(geister);
 }
 
-_Bool hny_equals_geister(const struct hny_geist *g1, const struct hny_geist *g2) {
+_Bool
+hny_equals_geister(const struct hny_geist *g1,
+	const struct hny_geist *g2) {
+
 	if(hny_check_geister(g1, 1) == HnyErrorNone
 		&& hny_check_geister(g2, 1) == HnyErrorNone) {
 		if(strcmp(g1->name, g2->name) == 0) {
@@ -64,7 +70,9 @@ _Bool hny_equals_geister(const struct hny_geist *g1, const struct hny_geist *g2)
 	return 0;
 }
 
-enum hny_error hny_check_name(const char *name) {
+enum hny_error
+hny_check_name(const char *name) {
+
 	if(name != NULL
 		&& *name != '\0'
 		&& *name != '.') {
@@ -81,7 +89,9 @@ enum hny_error hny_check_name(const char *name) {
 	return HnyErrorInvalidArgs;
 }
 
-enum hny_error hny_check_version(const char *version) {
+enum hny_error
+hny_check_version(const char *version) {
+
 	if(version == NULL) {
 		return HnyErrorNone;
 	} else if(*version != '\0') {
@@ -97,7 +107,8 @@ enum hny_error hny_check_version(const char *version) {
 	return HnyErrorInvalidArgs;
 }
 
-enum hny_error hny_check_package(const char *packagename) {
+enum hny_error
+hny_check_package(const char *packagename) {
 	enum hny_error error;
 	const char *dash = strchr(packagename, '-');
 
@@ -121,7 +132,9 @@ enum hny_error hny_check_package(const char *packagename) {
 	return error;
 }
 
-enum hny_error hny_check_geister(const struct hny_geist *geister, size_t n) {
+enum hny_error
+hny_check_geister(const struct hny_geist *geister,
+	size_t n) {
 	size_t i = 0;
 
 	if(geister == NULL || n == 0) {
@@ -137,7 +150,9 @@ enum hny_error hny_check_geister(const struct hny_geist *geister, size_t n) {
 	return i == n ? HnyErrorNone : HnyErrorInvalidArgs;
 }
 
-int hny_compare_versions(const char **p1, const char **p2) {
+int
+hny_compare_versions(const char **p1,
+	const char **p2) {
 	unsigned long m1, m2;
 	char *endptr1, *endptr2;
 
@@ -153,36 +168,3 @@ int hny_compare_versions(const char **p1, const char **p2) {
 	return m1 - m2;
 }
 
-/* INTERNAL UTILS */
-
-enum hny_error hny_errno(int err) {
-	switch(err) {
-		case EBADF:
-		case ENOENT:
-			return HnyErrorNonExistant;
-		case EAGAIN:
-		case ENFILE:
-		case ENOMEM:
-			return HnyErrorUnavailable;
-		case ELOOP:
-		case ENAMETOOLONG:
-		case ENOTEMPTY:
-			return HnyErrorInvalidArgs;
-		case EACCES:
-		case EPERM:
-			return HnyErrorUnauthorized;
-		default:
-			break;
-	}
-
-	return HnyErrorNone;
-}
-
-void hny_fill_packagename(char *buf, size_t bufsize, const struct hny_geist *geist) {
-	if(geist->version != NULL) {
-		snprintf(buf, bufsize,
-			"%s-%s", geist->name, geist->version);
-	} else {
-		strncpy(buf, geist->name, bufsize);
-	}
-}
