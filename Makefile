@@ -1,27 +1,35 @@
 CC=clang
-CFLAGS= -g -ansi -pedantic -Wall
-LDFLAGS= -lpthread -larchive
+CFLAGS=-g -ansi -pedantic -Wall
+LDFLAGS=-lpthread -larchive
 HEADERS=-I./include/
-LIBNAME=hny
-SOURCES=$(wildcard sources/*.c)
-OBJECTS=$(patsubst sources/%.c, objects/%.o, $(SOURCES))
+NAME=hny
+SOURCES=$(wildcard src/*.c)
+OBJECTS=$(patsubst src/%.c, obj/%.o, $(SOURCES))
 ifeq ($(shell uname), Darwin)
 SHAREDFLAG=-dylib -macosx_version_min 10.13
-LIB=./lib/lib$(LIBNAME).dylib
+LIB=build/lib/lib$(NAME).dylib
 LD=ld
 else
 SHAREDFLAG=-shared
-LIB=./lib/lib$(LIBNAME).so
+LIB=build/lib/lib$(NAME).so
 # We cannot use ld as a linker, on macOS, no problem
 # but on linux there is a problem between dynamic and
 # static code
 LD=clang
 endif
-BIN=./bin/$(LIBNAME)
+BUILDDIRS=build build/bin build/lib build/hny
+BINSOURCE=main.c
+BIN=build/bin/$(NAME)
 
-all: $(BIN)
+all: $(BUILDDIRS) $(BIN)
 
-objects/%.o: sources/%.c
+$(BUILDDIRS):
+	mkdir build
+	mkdir build/bin
+	mkdir build/lib
+	mkdir build/hny
+
+obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $(HEADERS) -fPIC -o $@ -c $<
 
 $(OBJECTS): $(SOURCES)
@@ -29,11 +37,10 @@ $(OBJECTS): $(SOURCES)
 $(LIB): $(OBJECTS)
 	$(LD) $(SHAREDFLAG) -o $@ $^ $(LDFLAGS)
 
-$(BIN): $(wildcard main.c) $(LIB)
-	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(LIBNAME) -L./lib
+$(BIN): $(BINSOURCE) $(LIB)
+	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(NAME) -L./build/lib
 
 clean:
-	rm -rf bin/*
-	rm -rf lib/*
-	rm -rf objects/*
+	rm -rf build
+	rm -rf obj/*
 
