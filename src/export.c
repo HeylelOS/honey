@@ -21,11 +21,6 @@ hny_export(hny_t hny,
 	struct archive *a;
 	int aerr;
 
-/*
-	length = snprintf(path, sizeof(path),
-		"%s/%s/", hny->path, name);
-*/
-
 	a = archive_read_new();
 	archive_read_support_filter_xz(a);
 	archive_read_support_format_tar(a);
@@ -38,9 +33,9 @@ hny_export(hny_t hny,
 			ssize_t length;
 			char *end = stpncpy(path, hny->path, MAXPATHLEN);
 
-			if(end < &path[MAXPATHLEN]
-				&& (length = hny_fill_packagename(&end[1],
-					&path[MAXPATHLEN] - end - 1, package)) > 0) {
+			length = hny_fill_packagename(&end[1],
+				&path[MAXPATHLEN] - end - 1, package);
+			if(length > 0) {
 				struct archive *aw;
 				struct archive_entry *entry;
 				int flags = ARCHIVE_EXTRACT_TIME
@@ -108,7 +103,7 @@ hny_export(hny_t hny,
 
 		archive_read_close(a);
 	} else {
-		/* printf("libarchive error: %s\n", archive_error_string(a)); */
+		/* fprintf(stderr, "libarchive error: %s\n", archive_error_string(a)); */
 		error = HnyErrorInvalidArgs;
 	}
 
