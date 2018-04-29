@@ -4,7 +4,7 @@ LDFLAGS=-lpthread -larchive
 HEADERS=-I./include/
 NAME=hny
 SOURCES=$(wildcard src/*.c)
-OBJECTS=$(patsubst src/%.c, obj/%.o, $(SOURCES))
+OBJECTS=$(patsubst src/%.c, build/obj/%.o, $(SOURCES))
 ifeq ($(shell uname), Darwin)
 SHAREDFLAG=-dylib -macosx_version_min 10.13
 LIB=build/lib/lib$(NAME).dylib
@@ -25,11 +25,12 @@ all: $(BUILDDIRS) $(BIN)
 
 $(BUILDDIRS):
 	mkdir build
+	mkdir build/obj
 	mkdir build/bin
 	mkdir build/lib
 	mkdir build/hny
 
-obj/%.o: src/%.c
+build/obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $(HEADERS) -fPIC -o $@ -c $<
 
 $(OBJECTS): $(SOURCES)
@@ -42,5 +43,4 @@ $(BIN): $(BINSOURCE) $(LIB)
 
 clean:
 	rm -rf build
-	rm -rf obj/*
 

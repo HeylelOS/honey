@@ -78,8 +78,8 @@ hny_execute(hny_t hny,
 			case HnyActionSetup:
 				straction = "setup";
 				break;
-			case HnyActionScrap:
-				straction = "scrap";
+			case HnyActionClean:
+				straction = "clean";
 				break;
 			case HnyActionReset:
 				straction = "reset";
@@ -87,8 +87,8 @@ hny_execute(hny_t hny,
 			case HnyActionCheck:
 				straction = "check";
 				break;
-			case HnyActionClean:
-				straction = "clean";
+			case HnyActionPurge:
+				straction = "purge";
 				break;
 			default:
 				straction = NULL;
