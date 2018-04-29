@@ -5,13 +5,13 @@ the following files:
 Mandatory:
 hny/ : the directory containing all package related files
 hny/setup : executable which installs necessary files on the system
-hny/scrap : executable which removes setup files
+hny/clean : executable which removes setup files
 hny/eula : file holding the license(s) of the package, must be displayed and
            agreed before the extract process
 
 Optional:
 hny/reset : executable reseting packages' configuration
 hny/check : executable checking files from packages (not the one installed)
-hny/clean : executable which removes every user-related data
+hny/purge : executable which removes every user-related data
 hny/retail/ : A directory which is meant to contain platform specific package files
 

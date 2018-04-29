@@ -44,7 +44,8 @@ hny_destroy(hny_t hny);
 	returns:
 	error if there was an error,
 	eula and len untouched else
-	eula and its size if found
+	eula and its size if found,
+	eula should be freed
 **/
 enum hny_error
 hny_verify(hny_t hny,
@@ -102,18 +103,19 @@ hny_erase(hny_t hny,
 	a pointer to the final geist, which can be freed with
 	hny_free_geister
 **/
-struct hny_geist *
+enum hny_error
 hny_status(hny_t hny,
-	const struct hny_geist *geist);
+	const struct hny_geist *geist,
+	struct hny_geist *target);
 
 /**
 **/
 enum hny_action {
 	HnyActionSetup,
-	HnyActionScrap,
+	HnyActionClean,
 	HnyActionReset,
 	HnyActionCheck,
-	HnyActionClean
+	HnyActionPurge
 };
 
 enum hny_error
