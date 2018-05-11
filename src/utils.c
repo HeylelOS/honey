@@ -50,7 +50,7 @@ hny_free_geister(struct hny_geist *geister,
 	free(geister);
 }
 
-_Bool
+int
 hny_equals_geister(const struct hny_geist *g1,
 	const struct hny_geist *g2) {
 
@@ -58,16 +58,17 @@ hny_equals_geister(const struct hny_geist *g1,
 		&& hny_check_geister(g2, 1) == HnyErrorNone) {
 		if(strcmp(g1->name, g2->name) == 0) {
 			if(g1->version != NULL
-				&& g2->version != NULL) {
-				return (strcmp(g1->version, g2->version) == 0);
+				&& g2->version != NULL
+				&& strcmp(g1->version, g2->version) == 0) {
+				return 0;
 			} else if(g1->version == NULL
 				&& g2->version == NULL) {
-				return 1;
+				return 0;
 			}
 		}
 	}
 
-	return 0;
+	return -1;
 }
 
 enum hny_error

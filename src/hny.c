@@ -15,6 +15,27 @@
 
 #include <stdio.h>
 
+static int
+hny_fdpath(int fd,
+	char *pathbuf) {
+#ifdef __APPLE__
+	return fcntl(fd, F_GETPATH, pathbuf);
+#elif defined(__linux__)
+	char linkbuf[32];
+	ssize_t length;
+
+	snprintf("/proc/self/fd/%d", sizeof(linkbuf), fd);
+	length = readlink(linkbuf, pathbuf, MAXPATHLEN);
+	if(length >= 0) {
+		pathbuf[length] = '\0';
+	}
+
+	return (int)length;
+#else
+#error "Unsupported path finding"
+#endif
+}
+
 hny_t
 hny_create(const char *prefix) {
 	hny_t hny = malloc(sizeof(*hny));
@@ -30,8 +51,8 @@ hny_create(const char *prefix) {
 
 	hny->path = malloc(MAXPATHLEN);
 	if(hny->path == NULL
-		|| fcntl(dirfd(hny->dirp),
-			F_GETPATH, hny->path) == -1) {
+		|| hny_fdpath(dirfd(hny->dirp),
+			hny->path) == -1) {
 		goto err_hny_create_3;
 	}
 

@@ -8,7 +8,7 @@
 #include "internal.h"
 
 #include <sys/stat.h>
-#include <limits.h> /* NAME_MAX */
+#include <sys/param.h> /* NAME_MAX */
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
