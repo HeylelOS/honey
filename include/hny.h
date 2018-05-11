@@ -99,14 +99,14 @@ hny_erase(hny_t hny,
 	Status follows the symlinks and/or file in the
 	prefix until it finds a problem or a package
 	directory, if it finds a broken symlink it will unlink
-	it, if an error occurs, it returns NULL, otherwise
-	a pointer to the final geist, which can be freed with
+	it, if an error occurs, it returns error, otherwise
+	a pointer to the target, which can be freed with
 	hny_free_geister
 **/
 enum hny_error
 hny_status(hny_t hny,
 	const struct hny_geist *geist,
-	struct hny_geist *target);
+	struct hny_geist **target);
 
 /**
 **/
@@ -145,8 +145,9 @@ hny_free_geister(struct hny_geist *geister,
 
 /**
 	Checks if two geister are equals
+	returns 0 if equals, -1 else
 **/
-_Bool
+int
 hny_equals_geister(const struct hny_geist *g1,
 	const struct hny_geist *g2);
 

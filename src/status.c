@@ -14,7 +14,7 @@
 enum hny_error
 hny_status(hny_t hny,
 	const struct hny_geist *geist,
-	struct hny_geist *target) {
+	struct hny_geist **target) {
 	enum hny_error error = HnyErrorNone;
 
 	if(hny_check_geister(geist, 1) == HnyErrorNone) {
@@ -31,8 +31,10 @@ hny_status(hny_t hny,
 			name = hny_target(dirfd(hny->dirp), name2, name1, NAME_MAX);
 			if(name != NULL) {
 
-				target->name = strsep(&name, "-");
-				target->version = name;
+				*target = malloc(sizeof(**target));
+
+				(*target)->name = strsep(&name, "-");
+				(*target)->version = name;
 			} else {
 				error = HnyErrorNonExistant;
 			}
