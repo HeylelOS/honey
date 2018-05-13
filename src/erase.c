@@ -47,7 +47,7 @@ hny_erase(hny_t hny,
 						if(hny_equals_geister(&target, geist) == 0
 							&& unlinkat(dirfd(hny->dirp),
 								entry->d_name, 0) == -1) {
-							perror("hny remove link");
+							/* perror("hny remove link"); */
 						}
 
 						free(target.name);

@@ -13,6 +13,10 @@
 #include <string.h>
 #include <ftw.h>
 #include <errno.h>
+#ifdef __linux__
+#include <dirent.h>
+#include <unistd.h>
+#endif
 
 _Bool
 hny_lock(hny_t hny) {
@@ -20,7 +24,7 @@ hny_lock(hny_t hny) {
 	pthread_mutex_lock(&hny->mutex);
 
 	if(flock(dirfd(hny->dirp), LOCK_EX) == -1) {
-		perror("flock");
+		/* perror("flock"); */
 		return false;
 	}
 
@@ -96,7 +100,7 @@ hny_remove_fn(const char *path,
 	struct FTW* ftw) {
 
 	if(remove(path) == -1) {
-		perror("hny remove package");
+		/* perror("hny remove package"); */
 	}
 
 	return 0;

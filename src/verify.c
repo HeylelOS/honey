@@ -25,7 +25,7 @@
 enum hny_error
 hny_verify(hny_t hny,
 	const char *file,
-	const char **eula,
+	char **eula,
 	size_t *len) {
 	enum hny_error error = HnyErrorNone;
 	struct archive *a;

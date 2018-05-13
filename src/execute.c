@@ -47,7 +47,7 @@ hny_spawn(hny_t hny,
 			execve(hny->path, argv, environ);
 		}
 
-		perror("hny");
+		/* perror("hny"); */
 		exit(HnyErrorUnavailable);
 	} else {
 		int status;

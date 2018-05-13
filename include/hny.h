@@ -8,6 +8,10 @@
 #ifndef HNY_H
 #define HNY_H
 
+#ifdef __linux__
+#define _XOPEN_SOURCE 700
+#define _BSD_SOURCE
+#endif
 #include <sys/types.h>
 
 enum hny_error {
@@ -50,7 +54,7 @@ hny_destroy(hny_t hny);
 enum hny_error
 hny_verify(hny_t hny,
 	const char *file,
-	const char **eula,
+	char **eula,
 	size_t *len);
 
 /**
