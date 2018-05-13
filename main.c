@@ -1,3 +1,10 @@
+/*
+	main.c
+	Copyright (c) 2018, Valentin Debon
+
+	This file is part of the Honey package manager
+	subject the BSD 3-Clause License, see LICENSE.txt
+*/
 #include <hny.h>
 
 #include <stdio.h>
@@ -26,8 +33,9 @@ print_error(const char *format,
 	va_end(args);
 }
 
-static void
+static void __attribute__ ((__noreturn__))
 out(enum hny_error error) {
+
 	hny_destroy(hny);
 	exit(error);
 }
@@ -70,9 +78,9 @@ export(int cmdargc,
 	struct hny_geist *package;
 
 	if(cmdargc != 2
-		|| (package = hny_alloc_geister(&cmdargv[1], 1)) == NULL) {
+		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
 		print_error("expected: hny export [package file] [package name]\n");
-		out(HnyInvalidArgs);
+		out(HnyErrorInvalidArgs);
 	}
 
 	if((error = hny_export(hny, cmdargv[0], package)) == HnyErrorNone) {
@@ -92,9 +100,9 @@ shift(int cmdargc,
 	struct hny_geist *package;
 
 	if(cmdargc != 2
-		|| (package = hny_alloc_geister(&cmdargv[1], 1)) == NULL) {
-		print_error("expected: hny shift [target geist] [source geist]\n", file);
-		out(HnyInvalidArgs);
+		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
+		print_error("expected: hny shift [target geist] [source geist]\n");
+		out(HnyErrorInvalidArgs);
 	}
 
 	if((error = hny_shift(hny, cmdargv[0], package)) == HnyErrorNone) {
@@ -127,32 +135,47 @@ execute(enum hny_action action,
 	int cmdargc,
 	char **cmdargv) {
 	struct hny_geist *geister
-		= hny_alloc_geister(cmdargv, cmdargc);
+		= hny_alloc_geister((const char **)cmdargv, cmdargc);
+	int i;
 
 	if(geister == NULL) {
 		print_error("Invalid geist name\n");
 		out(HnyErrorInvalidArgs);
 	}
 
-	hny_execute(hny, action, geist);
+	for(i = 0; i < cmdargc; i++) {
+		switch(hny_execute(hny, action, &geister[i])) {
+		case HnyErrorInvalidArgs:
+			print_error("Invalid arguments to execute action for %s-%s\n",
+				geister[i].name, geister[i].version);
+			break;
+		case HnyErrorUnavailable:
+			print_error("Missing resource to execute action for %s-%s\n",
+				geister[i].name, geister[i].version);
+			break;
+		default:
+			break;
+		}
+	}
 
-	hny_free_geister(geist, cmdargc);
+	hny_free_geister(geister, cmdargc);
 }
 
 int
 main(int argc,
 	char **argv) {
+	char *prefix = getenv("HNY_PREFIX");
 
-	hny = hny_create("./prefix");
-	if(hny == NULL) {
-		print_error("Unable to access prefix");
-		out(HnyErrorUnavailable);
+	if(prefix == NULL
+		|| (hny = hny_create(prefix)) == NULL) {
+		print_error("Unable to access prefix %s\n", prefix);
+		exit(HnyErrorUnavailable);
 	}
 
-	if(argc >= 3) {
-		int cmdargc = argc - 3;
-		char **cmdargv = &argv[3];
-		char *cmd = argv[2];
+	if(argc >= 2) {
+		int cmdargc = argc - 2;
+		char **cmdargv = &argv[2];
+		char *cmd = argv[1];
 
 		if(strcmp("verify", cmd) == 0) {
 			verify(cmdargc, cmdargv);

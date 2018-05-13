@@ -7,13 +7,15 @@
 */
 #include "internal.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/param.h> /* MAXPATHLEN */
-
-#include <stdio.h>
+#ifdef __linux__
+#include <unistd.h>
+#endif
 
 static int
 hny_fdpath(int fd,
@@ -24,7 +26,7 @@ hny_fdpath(int fd,
 	char linkbuf[32];
 	ssize_t length;
 
-	snprintf("/proc/self/fd/%d", sizeof(linkbuf), fd);
+	snprintf(linkbuf, sizeof(linkbuf), "/proc/self/fd/%d", fd);
 	length = readlink(linkbuf, pathbuf, MAXPATHLEN);
 	if(length >= 0) {
 		pathbuf[length] = '\0';

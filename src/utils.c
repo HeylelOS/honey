@@ -13,6 +13,7 @@
 struct hny_geist *
 hny_alloc_geister(const char **names,
 	size_t count) {
+	struct hny_geist *list = NULL;
 	size_t i = 0;
 
 	while(i < count
@@ -21,8 +22,9 @@ hny_alloc_geister(const char **names,
 	}
 
 	if(i == count) {
-		struct hny_geist *list = malloc(count * sizeof(*list));
 		char *stringp;
+
+		list = malloc(count * sizeof(*list));
 
 		for(i = 0; i < count; i++) {
 			stringp = strdup(names[i]);
@@ -30,11 +32,9 @@ hny_alloc_geister(const char **names,
 			list[i].name = strsep(&stringp, "-");
 			list[i].version = stringp;
 		}
-
-		return list;
 	}
 
-	return NULL;
+	return list;
 }
 
 void

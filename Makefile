@@ -17,21 +17,22 @@ LIB=build/lib/lib$(NAME).so
 # static code
 LD=clang
 endif
-BUILDDIRS=build build/bin build/lib build/hny
+BUILDDIRS=build/ build/obj build/bin build/lib
 BINSOURCE=main.c
 BIN=build/bin/$(NAME)
 
+.PHONY: all clean
+
 all: $(BUILDDIRS) $(BIN)
 
-$(BUILDDIRS):
-	mkdir build
-	mkdir build/obj
-	mkdir build/bin
-	mkdir build/lib
-	mkdir build/hny
+clean:
+	rm -rf build/
 
 build/obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $(HEADERS) -fPIC -o $@ -c $<
+
+$(BUILDDIRS):
+	mkdir $@
 
 $(OBJECTS): $(SOURCES)
 
@@ -40,7 +41,4 @@ $(LIB): $(OBJECTS)
 
 $(BIN): $(BINSOURCE) $(LIB)
 	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(NAME) -L./build/lib
-
-clean:
-	rm -rf build
 
