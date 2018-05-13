@@ -10,280 +10,202 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <signal.h>
 
-void honey_fatal(const char *format, ...) {
+static hny_t hny;
+
+static void
+print(const char *format,
+	...) {
 	va_list args;
-	va_start(args, format);
 
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
+}
+
+static void
+print_error(const char *format,
+	...) {
+	va_list args;
+
+	va_start(args, format);
 	vfprintf(stderr, format, args);
 	va_end(args);
-
-	exit(EXIT_FAILURE);
 }
 
-void signal_exit(int signal) {
-	honey_fatal("Exited on signal %d\n", signal);
+static void __attribute__ ((__noreturn__))
+out(enum hny_error error) {
+
+	hny_destroy(hny);
+	exit(error);
 }
 
-void setup_sigexits(void) {
-	struct sigaction sa;
+static void
+usage(void) {
 
-	sigfillset(&sa.sa_mask);
-	sa.sa_flags = 0;
-	sa.sa_handler = signal_exit;
-
-	sigaction(SIGHUP, &sa, NULL);
-	sigaction(SIGINT, &sa, NULL);
-	sigaction(SIGQUIT, &sa, NULL);
-	sigaction(SIGTRAP, &sa, NULL);
-	sigaction(SIGABRT, &sa, NULL);
-	sigaction(SIGSEGV, &sa, NULL);
-	sigaction(SIGALRM, &sa, NULL);
-	sigaction(SIGTERM, &sa, NULL);
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
+	print_error("usage: hny <command> <args>\n");
+	out(HnyErrorInvalidArgs);
 }
 
-_Bool honey_eula(const char *text, size_t bufsize) {
-	char answer;
-	printf("Do you agree the following license?:\n%.*s\n", (int)bufsize, text);
+static void
+verify(int cmdargc,
+	char **cmdargv) {
+	enum hny_error error;
+	char **iterator = cmdargv;
+	char **end = &cmdargv[cmdargc];
 
-	do {
-		printf("\r[y/n] ");
-		scanf("%c", &answer);
-	} while(answer != 'y'
-		&& answer != 'n');
+	while(iterator != end) {
+		char *file = *iterator;
+		char *eula;
+		size_t len;
 
-	return answer == 'y';
-}
+		if((error = hny_verify(hny, file, &eula, &len)) == HnyErrorNone) {
+			print("EULA:\n%*s\n", len, eula);
 
-void honey_fetch(int count, char **names) {
-	int i;
+			free(eula);
+		} else {
+			print_error("File %s is an invalid Honey package\n", file);
+		}
 
-	for(i = 0; i < count; i++) {
-		printf("fetch package %s\n", names[i]);
+		iterator++;
 	}
 }
 
-void honey_shift(char *geist, char *replacement) {
-	struct hny_geist repl;
-	repl.name = strsep(&replacement, "-");
-	repl.version = replacement;
+static void
+export(int cmdargc,
+	char **cmdargv) {
+	enum hny_error error;
+	struct hny_geist *package;
 
-	switch(hny_shift(geist, &repl)) {
-		case HnyErrorNone:
-			break;
-		case HnyErrorNonExistant:
-			honey_fatal("honey: unable to shift %s to %s-%s, a file is missing\n",
-				geist, repl.name, repl.version);
-		case HnyErrorUnauthorized:
-			honey_fatal("honey: unauthorized to shift %s to %s-%s\n",
-				geist, repl.name, repl.version);
-		case HnyErrorUnavailable:
-			honey_fatal("honey: unable to shift %s to %s-%s, a ressource isn't available\n",
-				geist, repl.name, repl.version);
+	if(cmdargc != 2
+		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
+		print_error("expected: hny export [package file] [package name]\n");
+		out(HnyErrorInvalidArgs);
+	}
+
+	if((error = hny_export(hny, cmdargv[0], package)) == HnyErrorNone) {
+		print("%s exported as %s\n", cmdargv[0], cmdargv[1]);
+	} else {
+		print_error("Unable to export Honey package\n");
+		out(error);
+	}
+
+	hny_free_geister(package, 1);
+}
+
+static void
+shift(int cmdargc,
+	char **cmdargv) {
+	enum hny_error error;
+	struct hny_geist *package;
+
+	if(cmdargc != 2
+		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
+		print_error("expected: hny shift [target geist] [source geist]\n");
+		out(HnyErrorInvalidArgs);
+	}
+
+	if((error = hny_shift(hny, cmdargv[0], package)) == HnyErrorNone) {
+		print("%s shifted for %s\n", cmdargv[0], cmdargv[1]);
+	} else {
+		print_error("Unable to shift Honey package\n");
+		out(error);
+	}
+
+	hny_free_geister(package, 1);
+}
+
+static void
+list(int cmdargc,
+	char **cmdargv) {
+}
+
+static void
+erase(int cmdargc,
+	char **cmdargv) {
+}
+
+static void
+status(int cmdargc,
+	char **cmdargv) {
+}
+
+static void
+execute(enum hny_action action,
+	int cmdargc,
+	char **cmdargv) {
+	struct hny_geist *geister
+		= hny_alloc_geister((const char **)cmdargv, cmdargc);
+	int i;
+
+	if(geister == NULL) {
+		print_error("Invalid geist name\n");
+		out(HnyErrorInvalidArgs);
+	}
+
+	for(i = 0; i < cmdargc; i++) {
+		switch(hny_execute(hny, action, &geister[i])) {
 		case HnyErrorInvalidArgs:
-			honey_fatal("honey: unable to shift %s to %s-%s, an argument is invalid\n",
-				geist, repl.name, repl.version);
+			print_error("Invalid arguments to execute action for %s-%s\n",
+				geister[i].name, geister[i].version);
+			break;
+		case HnyErrorUnavailable:
+			print_error("Missing resource to execute action for %s-%s\n",
+				geister[i].name, geister[i].version);
+			break;
 		default:
-			honey_fatal("honey: unable to shift %s to %s-%s, unknown error\n",
-				geist, repl.name, repl.version);
+			break;
+		}
 	}
+
+	hny_free_geister(geister, cmdargc);
 }
 
-void honey_install(int count, char **files) {
-	int i;
+int
+main(int argc,
+	char **argv) {
+	char *prefix = getenv("HNY_PREFIX");
 
-	for(i = 0; i < count; i++) {
-		switch(hny_install(files[i], honey_eula)) {
-			case HnyErrorNone:
-				printf("package %s successfully installed\n", files[i]);
-				break;
-			case HnyErrorNonExistant:
-				fprintf(stderr, "honey: unable to install %s, a file is missing\n", files[i]);
-				break;
-			case HnyErrorUnauthorized:
-				fprintf(stderr, "honey: unable to install %s, unauthorized\n", files[i]);
-				break;
-			case HnyErrorUnavailable:
-				fprintf(stderr, "honey: unable to install %s, the system lacked of ressources\n", files[i]);
-				break;
-			case HnyErrorInvalidArgs:
-				fprintf(stderr, "honey: unable to install %s, the archive doesn't exist or isn't valid\n", files[i]);
-				break;
-			default:
-				fprintf(stderr, "honey: unable to install %s, unknown error\n", files[i]);
-				break;
-		}
-	}
-}
-
-void honey_list(char *method) {
-	enum hny_listing listing = HnyListPackages;
-	struct hny_geist *list;
-	size_t i, count;
-
-	if(strcmp(method, "packages") == 0) {
-		/* Default */
-	} else if(strcmp(method, "active") == 0) {
-		listing = HnyListActive;
-	} else {
-		honey_fatal("error: list, \"%s\" is invalid\n", method);
+	if(prefix == NULL
+		|| (hny = hny_create(prefix)) == NULL) {
+		print_error("Unable to access prefix %s\n", prefix);
+		exit(HnyErrorUnavailable);
 	}
 
-	list = hny_list(listing, &count);
+	if(argc >= 2) {
+		int cmdargc = argc - 2;
+		char **cmdargv = &argv[2];
+		char *cmd = argv[1];
 
-	for(i = 0; i < count; i++) {
-		if(list[i].version != NULL) {
-			printf("%s-%s\n", list[i].name, list[i].version);
+		if(strcmp("verify", cmd) == 0) {
+			verify(cmdargc, cmdargv);
+		} else if(strcmp("export", cmd) == 0) {
+			export(cmdargc, cmdargv);
+		} else if(strcmp("shift", cmd) == 0) {
+			shift(cmdargc, cmdargv);
+		} else if(strcmp("list", cmd) == 0) {
+			list(cmdargc, cmdargv);
+		} else if(strcmp("erase", cmd) == 0) {
+			erase(cmdargc, cmdargv);
+		} else if(strcmp("status", cmd) == 0) {
+			status(cmdargc, cmdargv);
+		} else if(strcmp("setup", cmd) == 0) {
+			execute(HnyActionSetup, cmdargc, cmdargv);
+		} else if(strcmp("clean", cmd) == 0) {
+			execute(HnyActionClean, cmdargc, cmdargv);
+		} else if(strcmp("reset", cmd) == 0) {
+			execute(HnyActionReset, cmdargc, cmdargv);
+		} else if(strcmp("check", cmd) == 0) {
+			execute(HnyActionCheck, cmdargc, cmdargv);
+		} else if(strcmp("purge", cmd) == 0) {
+			execute(HnyActionPurge, cmdargc, cmdargv);
 		} else {
-			printf("%s\n", list[i].name);
-		}
-	}
-
-	hny_free_geister(list, count);
-}
-
-void honey_remove(int count, char **names) {
-	struct hny_geist geist;
-	int i;
-
-	for(i = 0; i < count; i++) {
-		geist.name = strsep(&names[i], "-");
-		geist.version = names[i];
-
-		switch(hny_remove(&geist)) {
-			case HnyErrorNone:
-				break;
-			case HnyErrorNonExistant:
-				honey_fatal("honey: unable to remove %s-%s, invalid file\n",
-					geist.name, geist.version);
-			case HnyErrorUnauthorized:
-				honey_fatal("honey: unauthorized to remove %s-%s\n",
-					geist.name, geist.version);
-			case HnyErrorUnavailable:
-				honey_fatal("honey: unable to remove %s-%s, a ressource isn't available\n",
-					geist.name, geist.version);
-			case HnyErrorInvalidArgs:
-				honey_fatal("honey: unable to remove %s-%s, an argument is invalid\n",
-					geist.name, geist.version);
-			default:
-				honey_fatal("honey: unable to remove %s-%s, unknown error\n",
-					geist.name, geist.version);
-		}
-	}
-}
-
-void honey_status(char *geist) {
-	struct hny_geist *target, source;
-
-	source.name = strsep(&geist, "-");
-	source.version = geist;
-
-	target = hny_status(&source);
-
-	if(target != NULL) {
-		if(target->version != NULL) {
-			printf("%s-%s\n", target->name, target->version);
-		} else {
-			printf("%s\n", target->name);
-		}
-
-		hny_free_geister(target, 1);
-	} else {
-		exit(EXIT_FAILURE);
-	}
-}
-
-void honey_execute(char *method, int count, char **names) {
-	enum hny_action action = HnyActionSetup;
-	struct hny_geist geist;
-	int i;
-
-	if(strcmp(method, "setup") == 0) {
-		/* Default */
-	} else if(strcmp(method, "drain") == 0) {
-		action = HnyActionDrain;
-	} else if(strcmp(method, "reset") == 0) {
-		action = HnyActionReset;
-	} else if(strcmp(method, "check") == 0) {
-		action = HnyActionCheck;
-	} else if(strcmp(method, "clean") == 0) {
-		action = HnyActionClean;
-	} else {
-		honey_fatal("error: execute, \"%s\" is invalid\n", method);
-	}
-
-	for(i = 0; i < count; i++) {
-		geist.name = strsep(&names[i], "-");
-		geist.version = names[i];
-
-		hny_execute(action, &geist);
-	}
-}
-
-int main(int argc, char **argv) {
-	int i = 1;
-
-	setup_sigexits();
-
-	atexit(hny_disconnect);
-
-	if(hny_connect(0) == HnyErrorUnavailable) {
-		honey_fatal("hny error: unable to connect\n");
-	}
-
-	if(argc < 2) {
-		honey_fatal("error: expected action\n");
-	}
-
-	if(strcmp(argv[i], "fetch") == 0) {
-		if(++i != argc) {
-			honey_fetch(argc - i, &argv[i]);
-		} else {
-			honey_fatal("error: %s fetch [packages names...]\n", argv[0]);
-		}
-	} else if(strcmp(argv[i], "shift") == 0) {
-		if(++i == argc - 2) {
-			honey_shift(argv[i], argv[i + 1]);
-		} else {
-			honey_fatal("error: %s shift [geist name] [replacement name]\n", argv[0]);
-		}
-	} else if(strcmp(argv[i], "install") == 0) {
-		if(++i != argc) {
-			honey_install(argc - i, &argv[i]);
-		} else {
-			honey_fatal("error: %s install [packages files...]\n", argv[0]);
-		}
-	} else if(strcmp(argv[i], "list") == 0) {
-		if(++i == argc - 1) {
-			honey_list(argv[i]);
-		} else {
-			honey_fatal("error: %s list [packages | active]\n", argv[0]);
-		}
-	} else if(strcmp(argv[i], "remove") == 0) {
-		if(++i != argc) {
-			honey_remove(argc - i, &argv[i]);
-		} else {
-			honey_fatal("error: %s remove [packages names...]\n", argv[0]);
-		}
-	} else if(strcmp(argv[i], "status") == 0) {
-		if(++i == argc - 1) {
-			honey_status(argv[i]);
-		} else {
-			honey_fatal("error: %s status [geist name]\n", argv[0]);
-		}
-	} else if(strcmp(argv[i], "execute") == 0) {
-		if(++i < argc - 1) {
-			honey_execute(argv[i], argc - i - 1, &argv[i + 1]);
-		} else {
-			honey_fatal("error: %s execute [setup | drain | reset | check | clean] [geister names...]\n", argv[0]);
+			print_error("Invalid command:\n");
+			usage();
 		}
 	} else {
-		honey_fatal("error: expected action\n");
+		usage();
 	}
 
-	exit(EXIT_SUCCESS);
+	out(HnyErrorNone);
 }
