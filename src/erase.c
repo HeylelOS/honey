@@ -44,7 +44,7 @@ hny_erase(hny_t hny,
 						target.name = strsep(&targetname, "-");
 						target.version = targetname;
 
-						if(hny_equals_geister(&target, geist) == 0
+						if(hny_equals_geister(&target, geist) == HnyErrorNone
 							&& unlinkat(dirfd(hny->dirp),
 								entry->d_name, 0) == -1) {
 							/* perror("hny remove link"); */

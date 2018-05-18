@@ -50,7 +50,7 @@ hny_free_geister(struct hny_geist *geister,
 	free(geister);
 }
 
-int
+enum hny_error
 hny_equals_geister(const struct hny_geist *g1,
 	const struct hny_geist *g2) {
 
@@ -60,15 +60,17 @@ hny_equals_geister(const struct hny_geist *g1,
 			if(g1->version != NULL
 				&& g2->version != NULL
 				&& strcmp(g1->version, g2->version) == 0) {
-				return 0;
+
+				return HnyErrorNone;
 			} else if(g1->version == NULL
 				&& g2->version == NULL) {
-				return 0;
+
+				return HnyErrorNone;
 			}
 		}
 	}
 
-	return -1;
+	return HnyErrorInvalidArgs;
 }
 
 enum hny_error
