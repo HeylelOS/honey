@@ -170,10 +170,10 @@ hny_list(hny_t hny,
 	size_t *len);
 
 /**
- * Erases the geist/package from prefix, unlink if a geist, remove all files and
- * dereference everywhere possible if it's a package
+ * Erases the package from prefix, remove all files and
+ * dereference everywhere possible
  * @param hny Honey prefix
- * @param geist the geist or package to erase
+ * @param geist the package to erase
  * @return error code
  */
 enum hny_error
@@ -241,13 +241,15 @@ enum hny_error
 hny_equals_geister(const struct hny_geist *g1,
 	const struct hny_geist *g2);
 
-/*@{*/
 /**
+ * @defgroup check Checking strings integrity
  * Checks syntaxic integrity of packages/geister names
- * name is the prefix, a "pure" geist name, version (NULL is valid) is the
- * version suffix and package is the mix of both, packages
- * entry names (name + '-' + version). Check geister is to check
- * a geister instance
+ * hny_checks_name() checks the prefix, a "pure" geist name,
+ * hny_check_version() checks the version suffix and
+ * hny_check_package() checks the mix of both, packages
+ * entry names (name + '-' + version).
+ * hny_check_geister() checks geister instance(s)
+ * @{
  */
 enum hny_error
 hny_check_name(const char *name);
@@ -258,7 +260,7 @@ hny_check_package(const char *packagename);
 enum hny_error
 hny_check_geister(const struct hny_geist *geister,
 	size_t n);
-/*@}*/
+/** @} */
 
 /**
  * Macro to cast hny_compare_versions to qsort type
