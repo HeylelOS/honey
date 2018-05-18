@@ -27,7 +27,8 @@ hny_export(hny_t hny,
 
 	aerr = archive_read_open_filename(a, file, 4096);
 	if(aerr == ARCHIVE_OK
-		&& hny_check_geister(package, 1) == HnyErrorNone) {
+		&& hny_check_geister(package, 1) == HnyErrorNone
+		&& package->version != NULL) {
 		if(hny_lock(hny)) {
 			char path[MAXPATHLEN];
 			ssize_t length;

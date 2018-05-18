@@ -21,9 +21,12 @@ BUILDDIRS=build/ build/obj build/bin build/lib
 BINSOURCE=main.c
 BIN=build/bin/$(NAME)
 
-.PHONY: all clean
+.PHONY: all doc clean
 
 all: $(BUILDDIRS) $(BIN)
+
+doc: $(BUILDDIRS)
+	doxygen doc/Doxyfile
 
 clean:
 	rm -rf build/
