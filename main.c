@@ -64,7 +64,7 @@ verify(int cmdargc,
 
 			free(eula);
 		} else {
-			print_error("File %s is an invalid Honey package\n", file);
+			print_error("File %s is not a Honey package\n", file);
 		}
 
 		iterator++;

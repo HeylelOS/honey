@@ -27,8 +27,8 @@ hny_export(hny_t hny,
 
 	aerr = archive_read_open_filename(a, file, 4096);
 	if(aerr == ARCHIVE_OK
-		&& hny_check_geister(package, 1) == HnyErrorNone
-		&& package->version != NULL) {
+		&& package->version != NULL
+		&& hny_check_geister(package, 1) == HnyErrorNone) {
 		if(hny_lock(hny)) {
 			char path[MAXPATHLEN];
 			ssize_t length;
@@ -44,6 +44,10 @@ hny_export(hny_t hny,
 					| ARCHIVE_EXTRACT_ACL
 					| ARCHIVE_EXTRACT_FFLAGS
 					| ARCHIVE_EXTRACT_NO_OVERWRITE;
+
+				if(getuid() == 0) {
+					flags |= ARCHIVE_EXTRACT_OWNER;
+				}
 
 				*end = '/';
 				length += end - path + 1;
