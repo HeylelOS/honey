@@ -66,7 +66,7 @@ struct hny_geist {
 /**
  * Listing conditions. ::HnyListPackages list
  * all packages, even unactive ones. ::HnyListActive
- * lists all referenced packages.
+ * lists all active packages.
  * @see hny_list
  */
 enum hny_listing {
@@ -168,10 +168,12 @@ hny_shift(hny_t hny,
  * @param hny Honey prefix
  * @param listing the listing condition
  * @param list pointer for returning the list,
- * should be hny_free_geister()'d if no error
+ * should be hny_free_geister()'d if no error and not empty
  * @param len pointer for returning list length
- * @return ::HnyErrorNone on success,
- * ::HnyErrorUnavailable if prefix busy
+ * @return ::HnyErrorNone on success and a list of
+ * len geister in list,
+ * ::HnyErrorUnavailable if prefix busy,
+ * list and len untouched.
  */
 enum hny_error
 hny_list(hny_t hny,
@@ -199,7 +201,9 @@ hny_erase(hny_t hny,
  * @param geist the geist or package to query
  * @param target pointer for returning the final target, should be hny_free_geister()'d if no error
  * @return ::HnyErrorNone on success,
- * ::HnyErrorUnavailable if prefix busy
+ * ::HnyErrorUnavailable if prefix busy,
+ * ::HnyErrorInvalidArgs if geist isn't valid and
+ * ::HnyErrorNonExistant if the status couldn't be fetched
  */
 enum hny_error
 hny_status(hny_t hny,
@@ -209,7 +213,6 @@ hny_status(hny_t hny,
 /**
  * Executes the assiociated the given script associated to geist
  * the script will be chdir'd into the package prefix
- * TODO: Better definition of execution jail/conditions
  * @param hny Honey prefix
  * @param action script to execute
  * @param geist the geist or package for which the script shall be executed

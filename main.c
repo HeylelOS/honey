@@ -50,7 +50,7 @@ usage(void) {
 static void
 verify(int cmdargc,
 	char **cmdargv) {
-	enum hny_error error;
+	enum hny_error error, retval = HnyErrorNone;
 	char **iterator = cmdargv;
 	char **end = &cmdargv[cmdargc];
 
@@ -64,11 +64,27 @@ verify(int cmdargc,
 
 			free(eula);
 		} else {
-			print_error("File %s is not a Honey package\n", file);
+			retval = HnyErrorInvalidArgs;
+
+			switch(error) {
+			case HnyErrorInvalidArgs:
+				print_error("Cannot access file \"%s\"\n", file);
+				break;
+			case HnyErrorNonExistant:
+				print_error("File \"%s\" is not a Honey package\n", file);
+				break;
+			case HnyErrorUnavailable:
+				print_error("Cannot access eula of file \"%s\"\n", file);
+				break;
+			default:
+				break;
+			}
 		}
 
 		iterator++;
 	}
+
+	out(retval);
 }
 
 static void
@@ -118,47 +134,162 @@ shift(int cmdargc,
 static void
 list(int cmdargc,
 	char **cmdargv) {
+	enum hny_error retval = HnyErrorNone;
+	enum hny_listing list;
+
+	if(cmdargc >= 2) {
+		if(strcmp("active", cmdargv[0]) == 0) {
+			list = HnyListActive;
+		} else if(strcmp("packages", cmdargv[0]) == 0) {
+			list = HnyListPackages;
+		} else {
+			retval = HnyErrorInvalidArgs;
+		}
+	} else {
+		retval = HnyErrorInvalidArgs;
+	}
+
+	if(retval == HnyErrorNone) {
+		struct hny_geist *geister;
+		size_t len;
+
+		if(hny_list(hny, list, &geister, &len) == HnyErrorNone) {
+			struct hny_geist *iterator = geister,
+				*end = &geister[len];
+
+			while(iterator != end) {
+				if(iterator->version != NULL) {
+					print("%s-%s\n",
+						iterator->name,
+						iterator->version);
+				} else {
+					print("%s\n",
+						iterator->name);
+				}
+
+				iterator++;
+			}
+		} else {
+			retval = HnyErrorUnavailable;
+		}
+	}
+
+	out(retval);
 }
 
 static void
 erase(int cmdargc,
 	char **cmdargv) {
+	enum hny_error retval = HnyErrorNone;
+	struct hny_geist *geister
+		= hny_alloc_geister((const char **)cmdargv, cmdargc);
+
+	if(geister == NULL) {
+		print_error("Invalid geist name\n");
+		retval = HnyErrorInvalidArgs;
+	} else {
+		int i;
+
+		for(i = 0; i < cmdargc; i++) {
+			switch(hny_erase(hny, &geister[i])) {
+			case HnyErrorUnavailable:
+				print_error("Unable to erase %s, prefix is unavailable\n",
+					cmdargv[i]);
+				retval = HnyErrorUnavailable;
+				break;
+			default:
+				break;
+			}
+		}
+
+		hny_free_geister(geister, cmdargc);
+	}
+
+	out(retval);
 }
 
 static void
 status(int cmdargc,
 	char **cmdargv) {
+	enum hny_error retval = HnyErrorNone;
+	struct hny_geist *geister
+		= hny_alloc_geister((const char **)cmdargv, cmdargc);
+
+	if(geister == NULL) {
+		print_error("Invalid geist name\n");
+		retval = HnyErrorInvalidArgs;
+	} else {
+		int i;
+
+		for(i = 0; i < cmdargc; i++) {
+			struct hny_geist *target;
+
+			switch(hny_status(hny, &geister[i], &target)) {
+			case HnyErrorNone:
+				hny_free_geister(target, 1);
+				break;
+			case HnyErrorUnavailable:
+				print_error("Unable to status %s: prefix is unavailable\n",
+					cmdargv[i]);
+				retval = HnyErrorUnavailable;
+				break;
+			case HnyErrorInvalidArgs:
+				/* Shouldn't happen */
+				print_error("Unable to status %s: geist invalid\n",
+					cmdargv[i]);
+				retval = HnyErrorInvalidArgs;
+				break;
+			case HnyErrorNonExistant:
+				print_error("Unable to status %s: the geist doesn't have a target\n",
+					cmdargv[i]);
+				retval = HnyErrorNonExistant;
+				break;
+			default:
+				break;
+			}
+		}
+
+		hny_free_geister(geister, cmdargc);
+	}
+
+	out(retval);
 }
 
 static void
 execute(enum hny_action action,
 	int cmdargc,
 	char **cmdargv) {
+	enum hny_error retval = HnyErrorNone;
 	struct hny_geist *geister
 		= hny_alloc_geister((const char **)cmdargv, cmdargc);
-	int i;
 
 	if(geister == NULL) {
 		print_error("Invalid geist name\n");
-		out(HnyErrorInvalidArgs);
-	}
+		retval = HnyErrorInvalidArgs;
+	} else {
+		int i;
 
-	for(i = 0; i < cmdargc; i++) {
-		switch(hny_execute(hny, action, &geister[i])) {
-		case HnyErrorInvalidArgs:
-			print_error("Invalid arguments to execute action for %s-%s\n",
-				geister[i].name, geister[i].version);
-			break;
-		case HnyErrorUnavailable:
-			print_error("Missing resource to execute action for %s-%s\n",
-				geister[i].name, geister[i].version);
-			break;
-		default:
-			break;
+		for(i = 0; i < cmdargc; i++) {
+			switch(hny_execute(hny, action, &geister[i])) {
+			case HnyErrorInvalidArgs:
+				print_error("Invalid arguments to execute action for %s\n",
+					cmdargv[i]);
+				retval = HnyErrorInvalidArgs;
+				break;
+			case HnyErrorUnavailable:
+				print_error("Missing resource to execute action for %s\n",
+					cmdargv[i]);
+				retval = HnyErrorInvalidArgs;
+				break;
+			default:
+				break;
+			}
 		}
+
+		hny_free_geister(geister, cmdargc);
 	}
 
-	hny_free_geister(geister, cmdargc);
+	out(retval);
 }
 
 int
