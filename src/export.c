@@ -50,7 +50,8 @@ hny_export(hny_t hny,
 				}
 
 				*end = '/';
-				length += end - path + 1;
+				length += end - path + 2;
+				path[length - 1] = '/';
 
 				aw = archive_write_disk_new();
 				archive_write_disk_set_options(aw, flags);
@@ -59,7 +60,7 @@ hny_export(hny_t hny,
 					&& error == HnyErrorNone) {
 					path[length] = '\0';
 					strncat(path, archive_entry_pathname(entry),
-						sizeof(path) - length - 1);
+						sizeof(path) - length + 1);
 
 					archive_entry_set_pathname(entry, path);
 

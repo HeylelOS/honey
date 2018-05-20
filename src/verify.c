@@ -14,12 +14,12 @@
 
 #define HNY_ARCHIVE_HAS_HNY	(1 << 0)
 #define HNY_ARCHIVE_HAS_SETUP	(1 << 1)
-#define HNY_ARCHIVE_HAS_DRAIN	(1 << 2)
+#define HNY_ARCHIVE_HAS_CLEAN	(1 << 2)
 #define HNY_ARCHIVE_HAS_EULA	(1 << 3)
 
 #define HNY_ARCHIVE_HAS_ALL	(HNY_ARCHIVE_HAS_HNY\
 				| HNY_ARCHIVE_HAS_SETUP\
-				| HNY_ARCHIVE_HAS_DRAIN\
+				| HNY_ARCHIVE_HAS_CLEAN\
 				| HNY_ARCHIVE_HAS_EULA)
 
 enum hny_error
@@ -73,8 +73,8 @@ hny_verify(hny_t hny,
 						archive_has |= HNY_ARCHIVE_HAS_HNY;
 					} else if(strcmp("setup", &entry_name[4]) == 0) {
 						archive_has |= HNY_ARCHIVE_HAS_SETUP;
-					} else if(strcmp("drain", &entry_name[4]) == 0) {
-						archive_has |= HNY_ARCHIVE_HAS_DRAIN;
+					} else if(strcmp("clean", &entry_name[4]) == 0) {
+						archive_has |= HNY_ARCHIVE_HAS_CLEAN;
 					}
 
 					archive_read_data_skip(a);

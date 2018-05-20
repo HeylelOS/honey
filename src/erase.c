@@ -19,49 +19,54 @@ hny_erase(hny_t hny,
 	const struct hny_geist *geist) {
 	enum hny_error error = HnyErrorNone;
 
-	if(hny_check_geister(geist, 1) == HnyErrorNone
-		&& geist->version != NULL) {
+	if(hny_check_geister(geist, 1) == HnyErrorNone) {
 
 		if(hny_lock(hny)) {
-			struct dirent *entry;
-			char *name1 = malloc(MAXPATHLEN);
-			char *name2 = malloc(NAME_MAX);
+			if(geist->version != NULL) {
+				struct dirent *entry;
+				char *name1 = malloc(MAXPATHLEN);
+				char *name2 = malloc(NAME_MAX);
 
-			/* First, delete all geister linked after me */
-			rewinddir(hny->dirp);
-			while((entry = readdir(hny->dirp)) != NULL) {
-				if(entry->d_type == DT_LNK
-					&& hny_check_name(entry->d_name) == HnyErrorNone) {
-					char *targetname;
+				/* First, delete all geister linked after me */
+				rewinddir(hny->dirp);
+				while((entry = readdir(hny->dirp)) != NULL) {
+					if(entry->d_type == DT_LNK
+						&& hny_check_name(entry->d_name) == HnyErrorNone) {
+						char *targetname;
 
-					strncpy(name2, entry->d_name, NAME_MAX);
+						strncpy(name2, entry->d_name, NAME_MAX);
 
-					targetname = hny_target(dirfd(hny->dirp),
-						name2, name1, NAME_MAX);
-					if(targetname != NULL) {
-						struct hny_geist target;
+						targetname = hny_target(dirfd(hny->dirp),
+							name2, name1, NAME_MAX);
+						if(targetname != NULL) {
+							struct hny_geist target;
 
-						target.name = strsep(&targetname, "-");
-						target.version = targetname;
+							target.name = strsep(&targetname, "-");
+							target.version = targetname;
 
-						if(hny_equals_geister(&target, geist) == HnyErrorNone
-							&& unlinkat(dirfd(hny->dirp),
-								entry->d_name, 0) == -1) {
-							/* perror("hny remove link"); */
+							if(hny_equals_geister(&target, geist) == HnyErrorNone
+								&& unlinkat(dirfd(hny->dirp),
+									entry->d_name, 0) == -1) {
+								/* perror("hny remove link"); */
+							}
+
+							free(target.name);
 						}
-
-						free(target.name);
 					}
 				}
-			}
-			free(name2);
+				free(name2);
 
-			/* Then delete the geist */
-			snprintf(name1, MAXPATHLEN,
-				"%s/%s-%s", hny->path,
-				geist->name, geist->version);
-			error = hny_remove_recursive(name1);
-			free(name1);
+				/* Then delete the geist */
+				snprintf(name1, MAXPATHLEN,
+					"%s/%s-%s", hny->path,
+					geist->name, geist->version);
+				error = hny_remove_recursive(name1);
+				free(name1);
+			} else {
+				if(unlinkat(dirfd(hny->dirp), geist->name, 0) == -1) {
+					error = hny_errno(errno);
+				}
+			}
 
 			hny_unlock(hny);
 		} else {

@@ -183,9 +183,10 @@ hny_list(hny_t hny,
 
 /**
  * Erases the package from prefix, remove all files and
- * dereference everywhere possible
+ * dereference everywhere possible. If its an active geist,
+ * deactivates it.
  * @param hny Honey prefix
- * @param geist the package to erase
+ * @param geist the geist to erase/deactivate
  * @return ::HnyErrorNone on success,
  * ::HnyErrorUnavailable if prefix busy
  */
