@@ -27,8 +27,8 @@ hny_export(hny_t hny,
 
 	aerr = archive_read_open_filename(a, file, 4096);
 	if(aerr == ARCHIVE_OK
-		&& hny_check_geister(package, 1) == HnyErrorNone
-		&& package->version != NULL) {
+		&& package->version != NULL
+		&& hny_check_geister(package, 1) == HnyErrorNone) {
 		if(hny_lock(hny)) {
 			char path[MAXPATHLEN];
 			ssize_t length;
@@ -45,8 +45,13 @@ hny_export(hny_t hny,
 					| ARCHIVE_EXTRACT_FFLAGS
 					| ARCHIVE_EXTRACT_NO_OVERWRITE;
 
+				if(getuid() == 0) {
+					flags |= ARCHIVE_EXTRACT_OWNER;
+				}
+
 				*end = '/';
-				length += end - path + 1;
+				length += end - path + 2;
+				path[length - 1] = '/';
 
 				aw = archive_write_disk_new();
 				archive_write_disk_set_options(aw, flags);
@@ -55,7 +60,7 @@ hny_export(hny_t hny,
 					&& error == HnyErrorNone) {
 					path[length] = '\0';
 					strncat(path, archive_entry_pathname(entry),
-						sizeof(path) - length - 1);
+						sizeof(path) - length + 1);
 
 					archive_entry_set_pathname(entry, path);
 

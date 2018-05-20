@@ -43,12 +43,13 @@ typedef struct hny *hny_t;
  * are used as error codes for Honey packages scripts
  */
 enum hny_error {
-	HnyErrorNone = 0,
-	HnyErrorInvalidArgs = 1,
-	HnyErrorUnavailable = 2,
-	HnyErrorNonExistant = 3,
-	HnyErrorUnauthorized = 4
+	HnyErrorNone = 0,		/**< No error occured */
+	HnyErrorInvalidArgs = 1,	/**< An argument is invalid */
+	HnyErrorUnavailable = 2,	/**< The prefix is busy, or a resource is missing */
+	HnyErrorNonExistant = 3,	/**< Something is missing, procedure dependant */
+	HnyErrorUnauthorized = 4	/**< The user lacks privileges */
 };
+
 
 /**
  * Internal representation of a geist,
@@ -58,22 +59,14 @@ enum hny_error {
  * @see hny_check_geister
  */
 struct hny_geist {
-	/**
-	 * name of the geist
-	 * @see hny_check_name
-	 * */
-	char *name;
-	/**
-	 * version of the geist
-	 * @see hny_check_version
-	 * */
-	char *version;
+	char *name;	/**< name of the geist @see hny_check_name */
+	char *version;	/**< version of the geist @see hny_check_version */
 };
 
 /**
- * Listing conditions. HnyListPackages list
- * all packages, even unactive ones. HnyListActive
- * lists all referenced packages.
+ * Listing conditions. ::HnyListPackages list
+ * all packages, even unactive ones. ::HnyListActive
+ * lists all active packages.
  * @see hny_list
  */
 enum hny_listing {
@@ -101,7 +94,8 @@ enum hny_action {
 /**
  * Hook on a Honey prefix
  * @param prefix prefix directory
- * @return NULL on error. A valid Honey prefix otherwise, which MUST be closed with hny_destroy
+ * @return A valid Honey prefix, which MUST be closed with
+ * hny_destroy() on success. NULL on error.
  */
 hny_t
 hny_create(const char *prefix);
@@ -121,9 +115,14 @@ hny_destroy(hny_t hny);
  * Checks archive integrity
  * @param hny Honey prefix
  * @param file file to verify
- * @param eula pointer for returning a buffer to the end user license agreement, should be free()'d if no error
+ * @param eula pointer for returning a buffer to the end user license agreement,
+ * should be free()'d if no error
  * @param len pointer for returning eula buffer size
- * @return error code
+ * @return ::HnyErrorNone on success,
+ * ::HnyErrorInvalidArgs if file couldn't get opened,
+ * ::HnyErrorNonExistant if the structure is invalid
+ * and ::HnyErrorUnavailable if a problem
+ * happened while extracting end user license agreement.
  */
 enum hny_error
 hny_verify(hny_t hny,
@@ -132,11 +131,19 @@ hny_verify(hny_t hny,
 	size_t *len);
 
 /**
- * Deflates the package in the associated prefix
+ * Deflates the package in the associated prefix, if the
+ * user running this function has user id 0, owners will be
+ * extracted from the archive.
  * @param hny Honey prefix
- * @param file archive to deflate, the user should have accepted the eula
+ * @param file archive to deflate, MUST have been hny_verify()'d
+ * and the user MUST have accepted the eula
  * @param package the package installed, name and version provided
- * @return error code
+ * @return ::HnyErrorNone on success,
+ * ::HnyErrorUnavailable if prefix busy,
+ * ::HnyErrorInvalidArgs if an argument is invalid
+ * (archive format invalid, etc...)
+ * ::HnyErrorNonExistant if one of the files couldn't
+ * be extracted
  */
 enum hny_error
 hny_export(hny_t hny,
@@ -148,7 +155,8 @@ hny_export(hny_t hny,
  * @param hny Honey prefix
  * @param geist the geist to replace
  * @param package the package portraying the geist
- * @return error code
+ * @return ::HnyErrorNone on success,
+ * ::HnyErrorUnavailable if prefix busy
  */
 enum hny_error
 hny_shift(hny_t hny,
@@ -159,9 +167,13 @@ hny_shift(hny_t hny,
  * Lists all packages following condition
  * @param hny Honey prefix
  * @param listing the listing condition
- * @param list pointer for returning the list, should be hny_free_geister()'d if no error
+ * @param list pointer for returning the list,
+ * should be hny_free_geister()'d if no error and not empty
  * @param len pointer for returning list length
- * @return error code
+ * @return ::HnyErrorNone on success and a list of
+ * len geister in list,
+ * ::HnyErrorUnavailable if prefix busy,
+ * list and len untouched.
  */
 enum hny_error
 hny_list(hny_t hny,
@@ -171,10 +183,12 @@ hny_list(hny_t hny,
 
 /**
  * Erases the package from prefix, remove all files and
- * dereference everywhere possible
+ * dereference everywhere possible. If its an active geist,
+ * deactivates it.
  * @param hny Honey prefix
- * @param geist the package to erase
- * @return error code
+ * @param geist the geist to erase/deactivate
+ * @return ::HnyErrorNone on success,
+ * ::HnyErrorUnavailable if prefix busy
  */
 enum hny_error
 hny_erase(hny_t hny,
@@ -187,7 +201,10 @@ hny_erase(hny_t hny,
  * @param hny Honey prefix
  * @param geist the geist or package to query
  * @param target pointer for returning the final target, should be hny_free_geister()'d if no error
- * @return error code
+ * @return ::HnyErrorNone on success,
+ * ::HnyErrorUnavailable if prefix busy,
+ * ::HnyErrorInvalidArgs if geist isn't valid and
+ * ::HnyErrorNonExistant if the status couldn't be fetched
  */
 enum hny_error
 hny_status(hny_t hny,
@@ -197,11 +214,11 @@ hny_status(hny_t hny,
 /**
  * Executes the assiociated the given script associated to geist
  * the script will be chdir'd into the package prefix
- * TODO: Better definition of execution jail/conditions
  * @param hny Honey prefix
  * @param action script to execute
  * @param geist the geist or package for which the script shall be executed
- * @return error code
+ * @return ::HnyErrorNone on success,
+ * ::HnyErrorUnavailable if prefix busy
  */
 enum hny_error
 hny_execute(hny_t hny,
@@ -235,7 +252,7 @@ hny_free_geister(struct hny_geist *geister,
  * Checks if two geister are equals
  * @param g1 first geist
  * @param g2 second geist
- * @return HnyErrorNone if equals, something else else
+ * @return ::HnyErrorNone if equals, something else else
  */
 enum hny_error
 hny_equals_geister(const struct hny_geist *g1,

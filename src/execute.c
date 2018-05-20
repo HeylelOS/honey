@@ -9,6 +9,7 @@
 
 #include <sys/param.h> /* MAXPATHLEN */
 #include <sys/wait.h>
+#include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,9 +17,7 @@
 
 /*
 	This function is shit, must do a more advanced version later
-	- Signals reset
 	- Errors redirections
-	- advanced exit codes
 */
 static enum hny_error
 hny_spawn(hny_t hny,
@@ -41,6 +40,12 @@ hny_spawn(hny_t hny,
 
 		if(length > 0
 			&& chdir(hny->path) == 0) {
+			int i;
+
+			for(i = 1; i < NSIG; i++) {
+				signal(i, SIG_DFL);
+			}
+
 			snprintf(&hny->path[length], MAXPATHLEN - length,
 				"/hny/%s", name);
 
