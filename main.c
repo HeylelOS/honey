@@ -137,7 +137,7 @@ list(int cmdargc,
 	enum hny_error retval = HnyErrorNone;
 	enum hny_listing list;
 
-	if(cmdargc >= 2) {
+	if(cmdargc == 1) {
 		if(strcmp("active", cmdargv[0]) == 0) {
 			list = HnyListActive;
 		} else if(strcmp("packages", cmdargv[0]) == 0) {
@@ -226,6 +226,7 @@ status(int cmdargc,
 
 			switch(hny_status(hny, &geister[i], &target)) {
 			case HnyErrorNone:
+				print("%s-%s\n", target->name, target->version);
 				hny_free_geister(target, 1);
 				break;
 			case HnyErrorUnavailable:
