@@ -17,13 +17,11 @@
 /**
  * @mainpage Honey package manager
  * Honey is intended to be a unix-like OS package manager,
- * archive structure format for packages and http/https remote
- * package database guideline. It is distributed under BSD 3-Clause
- * license.
+ * archive structure format for packages.
+ * It is distributed under BSD 3-Clause license.
  *
  * It is meant to be composed of an ansi C library and
- * a command line utility for now, plus a guideline
- * for future providers implementations.
+ * a command line utility.
  *
  * It keeps in mind the desire to stay embeddable without
  * any compromise on its capabilities. However it isn't
