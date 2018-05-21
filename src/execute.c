@@ -9,16 +9,11 @@
 
 #include <sys/param.h> /* MAXPATHLEN */
 #include <sys/wait.h>
-#include <signal.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-/*
-	This function is shit, must do a more advanced version later
-	- Errors redirections
-*/
 static enum hny_error
 hny_spawn(hny_t hny,
 	const struct hny_geist *geist,
@@ -40,11 +35,6 @@ hny_spawn(hny_t hny,
 
 		if(length > 0
 			&& chdir(hny->path) == 0) {
-			int i;
-
-			for(i = 1; i < NSIG; i++) {
-				signal(i, SIG_DFL);
-			}
 
 			snprintf(&hny->path[length], MAXPATHLEN - length,
 				"/hny/%s", name);
@@ -53,7 +43,7 @@ hny_spawn(hny_t hny,
 		}
 
 		/* perror("hny"); */
-		exit(HnyErrorUnavailable);
+		_Exit(HnyErrorUnavailable);
 	} else {
 		int status;
 
