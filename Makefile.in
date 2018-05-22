@@ -10,6 +10,9 @@ all: $(BUILDDIRS) $(BIN)
 
 doc: $(BUILDDIRS)
 	doxygen doc/Doxyfile
+	cp -r doc/man1/ build/man/
+	mv build/man/man3/hny.h.3 build/man/man3/hny.3
+	rm build/man/man3/_*
 
 tests: all
 	./tests/run.sh

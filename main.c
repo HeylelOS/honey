@@ -49,7 +49,7 @@ out(enum hny_error error) {
 static void
 usage(void) {
 
-	print_error(BOLD RED "usage" DEFAULT ": hny [options..] <command> <arguments>\n");
+	print_error(BOLD RED "usage" DEFAULT ": hny [--help] [--accepted-eulas|-a] [--prefix=<path>] <command> <args>\n");
 	out(HnyErrorInvalidArgs);
 }
 
@@ -328,7 +328,9 @@ main(int argc,
 		} else if(strncmp("--prefix=", argv[1], 9) == 0) {
 			prefix = &argv[1][9];
 		} else {
-			print_error("Invalid argument \"%s\"\n", argv[1]);
+			if(strcmp("--help", argv[1]) != 0) {
+				print_error("Invalid argument \"%s\"\n", argv[1]);
+			}
 			usage();
 		}
 
