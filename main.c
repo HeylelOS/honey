@@ -11,7 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DEFAULT		"\x1b[0m"
+#define BOLD		"\x1b[1m"
+#define RED		"\x1b[31m"
+#define MAGENTA		"\x1b[35m"
+
 static hny_t hny;
+static int hny_already_accepted;
 
 static void
 print(const char *format,
@@ -43,7 +49,7 @@ out(enum hny_error error) {
 static void
 usage(void) {
 
-	print_error("usage: hny <command> <args>\n");
+	print_error(BOLD RED "usage" DEFAULT ": hny [options..] <command> <arguments>\n");
 	out(HnyErrorInvalidArgs);
 }
 
@@ -60,7 +66,22 @@ verify(int cmdargc,
 		size_t len;
 
 		if((error = hny_verify(hny, file, &eula, &len)) == HnyErrorNone) {
-			print("EULA:\n%*s\n", len, eula);
+
+			if(hny_already_accepted == 0) {
+				int answer;
+
+				print(BOLD "EULA" DEFAULT ":\n%*s\nDo you accept it? [y/N] ", len, eula);
+
+				answer = getchar();
+				if(answer == 'y') {
+					print("You accepted EULA for package %s\n", file);
+				} else {
+					print("You didn't accept EULA for package %s\n", file);
+					error = HnyErrorUnauthorized;
+				}
+			} else {
+				print("You already accepted EULA for package %s\n", file);
+			}
 
 			free(eula);
 		} else {
@@ -95,7 +116,7 @@ export(int cmdargc,
 
 	if(cmdargc != 2
 		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
-		print_error("expected: hny export [package file] [package name]\n");
+		print_error(BOLD MAGENTA "expected" DEFAULT ": hny export [package file] [package name]\n");
 		out(HnyErrorInvalidArgs);
 	}
 
@@ -117,7 +138,7 @@ shift(int cmdargc,
 
 	if(cmdargc != 2
 		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
-		print_error("expected: hny shift [target geist] [source geist]\n");
+		print_error(BOLD MAGENTA "expected" DEFAULT ": hny shift [target geist] [source geist]\n");
 		out(HnyErrorInvalidArgs);
 	}
 
@@ -298,6 +319,23 @@ main(int argc,
 	char **argv) {
 	char *prefix = getenv("HNY_PREFIX");
 
+	while(argc >= 2
+		&& argv[1][0] == '-') {
+
+		if(strcmp("--accepted-eulas", argv[1]) == 0
+			|| strcmp("-a", argv[1]) == 0) {
+			hny_already_accepted = 1;
+		} else if(strncmp("--prefix=", argv[1], 9) == 0) {
+			prefix = &argv[1][9];
+		} else {
+			print_error("Invalid argument \"%s\"\n", argv[1]);
+			usage();
+		}
+
+		argc--;
+		argv++;
+	}
+
 	if(prefix == NULL
 		|| (hny = hny_create(prefix)) == NULL) {
 		print_error("Unable to access prefix %s\n", prefix);
@@ -332,7 +370,7 @@ main(int argc,
 		} else if(strcmp("purge", cmd) == 0) {
 			execute(HnyActionPurge, cmdargc, cmdargv);
 		} else {
-			print_error("Invalid command:\n");
+			print_error("Invalid command \"%s\"\n", cmd);
 			usage();
 		}
 	} else {

@@ -45,7 +45,7 @@ hny_export(hny_t hny,
 					| ARCHIVE_EXTRACT_FFLAGS
 					| ARCHIVE_EXTRACT_NO_OVERWRITE;
 
-				if(getuid() == 0) {
+				if(geteuid() == 0) {
 					flags |= ARCHIVE_EXTRACT_OWNER;
 				}
 
