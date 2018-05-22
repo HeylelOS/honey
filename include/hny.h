@@ -78,11 +78,11 @@ enum hny_listing {
  * @see hny_execute
  */
 enum hny_action {
-	HnyActionSetup,
-	HnyActionClean,
-	HnyActionReset,
-	HnyActionCheck,
-	HnyActionPurge
+	HnyActionSetup,	/**< Action which installs necessary files on the system */
+	HnyActionClean,	/**< Action which removes setup files */
+	HnyActionReset,	/**< Action reseting packages' configuration */
+	HnyActionCheck,	/**< Action checking files from packages (not the one installed) */
+	HnyActionPurge	/**< Action which removes every user-related data */
 };
 
 /********************
