@@ -68,8 +68,8 @@ struct hny_geist {
  * @see hny_list
  */
 enum hny_listing {
-	HnyListPackages,
-	HnyListActive
+	HnyListPackages,	/**< Lists packages in the prefix (dirs) */
+	HnyListActive		/**< Lists active geister in the prefix (symlinks) */
 };
 
 /**
@@ -78,11 +78,11 @@ enum hny_listing {
  * @see hny_execute
  */
 enum hny_action {
-	HnyActionSetup,
-	HnyActionClean,
-	HnyActionReset,
-	HnyActionCheck,
-	HnyActionPurge
+	HnyActionSetup,	/**< Action which installs necessary files on the system */
+	HnyActionClean,	/**< Action which removes setup files */
+	HnyActionReset,	/**< Action reseting packages' configuration */
+	HnyActionCheck,	/**< Action checking files from packages (not the one installed) */
+	HnyActionPurge	/**< Action which removes every user-related data */
 };
 
 /********************
@@ -257,7 +257,7 @@ hny_equals_geister(const struct hny_geist *g1,
 	const struct hny_geist *g2);
 
 /**
- * @defgroup check Checking strings integrity
+ * @defgroup hny_check Checking strings integrity
  * Checks syntaxic integrity of packages/geister names
  * hny_checks_name() checks the prefix, a "pure" geist name,
  * hny_check_version() checks the version suffix and

@@ -1,25 +1,8 @@
-CC=clang
-CFLAGS=-g -ansi -pedantic -Wall
-LDFLAGS=-lpthread -larchive
 HEADERS=-I./include/
-NAME=hny
 SOURCES=$(wildcard src/*.c)
 OBJECTS=$(patsubst src/%.c, build/obj/%.o, $(SOURCES))
-ifeq ($(shell uname), Darwin)
-SHAREDFLAG=-dylib -macosx_version_min 10.13
-LIB=build/lib/lib$(NAME).dylib
-LD=ld
-else
-SHAREDFLAG=-shared
-LIB=build/lib/lib$(NAME).so
-# We cannot use ld as a linker, on macOS, no problem
-# but on linux there is a problem between dynamic and
-# static code
-LD=clang
-endif
 BUILDDIRS=build/ build/obj build/bin build/lib
 BINSOURCE=main.c
-BIN=build/bin/$(NAME)
 
 .PHONY: all doc tests clean
 
@@ -27,6 +10,9 @@ all: $(BUILDDIRS) $(BIN)
 
 doc: $(BUILDDIRS)
 	doxygen doc/Doxyfile
+	cp -r doc/man1/ build/man/
+	mv build/man/man3/hny.h.3 build/man/man3/hny.3
+	rm build/man/man3/_*
 
 tests: all
 	./tests/run.sh
