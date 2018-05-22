@@ -68,8 +68,8 @@ struct hny_geist {
  * @see hny_list
  */
 enum hny_listing {
-	HnyListPackages,
-	HnyListActive
+	HnyListPackages,	/**< Lists packages in the prefix (dirs) */
+	HnyListActive		/**< Lists active geister in the prefix (symlinks) */
 };
 
 /**

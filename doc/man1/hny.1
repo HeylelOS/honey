@@ -1,0 +1,63 @@
+.\" manpage for the Honey package manager
+.TH "hny" 1 "Tue May 22 2018" "Honey"
+.SH NAME
+hny \- command line utility to repair or access Honey prefixes
+.SH SYNOPSIS
+\fBhny\fR [\-\-help] [\-\-accepted-eulas|\-a] [\-\-prefix=<path>] <command> <args>
+.SH DESCRIPTION
+This command line interface is only meant to be used in shell scripts or
+by advanced users, either for fun or to repair a broken prefix.
+.SH OPTIONS
+.RE
+.PP
+--help
+.RS 4
+Prints usage and exits.
+.RE
+.PP
+--accepted-eulas, -a
+.RS 4
+To specify you accepted all eulas, to automatically verify without prompting.
+.RE
+.PP
+--prefix=<path>
+.RS 4
+To specify a prefix manualy, overrides the value in \fBHNY_PREFIX\fR.
+.SH COMMANDS
+The commands are as follow, details are not explained here, and I redirect you to hny(3) for further details.
+.RE
+.PP
+\fBhny verify\fR [filenames...]
+.RE
+.PP
+\fBhny export\fR [archive] [packagename]
+.RE
+.PP
+\fBhny shift\fR [targetgeist] [geistname]
+.RE
+.PP
+\fBhny erase\fR [geistnames...]
+.RE
+.PP
+\fBhny status\fR [geistname]
+.RE
+.PP
+\fBhny setup\fR [geistnames...]
+.RE
+.PP
+\fBhny clean\fR [geistnames...]
+.RE
+.PP
+\fBhny reset\fR [geistnames...]
+.RE
+.PP
+\fBhny check\fR [geistnames...]
+.RE
+.PP
+\fBhny purge\fR [geistnames...]
+.SH SEE ALSO
+hny(3), hny_geist(3), hny_check(3)
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+Valentin Debon (valentin@debon.net)
