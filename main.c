@@ -332,6 +332,7 @@ main(int argc,
 				print_error("Invalid argument \"%s\"\n", argv[1]);
 			}
 			usage();
+			exit(EXIT_FAILURE);
 		}
 
 		argc--;
