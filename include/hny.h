@@ -130,8 +130,8 @@ hny_verify(hny_t hny,
 
 /**
  * Deflates the package in the associated prefix, if the
- * user running this function has user id 0, owners will be
- * extracted from the archive.
+ * user running this function has effective user id 0,
+ * owners will be extracted from the archive.
  * @param hny Honey prefix
  * @param file archive to deflate, MUST have been hny_verify()'d
  * and the user MUST have accepted the eula
