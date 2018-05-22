@@ -91,6 +91,9 @@ verify(int cmdargc,
 			retval = HnyErrorInvalidArgs;
 
 			switch(error) {
+			case HnyErrorNone:
+				print("File \"%s\" is verified and accepted\n");
+				break;
 			case HnyErrorInvalidArgs:
 				print_error("Cannot access file \"%s\"\n", file);
 				break;
@@ -167,7 +170,8 @@ list(int cmdargc,
 		} else if(strcmp("packages", cmdargv[0]) == 0) {
 			list = HnyListPackages;
 		} else {
-			retval = HnyErrorInvalidArgs;
+			print_error("Invalid argument for listing \"%s\"\n", cmdargv[0]);
+			usage();
 		}
 	} else {
 		retval = HnyErrorInvalidArgs;
@@ -216,6 +220,14 @@ erase(int cmdargc,
 
 		for(i = 0; i < cmdargc; i++) {
 			switch(hny_erase(hny, &geister[i])) {
+			case HnyErrorNone:
+				if(geister[i].version == NULL) {
+					print("Geist %s unlinked\n", geister[i].name);
+				} else {
+					print("Package %s-%s removed\n",
+						geister[i].name, geister[i].version);
+				}
+				break;
 			case HnyErrorUnavailable:
 				print_error("Unable to erase %s, prefix is unavailable\n",
 					cmdargv[i]);
