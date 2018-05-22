@@ -257,7 +257,7 @@ hny_equals_geister(const struct hny_geist *g1,
 	const struct hny_geist *g2);
 
 /**
- * @defgroup check Checking strings integrity
+ * @defgroup hny_check Checking strings integrity
  * Checks syntaxic integrity of packages/geister names
  * hny_checks_name() checks the prefix, a "pure" geist name,
  * hny_check_version() checks the version suffix and

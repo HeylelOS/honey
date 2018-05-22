@@ -1,0 +1,61 @@
+#!/bin/sh
+
+[ -z "$NAME" ] && NAME='hny'
+
+if [ -z "$CC" ]
+then
+	for CC in clang gcc cc
+	do [ ! -z "$CC" ] && break
+	done
+fi
+
+if [ ! -z "$CC" ]
+then echo "Using C compiler '$CC'"
+else
+	echo "Unable to find C compiler"
+	exit 1
+fi
+
+[ -z "$CFLAGS" ] && CFLAGS="-O3 -ansi -pedantic -Wall"
+
+echo "Using C flags '$CFLAGS'"
+
+case `uname -s` in
+	# Handling two cases: mach-o and elf:
+	# ld as a linker, on macOS, no problem
+	# but on linux there was a problem
+	# between dynamic and static code
+	'Darwin')
+		echo 'Handling Mach-O format for macOS'
+		SHAREDFLAG='-dylib -macosx_version_min 10.13'
+		LD=ld
+		LIBEXT=".dylib"
+		;;
+	*)
+		echo 'Handling ELF format for any UNIX/Linux'
+		SHAREDFLAG='-shared'
+		LD="$CC"
+		LIBEXT=".so"
+		;;
+esac
+
+echo "Using Linker '$LD'"
+
+[ -z "$LDFLAGS" ] && LDFLAGS='-lpthread -larchive'
+
+echo "Using Linker flags '$LDFLAGS'"
+
+cat <<EOF > Makefile
+NAME=$NAME
+CC=$CC
+CFLAGS=$CFLAGS
+LD=$LD
+LDFLAGS=$LDFLAGS
+SHAREDFLAG=$SHAREDFLAG
+LIB=build/lib/lib\$(NAME)$LIBEXT
+BIN=build/bin/\$(NAME)
+
+EOF
+
+cat Makefile.in >> Makefile
+

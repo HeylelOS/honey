@@ -27,11 +27,11 @@ hny_spawn(hny_t hny,
 		size_t length = strlen(hny->path);
 
 		if(setenv("HNY_PREFIX", hny->path, 1) != 0
-			|| putenv("HNY_ERROR_NONE=0") != 0
-			|| putenv("HNY_ERROR_INVALID_ARGS=1") != 0
-			|| putenv("HNY_ERROR_UNAVAILABLE=2") != 0
-			|| putenv("HNY_ERROR_NON_EXISTANT=3") != 0
-			|| putenv("HNY_ERROR_UNAUTHORIZED=4") != 0) {
+			|| putenv("HNY_ERROR_NONE=0") != 0
+			|| putenv("HNY_ERROR_INVALID_ARGS=1") != 0
+			|| putenv("HNY_ERROR_UNAVAILABLE=2") != 0
+			|| putenv("HNY_ERROR_NON_EXISTANT=3") != 0
+			|| putenv("HNY_ERROR_UNAUTHORIZED=4") != 0) {
 			_Exit(HnyErrorUnavailable);
 		}
 
