@@ -1,12 +1,3 @@
-NAME=hny
-CC=clang
-CFLAGS=-O3 -ansi -pedantic -Wall
-LD=clang
-LDFLAGS=-lpthread -larchive
-SHAREDFLAG=-shared
-LIB=build/lib/lib$(NAME).so
-BIN=build/bin/$(NAME)
-
 HEADERS=-I./include/
 SOURCES=$(wildcard src/*.c)
 OBJECTS=$(patsubst src/%.c, build/obj/%.o, $(SOURCES))
