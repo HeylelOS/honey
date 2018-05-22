@@ -42,7 +42,10 @@ print_error(const char *format,
 static void __attribute__ ((__noreturn__))
 out(enum hny_error error) {
 
-	hny_destroy(hny);
+	if(hny != NULL) {
+		hny_destroy(hny);
+	}
+
 	exit(error);
 }
 
@@ -341,7 +344,7 @@ main(int argc,
 	if(prefix == NULL
 		|| (hny = hny_create(prefix)) == NULL) {
 		print_error("Unable to access prefix %s\n", prefix);
-		exit(HnyErrorUnavailable);
+		out(HnyErrorUnavailable);
 	}
 
 	if(argc >= 2) {
