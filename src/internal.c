@@ -20,9 +20,14 @@ hny_lock(hny_t hny) {
 
 	pthread_mutex_lock(&hny->mutex);
 
-	if(flock(dirfd(hny->dirp), LOCK_EX) == -1) {
+	if(flock(dirfd(hny->dirp),
+		LOCK_EX | (hny->block == HNY_NONBLOCK ? LOCK_NB : 0))
+			== -1) {
 #ifdef HNY_VERBOSE
-		perror("hny flock");
+		if(hny->block != HNY_NONBLOCK
+			&& errno != EWOULDBLOCK) {
+			perror("hny flock");
+		}
 #endif
 		return HnyErrorUnavailable;
 	}

@@ -62,8 +62,8 @@ struct hny_geist {
 };
 
 /**
- * Listing conditions. ::HnyListPackages list
- * all packages, even unactive ones. ::HnyListActive
+ * Listing conditions. #HnyListPackages list
+ * all packages, even unactive ones. #HnyListActive
  * lists all active packages.
  * @see hny_list
  */
@@ -105,6 +105,18 @@ hny_create(const char *prefix);
 void
 hny_destroy(hny_t hny);
 
+#define HNY_BLOCK	1	/**< The prefix blocks until availability @see hny_locking */
+#define HNY_NONBLOCK	0	/**< The prefix is non-blocking and may be unavailable @see hny_locking */
+
+/**
+ * Sets Honey prefix behavior on locking
+ * @param hny Honey prefix
+ * @param block the behavior to set, either #HNY_BLOCK or #HNY_NONBLOCK
+ */
+void
+hny_locking(hny_t hny,
+	int block);
+
 /********************
   OPERATIONS SECTION
 *********************/
@@ -116,10 +128,10 @@ hny_destroy(hny_t hny);
  * @param eula pointer for returning a buffer to the end user license agreement,
  * should be free()'d if no error
  * @param len pointer for returning eula buffer size
- * @return ::HnyErrorNone on success,
- * ::HnyErrorInvalidArgs if file couldn't get opened,
- * ::HnyErrorNonExistant if the structure is invalid
- * and ::HnyErrorUnavailable if a problem
+ * @return #HnyErrorNone on success,
+ * #HnyErrorInvalidArgs if file couldn't get opened,
+ * #HnyErrorNonExistant if the structure is invalid
+ * and #HnyErrorUnavailable if a problem
  * happened while extracting end user license agreement.
  */
 enum hny_error
@@ -136,11 +148,11 @@ hny_verify(hny_t hny,
  * @param file archive to deflate, MUST have been hny_verify()'d
  * and the user MUST have accepted the eula
  * @param package the package installed, name and version provided
- * @return ::HnyErrorNone on success,
- * ::HnyErrorUnavailable if prefix busy,
- * ::HnyErrorInvalidArgs if an argument is invalid
+ * @return #HnyErrorNone on success,
+ * #HnyErrorUnavailable if prefix busy,
+ * #HnyErrorInvalidArgs if an argument is invalid
  * (archive format invalid, etc...)
- * ::HnyErrorNonExistant if one of the files couldn't
+ * #HnyErrorNonExistant if one of the files couldn't
  * be extracted
  */
 enum hny_error
@@ -153,8 +165,8 @@ hny_export(hny_t hny,
  * @param hny Honey prefix
  * @param geist the geist to replace
  * @param package the package portraying the geist
- * @return ::HnyErrorNone on success,
- * ::HnyErrorUnavailable if prefix busy
+ * @return #HnyErrorNone on success,
+ * #HnyErrorUnavailable if prefix busy
  */
 enum hny_error
 hny_shift(hny_t hny,
@@ -168,9 +180,9 @@ hny_shift(hny_t hny,
  * @param list pointer for returning the list,
  * should be hny_free_geister()'d if no error and not empty
  * @param len pointer for returning list length
- * @return ::HnyErrorNone on success and a list of
+ * @return #HnyErrorNone on success and a list of
  * len geister in list,
- * ::HnyErrorUnavailable if prefix busy,
+ * #HnyErrorUnavailable if prefix busy,
  * list and len untouched.
  */
 enum hny_error
@@ -185,8 +197,8 @@ hny_list(hny_t hny,
  * deactivates it.
  * @param hny Honey prefix
  * @param geist the geist to erase/deactivate
- * @return ::HnyErrorNone on success,
- * ::HnyErrorUnavailable if prefix busy
+ * @return #HnyErrorNone on success,
+ * #HnyErrorUnavailable if prefix busy
  */
 enum hny_error
 hny_erase(hny_t hny,
@@ -199,10 +211,10 @@ hny_erase(hny_t hny,
  * @param hny Honey prefix
  * @param geist the geist or package to query
  * @param target pointer for returning the final target, should be hny_free_geister()'d if no error
- * @return ::HnyErrorNone on success,
- * ::HnyErrorUnavailable if prefix busy,
- * ::HnyErrorInvalidArgs if geist isn't valid and
- * ::HnyErrorNonExistant if the status couldn't be fetched
+ * @return #HnyErrorNone on success,
+ * #HnyErrorUnavailable if prefix busy,
+ * #HnyErrorInvalidArgs if geist isn't valid and
+ * #HnyErrorNonExistant if the status couldn't be fetched
  */
 enum hny_error
 hny_status(hny_t hny,
@@ -215,8 +227,8 @@ hny_status(hny_t hny,
  * @param hny Honey prefix
  * @param action script to execute
  * @param geist the geist or package for which the script shall be executed
- * @return ::HnyErrorNone on success,
- * ::HnyErrorUnavailable if prefix busy
+ * @return #HnyErrorNone on success,
+ * #HnyErrorUnavailable if prefix busy
  */
 enum hny_error
 hny_execute(hny_t hny,
@@ -250,7 +262,7 @@ hny_free_geister(struct hny_geist *geister,
  * Checks if two geister are equals
  * @param g1 first geist
  * @param g2 second geist
- * @return ::HnyErrorNone if equals, something else else
+ * @return #HnyErrorNone if equals, something else else
  */
 enum hny_error
 hny_equals_geister(const struct hny_geist *g1,
