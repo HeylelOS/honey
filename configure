@@ -5,7 +5,7 @@
 if [ -z "$CC" ]
 then
 	for CC in clang gcc cc
-	do [ ! -z "$CC" ] && break
+	do [ ! -z `which "$CC"` ] && break
 	done
 fi
 
