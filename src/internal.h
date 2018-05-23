@@ -14,8 +14,9 @@
 #include <pthread.h>
 
 struct hny {
-	DIR *dirp;				/* export prefix */
-	char *path;				/* export prefix absolute path */
+	DIR *dirp;		/* export prefix */
+	char *path;		/* export prefix absolute path */
+	int block;		/* blocking behavior */
 
 	pthread_mutex_t mutex;
 };
