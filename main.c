@@ -356,6 +356,7 @@ int
 main(int argc,
 	char **argv) {
 	char *prefix = getenv("HNY_PREFIX");
+	int block = HNY_BLOCK;
 
 	while(argc >= 2
 		&& argv[1][0] == '-') {
@@ -363,6 +364,8 @@ main(int argc,
 		if(strcmp("--accepted-eulas", argv[1]) == 0
 			|| strcmp("-a", argv[1]) == 0) {
 			hny_already_accepted = 1;
+		} else if(strcmp("--non-blocking", argv[1]) == 0) {
+			block = HNY_NONBLOCK;
 		} else if(strncmp("--prefix=", argv[1], 9) == 0) {
 			prefix = &argv[1][9];
 		} else {
@@ -381,6 +384,8 @@ main(int argc,
 		print_error("Unable to access prefix %s\n", prefix);
 		out(HnyErrorUnavailable);
 	}
+
+	hny_locking(hny, block);
 
 	if(argc >= 2) {
 		int cmdargc = argc - 2;
