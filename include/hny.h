@@ -62,7 +62,7 @@ struct hny_geist {
 };
 
 /**
- * Listing conditions. #HnyListPackages list
+ * Listing conditions. #HnyListPackages lists
  * all packages, even unactive ones. #HnyListActive
  * lists all active packages.
  * @see hny_list
