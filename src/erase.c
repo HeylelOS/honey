@@ -52,7 +52,7 @@ hny_erase(hny_t hny,
 
 	if(hny_check_geister(geist, 1) == HnyErrorNone) {
 
-		if(hny_lock(hny)) {
+		if(hny_lock(hny) == HnyErrorNone) {
 			if(geist->version != NULL) {
 				struct dirent *entry;
 				char *name1 = malloc(MAXPATHLEN);

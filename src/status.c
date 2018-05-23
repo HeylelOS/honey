@@ -19,7 +19,7 @@ hny_status(hny_t hny,
 
 	if(hny_check_geister(geist, 1) == HnyErrorNone) {
 
-		if(hny_lock(hny)) {
+		if(hny_lock(hny) == HnyErrorNone) {
 			/* NAME_MAX because of the package dir format */
 			char *name1, *name2, *name;
 
