@@ -14,13 +14,14 @@
 #include <pthread.h>
 
 struct hny {
-	DIR *dirp;				/* export prefix */
-	char *path;				/* export prefix absolute path */
+	DIR *dirp;		/* export prefix */
+	char *path;		/* export prefix absolute path */
+	int block;		/* blocking behavior */
 
 	pthread_mutex_t mutex;
 };
 
-_Bool
+enum hny_error
 hny_lock(hny_t hny);
 
 void
@@ -33,9 +34,6 @@ ssize_t
 hny_fill_packagename(char *buf,
 	size_t bufsize,
 	const struct hny_geist *geist);
-
-enum hny_error
-hny_remove_recursive(const char *path);
 
 char *
 hny_target(int dirfd,

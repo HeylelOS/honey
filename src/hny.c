@@ -62,6 +62,8 @@ hny_create(const char *prefix) {
 		goto err_hny_create_4;
 	}
 
+	hny->block = HNY_BLOCK;
+
 	return hny;
 err_hny_create_4:
 	pthread_mutex_destroy(&hny->mutex);
@@ -91,5 +93,14 @@ hny_destroy(hny_t hny) {
 	}
 
 	free(hny);
+}
+
+void
+hny_locking(hny_t hny,
+	int block) {
+
+	pthread_mutex_lock(&hny->mutex);
+	hny->block = block;
+	pthread_mutex_unlock(&hny->mutex);
 }
 

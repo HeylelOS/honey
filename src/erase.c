@@ -13,6 +13,37 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ftw.h>
+
+static int
+hny_remove_fn(const char *path,
+	const struct stat *st,
+	int type,
+	struct FTW* ftw) {
+
+	if(remove(path) == -1) {
+#ifdef HNY_VERBOSE
+		perror("hny remove package");
+#endif
+	}
+
+	return 0;
+}
+
+static enum hny_error
+hny_remove_recursive(const char *path) {
+	enum hny_error error = HnyErrorNone;
+
+	/*
+		indeed, with the current hny_remove_fn,
+		errors are not checked
+	*/
+	if(nftw(path, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
+		error = hny_errno(errno);
+	}
+
+	return error;
+}
 
 enum hny_error
 hny_erase(hny_t hny,
@@ -21,7 +52,7 @@ hny_erase(hny_t hny,
 
 	if(hny_check_geister(geist, 1) == HnyErrorNone) {
 
-		if(hny_lock(hny)) {
+		if(hny_lock(hny) == HnyErrorNone) {
 			if(geist->version != NULL) {
 				struct dirent *entry;
 				char *name1 = malloc(MAXPATHLEN);
@@ -47,7 +78,9 @@ hny_erase(hny_t hny,
 							if(hny_equals_geister(&target, geist) == HnyErrorNone
 								&& unlinkat(dirfd(hny->dirp),
 									entry->d_name, 0) == -1) {
-								/* perror("hny remove link"); */
+#ifdef HNY_VERBOSE
+								perror("hny remove link");
+#endif
 							}
 
 							free(target.name);

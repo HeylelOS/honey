@@ -51,7 +51,9 @@ hny_spawn(hny_t hny,
 			execve(hny->path, argv, environ);
 		}
 
-		/* perror("hny"); */
+#ifdef HNY_VERBOSE
+		perror("hny execve");
+#endif
 		_Exit(HnyErrorUnavailable);
 	} else {
 		int status;
@@ -75,7 +77,7 @@ hny_execute(hny_t hny,
 
 	if(hny_check_geister(geist, 1) == HnyErrorNone) {
 
-		if(hny_lock(hny)) {
+		if(hny_lock(hny) == HnyErrorNone) {
 			char *straction;
 
 			switch(action) {

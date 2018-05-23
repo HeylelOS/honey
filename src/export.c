@@ -29,7 +29,8 @@ hny_export(hny_t hny,
 	if(aerr == ARCHIVE_OK
 		&& package->version != NULL
 		&& hny_check_geister(package, 1) == HnyErrorNone) {
-		if(hny_lock(hny)) {
+
+		if(hny_lock(hny) == HnyErrorNone) {
 			char path[MAXPATHLEN];
 			ssize_t length;
 			char *end = stpncpy(path, hny->path, MAXPATHLEN);
@@ -89,11 +90,6 @@ hny_export(hny_t hny,
 					} else {
 						error = HnyErrorNonExistant;
 					}
-				}
-
-				if(error != HnyErrorNone) {
-					path[length] = '\0';
-					hny_remove_recursive(path);
 				}
 
 				archive_write_close(aw);
