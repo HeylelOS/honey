@@ -22,7 +22,7 @@ hny_shift(hny_t hny,
 	if(hny_check_name(geist) == HnyErrorNone
 		&& hny_check_geister(package, 1) == HnyErrorNone) {
 
-		if(hny_lock(hny)) {
+		if(hny_lock(hny) == HnyErrorNone) {
 			struct stat st;
 			char name[NAME_MAX];
 

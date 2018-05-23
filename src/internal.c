@@ -7,7 +7,6 @@
 */
 #include "internal.h"
 
-#include <stdbool.h>
 #include <sys/file.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +15,7 @@
 #include <unistd.h>
 #endif
 
-_Bool
+enum hny_error
 hny_lock(hny_t hny) {
 
 	pthread_mutex_lock(&hny->mutex);
@@ -25,10 +24,10 @@ hny_lock(hny_t hny) {
 #ifdef HNY_VERBOSE
 		perror("hny flock");
 #endif
-		return false;
+		return HnyErrorUnavailable;
 	}
 
-	return true;
+	return HnyErrorNone;
 }
 
 void

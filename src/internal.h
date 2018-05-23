@@ -20,7 +20,7 @@ struct hny {
 	pthread_mutex_t mutex;
 };
 
-_Bool
+enum hny_error
 hny_lock(hny_t hny);
 
 void

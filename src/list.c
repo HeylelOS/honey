@@ -17,7 +17,7 @@ hny_list(hny_t hny,
 	size_t *len) {
 	enum hny_error error = HnyErrorNone;
 
-	if(hny_lock(hny)) {
+	if(hny_lock(hny) == HnyErrorNone) {
 		struct dirent *entry;
 		size_t alloced = 0;
 
