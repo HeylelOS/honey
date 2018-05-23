@@ -109,7 +109,7 @@ hny_destroy(hny_t hny);
 #define HNY_NONBLOCK	0	/**< The prefix is non-blocking and may be unavailable @see hny_locking */
 
 /**
- * Sets Honey prefix behavior on locking
+ * Sets Honey prefix behavior on locking, default is #HNY_BLOCK
  * @param hny Honey prefix
  * @param block the behavior to set, either #HNY_BLOCK or #HNY_NONBLOCK
  */
