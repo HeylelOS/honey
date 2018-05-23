@@ -79,7 +79,7 @@ verify(int cmdargc,
 				if(answer == 'y') {
 					print("You accepted EULA for package %s\n", file);
 				} else {
-					print("You didn't accept EULA for package %s\n", file);
+					print_error("You didn't accept EULA for package %s\n", file);
 					error = HnyErrorUnauthorized;
 				}
 			} else {
@@ -91,19 +91,17 @@ verify(int cmdargc,
 			retval = HnyErrorInvalidArgs;
 
 			switch(error) {
-			case HnyErrorNone:
-				print("File \"%s\" is verified and accepted\n");
-				break;
-			case HnyErrorInvalidArgs:
-				print_error("Cannot access file \"%s\"\n", file);
-				break;
 			case HnyErrorNonExistant:
 				print_error("File \"%s\" is not a Honey package\n", file);
 				break;
 			case HnyErrorUnavailable:
 				print_error("Cannot access eula of file \"%s\"\n", file);
 				break;
+			case HnyErrorUnauthorized:
+				print_error("Unauthorized access for file \"%s\"\n", file);
+				break;
 			default:
+				print_error("Cannot access file \"%s\"\n", file);
 				break;
 			}
 		}
@@ -233,7 +231,20 @@ erase(int cmdargc,
 					cmdargv[i]);
 				retval = HnyErrorUnavailable;
 				break;
+			case HnyErrorNonExistant:
+				print_error("Unable to erase %s, a needed resource is missing\n",
+					cmdargv[i]);
+				retval = HnyErrorNonExistant;
+				break;
+			case HnyErrorUnauthorized:
+				print_error("Unable to erase %s, unauthorized\n",
+					cmdargv[i]);
+				retval = HnyErrorUnauthorized;
+				break;
 			default:
+				print_error("Unable to erase %s\n",
+					cmdargv[i]);
+				retval = HnyErrorInvalidArgs;
 				break;
 			}
 		}
@@ -270,18 +281,20 @@ status(int cmdargc,
 					cmdargv[i]);
 				retval = HnyErrorUnavailable;
 				break;
-			case HnyErrorInvalidArgs:
-				/* Shouldn't happen */
-				print_error("Unable to status %s: geist invalid\n",
-					cmdargv[i]);
-				retval = HnyErrorInvalidArgs;
-				break;
 			case HnyErrorNonExistant:
 				print_error("Unable to status %s: the geist doesn't have a target\n",
 					cmdargv[i]);
 				retval = HnyErrorNonExistant;
 				break;
+			case HnyErrorUnauthorized:
+				print_error("Unable to status %s: unauthorized\n",
+					cmdargv[i]);
+				retval = HnyErrorUnauthorized;
+				break;
 			default:
+				print_error("Unable to status %s\n",
+					cmdargv[i]);
+				retval = HnyErrorInvalidArgs;
 				break;
 			}
 		}
@@ -308,17 +321,27 @@ execute(enum hny_action action,
 
 		for(i = 0; i < cmdargc; i++) {
 			switch(hny_execute(hny, action, &geister[i])) {
-			case HnyErrorInvalidArgs:
-				print_error("Invalid arguments to execute action for %s\n",
-					cmdargv[i]);
-				retval = HnyErrorInvalidArgs;
+			case HnyErrorNone:
 				break;
 			case HnyErrorUnavailable:
 				print_error("Missing resource to execute action for %s\n",
 					cmdargv[i]);
-				retval = HnyErrorInvalidArgs;
+				retval = HnyErrorUnavailable;
+				break;
+			case HnyErrorNonExistant:
+				print_error("Non existant resource to execute action for %s\n",
+					cmdargv[i]);
+				retval = HnyErrorNonExistant;
+				break;
+			case HnyErrorUnauthorized:
+				print_error("Unauthorized to execute action for %s\n",
+					cmdargv[i]);
+				retval = HnyErrorUnauthorized;
 				break;
 			default:
+				print_error("Invalid arguments to execute action for %s\n",
+					cmdargv[i]);
+				retval = HnyErrorInvalidArgs;
 				break;
 			}
 		}

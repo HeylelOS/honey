@@ -34,9 +34,6 @@ hny_fill_packagename(char *buf,
 	size_t bufsize,
 	const struct hny_geist *geist);
 
-enum hny_error
-hny_remove_recursive(const char *path);
-
 char *
 hny_target(int dirfd,
 	char *orig,

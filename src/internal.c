@@ -11,10 +11,8 @@
 #include <sys/file.h>
 #include <stdio.h>
 #include <string.h>
-#include <ftw.h>
 #include <errno.h>
 #ifdef __linux__
-#include <dirent.h>
 #include <unistd.h>
 #endif
 
@@ -24,7 +22,9 @@ hny_lock(hny_t hny) {
 	pthread_mutex_lock(&hny->mutex);
 
 	if(flock(dirfd(hny->dirp), LOCK_EX) == -1) {
-		/* perror("flock"); */
+#ifdef HNY_VERBOSE
+		perror("hny flock");
+#endif
 		return false;
 	}
 
@@ -91,34 +91,6 @@ hny_fill_packagename(char *buf,
 	}
 
 	return written;
-}
-
-static int
-hny_remove_fn(const char *path,
-	const struct stat *st,
-	int type,
-	struct FTW* ftw) {
-
-	if(remove(path) == -1) {
-		/* perror("hny remove package"); */
-	}
-
-	return 0;
-}
-
-enum hny_error
-hny_remove_recursive(const char *path) {
-	enum hny_error error = HnyErrorNone;
-
-	/*
-		indeed, with the current hny_remove_fn,
-		errors are not checked
-	*/
-	if(nftw(path, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
-		error = hny_errno(errno);
-	}
-
-	return error;
 }
 
 char *

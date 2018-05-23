@@ -91,11 +91,6 @@ hny_export(hny_t hny,
 					}
 				}
 
-				if(error != HnyErrorNone) {
-					path[length] = '\0';
-					hny_remove_recursive(path);
-				}
-
 				archive_write_close(aw);
 				archive_write_free(aw);
 			} else {
