@@ -173,7 +173,8 @@ list(int cmdargc,
 			usage();
 		}
 	} else {
-		retval = HnyErrorInvalidArgs;
+		print_error("Invalid number of arguments for listing\n");
+		usage();
 	}
 
 	if(retval == HnyErrorNone) {
