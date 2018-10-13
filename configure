@@ -1,6 +1,7 @@
 #!/bin/sh
 
 [ -z "$NAME" ] && NAME='hny'
+[ -z "$BUILDDIR" ] && BUILDDIR='./build'
 
 if [ -z "$CC" ]
 then
@@ -23,7 +24,7 @@ echo "Using C flags '$CFLAGS'"
 case `uname -s` in
 	# Handling two cases: mach-o and elf:
 	# ld as a linker, on macOS, no problem
-	# but on linux there was a problem
+	# but on ELF there is a problem
 	# between dynamic and static code
 	'Darwin')
 		echo 'Handling Mach-O format for macOS'
@@ -52,8 +53,8 @@ CFLAGS=$CFLAGS
 LD=$LD
 LDFLAGS=$LDFLAGS
 SHAREDFLAG=$SHAREDFLAG
-LIB=build/lib/lib\$(NAME)$LIBEXT
-BIN=build/bin/\$(NAME)
+BUILDDIR=$BUILDDIR
+LIB=\$(BUILDDIR)/lib/lib\$(NAME)$LIBEXT
 
 EOF
 

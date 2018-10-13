@@ -11,7 +11,7 @@ It keeps in mind the desire to stay embeddable without
 any compromise on its scalability. However it isn't
 meant to be used directly, you should build your
 providers around it. The command line utility is meant for
-shell script providers or advanced users.
+shell script providers, recovery or advanced users.
 
 ## Dependencies
 
@@ -19,7 +19,7 @@ The Honey library only have one non-standard dependency:
 - [libarchive](https://github.com/libarchive/libarchive), with xz and tar support
 
 Honey also depends on POSIX threads but you can be sure they
-will be present on any UNIX/Linux like distribution.
+will be available on any UNIX/Linux like distribution.
 
 ## Build
 
@@ -51,4 +51,4 @@ make tests
 ```
 There are no output comparisons for checking whether any
 problem occured, but error messages should be clear enough
-to detect them at reading.
+to detect them at sight.
