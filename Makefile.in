@@ -1,9 +1,9 @@
 HEADERS=-I./include/
+BINSOURCE=main.c
 SOURCES=$(wildcard src/*.c)
 OBJECTS=$(patsubst src/%.c, $(BUILDDIR)/obj/%.o, $(SOURCES))
 BIN=$(BUILDDIR)/bin/$(NAME)
 BUILDDIRS=$(BUILDDIR)/ $(BUILDDIR)/obj $(BUILDDIR)/bin $(BUILDDIR)/lib
-BINSOURCE=main.c
 
 .PHONY: all doc tests clean
 

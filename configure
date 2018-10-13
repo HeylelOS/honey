@@ -58,5 +58,18 @@ LIB=\$(BUILDDIR)/lib/lib\$(NAME)$LIBEXT
 
 EOF
 
+if [ ! -z "$LIBARCHIVE_DIR" ]
+then
+
+	echo "Using libarchive from directory '$LIBARCHIVE_DIR'"
+	cat <<EOF >> Makefile
+LIBARCHIVE_DIR=$LIBARCHIVE_DIR
+CFLAGS += -I\$(LIBARCHIVE_DIR)/include/
+LDFLAGS+= -L\$(LIBARCHIVE_DIR)/lib
+
+EOF
+
+fi
+
 cat Makefile.in >> Makefile
 
