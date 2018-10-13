@@ -1,7 +1,8 @@
 HEADERS=-I./include/
 SOURCES=$(wildcard src/*.c)
-OBJECTS=$(patsubst src/%.c, build/obj/%.o, $(SOURCES))
-BUILDDIRS=build/ build/obj build/bin build/lib
+OBJECTS=$(patsubst src/%.c, $(BUILDDIR)/obj/%.o, $(SOURCES))
+BIN=$(BUILDDIR)/bin/$(NAME)
+BUILDDIRS=$(BUILDDIR)/ $(BUILDDIR)/obj $(BUILDDIR)/bin $(BUILDDIR)/lib
 BINSOURCE=main.c
 
 .PHONY: all doc tests clean
@@ -10,17 +11,17 @@ all: $(BUILDDIRS) $(BIN)
 
 doc: $(BUILDDIRS)
 	doxygen doc/Doxyfile
-	cp -r doc/man1/ build/man/
-	mv build/man/man3/hny.h.3 build/man/man3/hny.3
-	rm build/man/man3/_*
+	cp -r doc/man1/ $(BUILDDIR)/man/
+	mv $(BUILDDIR)/man/man3/hny.h.3 $(BUILDDIR)/man/man3/hny.3
+	rm $(BUILDDIR)/man/man3/_*
 
 tests: all
 	./tests/run.sh
 
 clean:
-	rm -rf build/
+	rm -rf $(BUILDDIR)
 
-build/obj/%.o: src/%.c
+$(BUILDDIR)/obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $(HEADERS) -fPIC -o $@ -c $<
 
 $(BUILDDIRS):
@@ -32,5 +33,5 @@ $(LIB): $(OBJECTS)
 	$(LD) $(SHAREDFLAG) -o $@ $^ $(LDFLAGS)
 
 $(BIN): $(BINSOURCE) $(LIB)
-	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(NAME) -L./build/lib
+	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(NAME) -L./$(BUILDDIR)/lib
 
