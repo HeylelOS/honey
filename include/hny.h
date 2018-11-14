@@ -198,6 +198,9 @@ hny_list(hny_t hny,
  * @param geist the geist to erase/deactivate
  * @return #HnyErrorNone on success,
  * #HnyErrorUnavailable if prefix busy
+ * #HnyErrorNonExistant if a ressource doesn't exist
+ * #HnyErrorInvalidArgs if a filename is too long or too much symlinks...
+ * #HnyErrorUnauthorized if not authorized
  */
 enum hny_error
 hny_erase(hny_t hny,
