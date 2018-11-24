@@ -2,7 +2,7 @@
 	execute.c
 	Copyright (c) 2018, Valentin Debon
 
-	This file is part of the Honey package manager
+	This file is part of the honey package manager
 	subject the BSD 3-Clause License, see LICENSE.txt
 */
 #include "internal.h"
@@ -39,13 +39,13 @@ hny_spawn(hny_t hny,
 
 		hny->path[length] = '/';
 		length++;
-		length += hny_fill_packagename(&hny->path[length],
+		length += hny_fill_packagename(hny->path + length,
 			MAXPATHLEN - length, geist);
 
 		if(length > 0
 			&& chdir(hny->path) == 0) {
 
-			snprintf(&hny->path[length], MAXPATHLEN - length,
+			snprintf(hny->path + length, MAXPATHLEN - length,
 				"/hny/%s", name);
 
 			execve(hny->path, argv, environ);

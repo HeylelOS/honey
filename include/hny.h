@@ -2,7 +2,7 @@
 	hny.h
 	Copyright (c) 2018, Valentin Debon
 
-	This file is part of the Honey package manager
+	This file is part of the honey package manager
 	subject the BSD 3-Clause License, see LICENSE.txt
 */
 #ifndef HNY_H
@@ -15,8 +15,8 @@
 #include <sys/types.h>
 
 /**
- * @mainpage Honey package manager
- * Honey is intended to be a unix-like OS package manager,
+ * @mainpage honey package manager
+ * honey is intended to be a unix-like OS package manager,
  * archive structure format for packages.
  * It is distributed under BSD 3-Clause license.
  *
@@ -31,14 +31,14 @@
  */
 
 /**
- * Opaque data type to represent a Honey prefix
+ * Opaque data type to represent a honey prefix
  * thread-safe through the library
  */
 typedef struct hny *hny_t;
 
 /**
  * enum type to represent errors, numeric values
- * are used as error codes for Honey packages scripts
+ * are used as error codes for honey packages scripts
  */
 enum hny_error {
 	HnyErrorNone = 0,		/**< No error occured */
@@ -47,7 +47,6 @@ enum hny_error {
 	HnyErrorNonExistant = 3,	/**< Something is missing, procedure dependant */
 	HnyErrorUnauthorized = 4	/**< The user lacks privileges */
 };
-
 
 /**
  * Internal representation of a geist,
@@ -73,7 +72,7 @@ enum hny_listing {
 };
 
 /**
- * List of valid Honey package scripts,
+ * List of valid honey package scripts,
  * see the package file format for further informations
  * @see hny_execute
  */
@@ -90,17 +89,17 @@ enum hny_action {
 *********************/
 
 /**
- * Hook on a Honey prefix
+ * Hook on a honey prefix
  * @param prefix prefix directory
- * @return A valid Honey prefix, which MUST be closed with
+ * @return A valid honey prefix, which MUST be closed with
  * hny_destroy() on success. NULL on error.
  */
 hny_t
 hny_create(const char *prefix);
 
 /**
- * Unhook a Honey prefix
- * @param hny Honey prefix to close
+ * Unhook a honey prefix
+ * @param hny honey prefix to close
  */
 void
 hny_destroy(hny_t hny);
@@ -109,8 +108,8 @@ hny_destroy(hny_t hny);
 #define HNY_NONBLOCK	0	/**< The prefix is non-blocking and may be unavailable @see hny_locking */
 
 /**
- * Sets Honey prefix behavior on locking, default is #HNY_BLOCK
- * @param hny Honey prefix
+ * Sets honey prefix behavior on locking, default is #HNY_BLOCK
+ * @param hny honey prefix
  * @param block the behavior to set, either #HNY_BLOCK or #HNY_NONBLOCK
  */
 void
@@ -123,7 +122,7 @@ hny_locking(hny_t hny,
 
 /**
  * Checks archive integrity
- * @param hny Honey prefix
+ * @param hny honey prefix
  * @param file file to verify
  * @param eula pointer for returning a buffer to the end user license agreement,
  * should be free()'d if no error
@@ -144,7 +143,7 @@ hny_verify(hny_t hny,
  * Deflates the package in the associated prefix, if the
  * user running this function has effective user id 0,
  * owners will be extracted from the archive.
- * @param hny Honey prefix
+ * @param hny honey prefix
  * @param file archive to deflate, MUST have been hny_verify()'d
  * and the user MUST have accepted the eula
  * @param package the package installed, name and version provided
@@ -162,7 +161,7 @@ hny_export(hny_t hny,
 
 /**
  * Replaces a geist by a package
- * @param hny Honey prefix
+ * @param hny honey prefix
  * @param geist the geist to replace
  * @param package the package portraying the geist
  * @return #HnyErrorNone on success,
@@ -175,7 +174,7 @@ hny_shift(hny_t hny,
 
 /**
  * Lists all packages following condition
- * @param hny Honey prefix
+ * @param hny honey prefix
  * @param listing the listing condition
  * @param list pointer for returning the list,
  * should be hny_free_geister()'d if no error and not empty
@@ -192,10 +191,10 @@ hny_list(hny_t hny,
 	size_t *len);
 
 /**
- * Erases the package from prefix, remove all files and
- * dereference everywhere possible. If its an active geist,
- * deactivates it.
- * @param hny Honey prefix
+ * Erases the package from prefix, remove all files.
+ * Note: Doesn't dereference its references.
+ * If its an active geist, deactivates it.
+ * @param hny honey prefix
  * @param geist the geist to erase/deactivate
  * @return #HnyErrorNone on success,
  * #HnyErrorUnavailable if prefix busy
@@ -211,7 +210,7 @@ hny_erase(hny_t hny,
  * Status follows the symlinks and/or file in the
  * prefix until it finds a problem or a package
  * directory, if it finds a broken symlink it will unlink it
- * @param hny Honey prefix
+ * @param hny honey prefix
  * @param geist the geist or package to query
  * @param target pointer for returning the final target, should be hny_free_geister()'d if no error
  * @return #HnyErrorNone on success,
@@ -227,7 +226,7 @@ hny_status(hny_t hny,
 /**
  * Executes the assiociated the given script associated to geist
  * the script will be chdir'd into the package prefix
- * @param hny Honey prefix
+ * @param hny honey prefix
  * @param action script to execute
  * @param geist the geist or package for which the script shall be executed
  * @return #HnyErrorNone on success,

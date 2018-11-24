@@ -1,4 +1,4 @@
-PROJECT_NAME = Honey
+PROJECT_NAME = honey
 EXTRACT_ALL = YES
 INPUT = include/hny.h
 OUTPUT_DIRECTORY = build/

@@ -2,7 +2,7 @@
 	internal.c
 	Copyright (c) 2018, Valentin Debon
 
-	This file is part of the Honey package manager
+	This file is part of the honey package manager
 	subject the BSD 3-Clause License, see LICENSE.txt
 */
 #include "internal.h"
@@ -78,7 +78,7 @@ hny_fill_packagename(char *buf,
 			"%s-%s", geist->name, geist->version);
 
 		if(end < 0
-			|| &buf[end] >= &buf[bufsize]) {
+			|| buf + end >= buf + bufsize) {
 			return -1;
 		}
 

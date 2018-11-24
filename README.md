@@ -1,8 +1,8 @@
-# Honey
+# honey
   
-Honey is intended to be a unix-like OS package manager and
+honey is intended to be a unix-like OS package manager and
 archive structure format for packages. It is distributed under BSD 3-Clause
-license, see [LICENSE.txt](https://github.com/ValentinDebon/Honey/blob/master/LICENSE.txt).
+license, see [LICENSE.txt](https://github.com/ValentinDebon/honey/blob/master/LICENSE.txt).
 
 It is meant to be composed of an ansi C library and
 a command line utility.
@@ -15,10 +15,10 @@ shell script providers, recovery or advanced users.
 
 ## Dependencies
 
-The Honey library only have one non-standard dependency:
+The honey library only have one non-standard dependency:
 - [libarchive](https://github.com/libarchive/libarchive), with xz and tar support
 
-Honey also depends on POSIX threads but you can be sure they
+honey also depends on POSIX threads but you can be sure they
 will be available on any UNIX/Linux like distribution.
 
 ## Build
