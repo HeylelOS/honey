@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
 #define DEFAULT		"\x1b[0m"
@@ -74,6 +75,7 @@ verify(int cmdargc,
 				int answer;
 
 				print(BOLD "EULA" DEFAULT ":\n%*s\nDo you accept it? [y/N] ", len, eula);
+				fflush(stdout);
 
 				answer = getchar();
 				if(answer == 'y') {
@@ -97,10 +99,7 @@ verify(int cmdargc,
 			case HnyErrorUnavailable:
 				print_error("Cannot access eula of file \"%s\"\n", file);
 				break;
-			case HnyErrorUnauthorized:
-				print_error("Unauthorized access for file \"%s\"\n", file);
-				break;
-			default:
+			default: /* HnyErrorInvalidArgs */
 				print_error("Cannot access file \"%s\"\n", file);
 				break;
 			}
@@ -127,7 +126,17 @@ export(int cmdargc,
 	if((error = hny_export(hny, cmdargv[0], package)) == HnyErrorNone) {
 		print("%s exported as %s\n", cmdargv[0], cmdargv[1]);
 	} else {
-		print_error("Unable to export honey package\n");
+		switch(error) {
+		case HnyErrorUnavailable:
+			print_error("Cannot export \"%s\", prefix busy\n", cmdargv[0]);
+			break;
+		case HnyErrorInvalidArgs:
+			print_error("Cannot export \"%s\", invalid integrity\n", cmdargv[0]);
+			break;
+		default: /* HnyErrorNonExistant */
+			print_error("Cannot export \"%s\", one of the file couldn't be extracted\n", cmdargv[0]);
+			break;
+		}
 		out(error);
 	}
 
