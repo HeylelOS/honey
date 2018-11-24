@@ -4,6 +4,7 @@ SOURCES=$(wildcard src/*.c)
 OBJECTS=$(patsubst src/%.c, $(BUILDDIR)/obj/%.o, $(SOURCES))
 BIN=$(BUILDDIR)/bin/$(NAME)
 BUILDDIRS=$(BUILDDIR)/ $(BUILDDIR)/obj $(BUILDDIR)/bin $(BUILDDIR)/lib
+TESTDIR=tests/prefix
 
 .PHONY: all doc tests clean
 
@@ -15,16 +16,20 @@ doc: $(BUILDDIRS)
 	mv $(BUILDDIR)/man/man3/hny.h.3 $(BUILDDIR)/man/man3/hny.3
 	rm $(BUILDDIR)/man/man3/_*
 
-tests: all
-	./tests/run.sh
+tests: $(TESTDIR) all
+	./tests/clitests/run.sh $(TESTDIR)
 
 clean:
 	rm -rf $(BUILDDIR)
+	rm -rf $(TESTDIR)
 
 $(BUILDDIR)/obj/%.o: src/%.c
 	$(CC) $(CFLAGS) $(HEADERS) -fPIC -o $@ -c $<
 
 $(BUILDDIRS):
+	mkdir $@
+
+$(TESTDIR):
 	mkdir $@
 
 $(OBJECTS): $(SOURCES)

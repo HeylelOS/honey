@@ -2,7 +2,7 @@
 	export.c
 	Copyright (c) 2018, Valentin Debon
 
-	This file is part of the Honey package manager
+	This file is part of the honey package manager
 	subject the BSD 3-Clause License, see LICENSE.txt
 */
 #include "internal.h"
@@ -36,7 +36,7 @@ hny_export(hny_t hny,
 			char *end = stpncpy(path, hny->path, MAXPATHLEN);
 
 			length = hny_fill_packagename(&end[1],
-				&path[MAXPATHLEN] - end - 1, package);
+				path + MAXPATHLEN - end - 1, package);
 			if(length > 0) {
 				struct archive *aw;
 				struct archive_entry *entry;
