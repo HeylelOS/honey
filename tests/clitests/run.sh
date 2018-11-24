@@ -11,7 +11,7 @@ hnytest() {
 echo "Testing prefix $HNY_PREFIX"
 
 echo "Verifying test archives"
-hnytest hny verify -a "tests/clitests/test1.hny" "tests/clitests/test2.hny"
+hnytest hny -a verify "tests/clitests/test1.hny" "tests/clitests/test2.hny"
 
 echo "Exporting test archives"
 hnytest hny export "tests/clitests/test1.hny" "test1-0.0.1"
@@ -48,4 +48,4 @@ hnytest hny clean "test1" "test2"
 echo "Erasing"
 hnytest hny erase "test1-0.0.1" "test2-0.0.1"
 
-return 0
+exit 0

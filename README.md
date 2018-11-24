@@ -49,6 +49,3 @@ You should be able to run tests by executing:
 ```sh
 make tests
 ```
-There are no output comparisons for checking whether any
-problem occured, but error messages should be clear enough
-to detect them at sight.
