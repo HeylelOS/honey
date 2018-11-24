@@ -2,7 +2,7 @@
 	main.c
 	Copyright (c) 2018, Valentin Debon
 
-	This file is part of the Honey package manager
+	This file is part of the honey package manager
 	subject the BSD 3-Clause License, see LICENSE.txt
 */
 #include <hny.h>
@@ -92,7 +92,7 @@ verify(int cmdargc,
 
 			switch(error) {
 			case HnyErrorNonExistant:
-				print_error("File \"%s\" is not a Honey package\n", file);
+				print_error("File \"%s\" is not a honey package\n", file);
 				break;
 			case HnyErrorUnavailable:
 				print_error("Cannot access eula of file \"%s\"\n", file);
@@ -127,7 +127,7 @@ export(int cmdargc,
 	if((error = hny_export(hny, cmdargv[0], package)) == HnyErrorNone) {
 		print("%s exported as %s\n", cmdargv[0], cmdargv[1]);
 	} else {
-		print_error("Unable to export Honey package\n");
+		print_error("Unable to export honey package\n");
 		out(error);
 	}
 
@@ -149,7 +149,7 @@ shift(int cmdargc,
 	if((error = hny_shift(hny, cmdargv[0], package)) == HnyErrorNone) {
 		print("%s shifted for %s\n", cmdargv[0], cmdargv[1]);
 	} else {
-		print_error("Unable to shift Honey package\n");
+		print_error("Unable to shift honey package\n");
 		out(error);
 	}
 
