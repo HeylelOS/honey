@@ -1,8 +1,112 @@
 #!/bin/sh
 
+for arg in $@
+do
+	if echo "$arg" | grep -Eq '^[A-Z]+=.+$'
+	then
+		# The following is not secure at all
+		eval "$arg"
+	else
+		case `echo "$arg" | cut -d'=' -f1` in
+		'-h' | '--help')
+			cat <<EOF
+\`configure' configures this package to adapt to many kinds of systems.
+
+Usage: ./configure [OPTION]... [VAR=VALUE]...
+
+To assign environment variables (e.g., CC, CFLAGS...), specify them as
+VAR=VALUE.  See below for descriptions of some of the useful variables.
+
+Defaults for the options are specified in brackets.
+
+Configuration:
+  -h, --help              display this help and exit
+
+Installation directories:
+  --prefix=PREFIX         install architecture-independent files in PREFIX
+                          [/usr/local]
+
+By default, \`make install' will install all the files in
+\`/usr/local/bin', \`/usr/local/lib' etc.  You can specify
+an installation prefix other than \`/usr/local' using \`--prefix',
+for instance \`--prefix=\$HOME'.
+
+For better control, use the options below.
+
+Fine tuning of the installation directories:
+  --bindir=DIR               user executables [PREFIX/bin]
+  --libdir=DIR               user library [PREFIX/lib]
+  --mandir=DIR               manpages documentation [PREFIX/man]
+
+Optional Features:
+  --enable-verbose           Enable error messages from honey library.
+
+Optional Packages:
+  --with-libarchive=library  archive library to be used [archive]
+  --with-pthread=library     pthread library to be used [pthread]
+
+Some influential environment variables:
+  NAME            honey executable and library name
+  CC              C compiler command, default in clang gcc cc
+  CFLAGS          C compiler flags, default -O3 -ansi -pedantic -Wall
+  HEADERS         where to look for headers, default -I./include
+  LD              linker to use, default \$CC
+  LDFLAGS         linker flags, e.g. -L<lib dir> if you have libraries in a
+                  nonstandard directory <lib dir>.
+  LIBS            libraries to pass to the linker, e.g. -l<library>
+  LIBARCHIVE      if set, where to find headers and binaries for libarchive,
+                  default /usr/include
+  BUILDDIR        where the binaries and documentations will be built
+
+Use these variables to override the choices made by \`configure' or to help
+it to find libraries and programs with nonstandard names/locations.
+
+Report bugs to the package provider.
+EOF
+			exit 0
+			;;
+		'--prefix')
+			PREFIX=`echo "$arg" | cut -d'=' -f2-`
+			;;
+		'--bindir')
+			BINDIR=`echo "$arg" | cut -d'=' -f2-`
+			;;
+		'--libdir')
+			LIBDIR=`echo "$arg" | cut -d'=' -f2-`
+			;;
+		'--mandir')
+			MANDIR=`echo "$arg" | cut -d'=' -f2-`
+			;;
+		'--enable-verbose')
+			HNY_VERBOSE=0
+			;;
+		'--with-libarchive')
+			WITH_LIBARCHIVE=`echo "$arg" | cut -d'=' -f2-`
+			;;
+		'--with-pthread')
+			WITH_PTHREAD=`echo "$arg" | cut -d'=' -f2-`
+			;;
+		*)
+			echo "Unknown option: $arg"
+			;;
+		esac
+	fi
+done
+
+[ -z "$PREFIX" ] && PREFIX='/usr/local'
+[ -z "$BINDIR" ] && BINDIR="$PREFIX/bin"
+[ -z "$LIBDIR" ] && LIBDIR="$PREFIX/lib"
+[ -z "$MANDIR" ] && MANDIR="$PREFIX/man"
+[ -z "$WITH_LIBARCHIVE" ] && WITH_LIBARCHIVE='archive'
+[ -z "$WITH_PTHREAD" ] && WITH_PTHREAD='pthread'
+
+# NAME
 [ -z "$NAME" ] && NAME='hny'
+
+# BUILDDIR
 [ -z "$BUILDDIR" ] && BUILDDIR='./build'
 
+# CC
 if [ -z "$CC" ]
 then
 	for CC in clang gcc cc
@@ -17,59 +121,78 @@ else
 	exit 1
 fi
 
+# CFLAGS
 [ -z "$CFLAGS" ] && CFLAGS="-O3 -ansi -pedantic -Wall"
 
 echo "Using C flags '$CFLAGS'"
 
+[ -z "$HEADERS" ] && HEADERS='-I./include'
+
+# LD
+[ -z "$LD" ] && LD="$CC"
 case `uname -s` in
-	# Handling two cases: mach-o and elf:
-	# ld as a linker, on macOS, no problem
-	# but on ELF there is a problem
-	# between dynamic and static code
+	# Handling two cases: mach-o and elf
 	'Darwin')
 		echo 'Handling Mach-O format for macOS'
-		SHAREDFLAG='-dylib -macosx_version_min 10.13'
-		LD=ld
-		LIBEXT=".dylib"
+		LD_SHAREDFLAG='-dylib -macosx_version_min 10.13'
+		LD_LIBEXT='.dylib'
 		;;
 	*)
 		echo 'Handling ELF format for any UNIX/Linux'
-		SHAREDFLAG='-shared'
-		LD="$CC"
-		LIBEXT=".so"
+		LD_SHAREDFLAG='-shared'
+		LD_LIBEXT='.so'
 		;;
 esac
 
 echo "Using Linker '$LD'"
 
-[ -z "$LDFLAGS" ] && LDFLAGS='-lpthread -larchive'
+# LDFLAGS
 
-echo "Using Linker flags '$LDFLAGS'"
+# LIBS
+[ -z "$LIBS" ] && LIBS="-l$WITH_LIBARCHIVE -l$WITH_PTHREAD"
+
+echo "Using Linker flags ldflags: '$LDFLAGS', libs: '$LIBS'"
 
 cat <<EOF > Makefile
 NAME=$NAME
+
 CC=$CC
 CFLAGS=$CFLAGS
+HEADERS=$HEADERS
 LD=$LD
+LD_SHAREDFLAG=$LD_SHAREDFLAG
 LDFLAGS=$LDFLAGS
-SHAREDFLAG=$SHAREDFLAG
+LIBS=$LIBS
+
+BINSOURCE=main.c
+SOURCES=\$(wildcard src/*.c)
+OBJECTS=\$(patsubst src/%.c, \$(BUILDDIR)/obj/%.o, \$(SOURCES))
+
 BUILDDIR=$BUILDDIR
-LIB=\$(BUILDDIR)/lib/lib\$(NAME)$LIBEXT
+BUILDDIRS=\$(BUILDDIR)/ \$(BUILDDIR)/obj \$(BUILDDIR)/bin \$(BUILDDIR)/lib
+LIB=\$(BUILDDIR)/lib/lib\$(NAME)$LD_LIBEXT
+BIN=\$(BUILDDIR)/bin/\$(NAME)
 
+TESTDIR=tests/prefix
+
+INSTALLPREFIX=$PREFIX
+INSTALLBINDIR=$BINDIR
+INSTALLLIBDIR=$LIBDIR
+INSTALLMANDIR=$MANDIR
+INSTALLDIRS=\$(PREFIX) \$(BINDIR) \$(LIBDIR) \$(MANDIR)
 EOF
 
-if [ ! -z "$LIBARCHIVE_DIR" ]
+# LIBARCHIVEDIR
+if [ ! -z "$LIBARCHIVE" ]
 then
-
-	echo "Using libarchive from directory '$LIBARCHIVE_DIR'"
-	cat <<EOF >> Makefile
-LIBARCHIVE_DIR=$LIBARCHIVE_DIR
-CFLAGS += -I\$(LIBARCHIVE_DIR)/include/
-LDFLAGS+= -L\$(LIBARCHIVE_DIR)/lib
-
-EOF
-
+	echo "CFLAGS += -I$LIBARCHIVE" >> Makefile
 fi
 
-cat Makefile.in >> Makefile
+# HNY_VERBOSE
+if [ ! -z "$HNY_VERBOSE" ]
+then
+	echo 'CFLAGS += -DHNY_VERBOSE' >> Makefile
+fi
+
+cat Makefile.part >> Makefile
 
