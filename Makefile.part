@@ -1,7 +1,14 @@
 
-.PHONY: all doc tests clean
+.PHONY: all install installdoc doc tests clean
 
 all: $(BUILDDIRS) $(BIN)
+
+install: $(INSTALLDIRS) $(BIN)
+	cp -r $(BUILDDIR)/bin/* $(INSTALLBINDIR)
+	cp -r $(BUILDDIR)/lib/* $(INSTALLLIBDIR)
+
+installdoc: $(INSTALLDIRS) doc
+	cp -r $(BUILDDIR)/man/* $(INSTALLMANDIR)
 
 doc: $(BUILDDIRS)
 	doxygen doc/Doxyfile
@@ -25,11 +32,14 @@ $(BUILDDIRS):
 $(TESTDIR):
 	mkdir $@
 
+$(INSTALLDIRS):
+	mkdir $@
+
 $(OBJECTS): $(SOURCES)
 
 $(LIB): $(OBJECTS)
-	$(LD) $(LD_SHAREDFLAG) -o $@ $^ $(LDFLAGS)
+	$(LD) $(LD_SHAREDFLAG) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 $(BIN): $(BINSOURCE) $(LIB)
-	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(NAME) -L./$(BUILDDIR)/lib
+	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(NAME) -L$(BUILDDIR)/lib
 
