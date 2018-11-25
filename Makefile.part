@@ -24,7 +24,7 @@ clean:
 	rm -rf $(TESTDIR)
 
 $(BUILDDIR)/obj/%.o: src/%.c
-	$(CC) $(CFLAGS) $(HEADERS) -fPIC -o $@ -c $<
+	$(CC) $(CFLAGS) -fPIC -o $@ -c $<
 
 $(BUILDDIRS):
 	mkdir $@
@@ -41,5 +41,5 @@ $(LIB): $(OBJECTS)
 	$(LD) $(LD_SHAREDFLAG) -o $@ $^ $(LDFLAGS) $(LIBS)
 
 $(BIN): $(BINSOURCE) $(LIB)
-	$(CC) $(CFLAGS) $(HEADERS) -o $@ $< -l$(NAME) -L$(BUILDDIR)/lib
+	$(CC) $(CFLAGS) -o $@ $< -l$(NAME) -L$(BUILDDIR)/lib
 
