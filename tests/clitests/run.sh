@@ -11,41 +11,41 @@ hnytest() {
 echo "Testing prefix $HNY_PREFIX"
 
 echo "Verifying test archives"
-hnytest hny -a verify "tests/clitests/test1.hny" "tests/clitests/test2.hny"
+hnytest ./build/bin/hny -a verify "tests/clitests/test1.hny" "tests/clitests/test2.hny"
 
 echo "Exporting test archives"
-hnytest hny export "tests/clitests/test1.hny" "test1-0.0.1"
-hnytest hny export "tests/clitests/test2.hny" "test2-0.0.1"
+hnytest ./build/bin/hny export "tests/clitests/test1.hny" "test1-0.0.1"
+hnytest ./build/bin/hny export "tests/clitests/test2.hny" "test2-0.0.1"
 
 echo "Shifting test archives"
-hnytest hny shift "test1" "test1-0.0.1"
-hnytest hny shift "test2" "test2-0.0.1"
+hnytest ./build/bin/hny shift "test1" "test1-0.0.1"
+hnytest ./build/bin/hny shift "test2" "test2-0.0.1"
 
 echo "Statuses"
-hnytest hny status "test1" "test2"
+hnytest ./build/bin/hny status "test1" "test2"
 
 echo "Setups"
-hnytest hny setup "test1" "test2"
+hnytest ./build/bin/hny setup "test1" "test2"
 
 echo "Testing links above links"
-hnytest hny shift "test" "test1"
-hnytest hny status "test"
-hnytest hny erase "test"
+hnytest ./build/bin/hny shift "test" "test1"
+hnytest ./build/bin/hny status "test"
+hnytest ./build/bin/hny erase "test"
 
 echo "Listing active"
-hnytest hny list active
+hnytest ./build/bin/hny list active
 echo "Listing packages"
-hnytest hny list packages
+hnytest ./build/bin/hny list packages
 
 echo "Testing links above links"
-hnytest hny shift "test" "test2"
-hnytest hny status "test"
-hnytest hny erase "test"
+hnytest ./build/bin/hny shift "test" "test2"
+hnytest ./build/bin/hny status "test"
+hnytest ./build/bin/hny erase "test"
 
 echo "Cleans"
-hnytest hny clean "test1" "test2"
+hnytest ./build/bin/hny clean "test1" "test2"
 
 echo "Erasing"
-hnytest hny erase "test1-0.0.1" "test2-0.0.1"
+hnytest ./build/bin/hny erase "test1-0.0.1" "test2-0.0.1"
 
 exit 0

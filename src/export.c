@@ -35,7 +35,7 @@ hny_export(hny_t hny,
 			ssize_t length;
 			char *end = stpncpy(path, hny->path, MAXPATHLEN);
 
-			length = hny_fill_packagename(&end[1],
+			length = hny_fill_packagename(end + 1,
 				path + MAXPATHLEN - end - 1, package);
 			if(length > 0) {
 				struct archive *aw;
