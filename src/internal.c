@@ -87,7 +87,7 @@ hny_fill_packagename(char *buf,
 		char *end = stpncpy(buf,
 			geist->name, bufsize);
 
-		if(end >= &buf[bufsize]) {
+		if(end >= buf + bufsize) {
 			return -1;
 		}
 
