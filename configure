@@ -2,7 +2,7 @@
 
 for arg in $@
 do
-	if echo "$arg" | grep -Eq '^[A-Z]+=.+$'
+	if echo "$arg" | grep -Eq '[A-Z]+=.+'
 	then
 		# The following is not secure at all
 		eval "$arg"
