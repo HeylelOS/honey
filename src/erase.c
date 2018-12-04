@@ -10,6 +10,7 @@
 #include <stdio.h> /* remove() */
 #include <unistd.h> /* unlinkat() */
 #include <sys/param.h> /* MAXPATHLEN, NAME_MAX */
+#include <sys/resource.h> /* getrlimit() */
 #include <string.h>
 #include <alloca.h>
 #include <errno.h>
@@ -19,7 +20,7 @@ static int
 hny_remove_fn(const char *path,
 	const struct stat *st,
 	int type,
-	struct FTW* ftw) {
+	struct FTW *ftw) {
 
 	if(remove(path) == -1) {
 #ifdef HNY_VERBOSE
@@ -34,8 +35,19 @@ hny_remove_fn(const char *path,
 static enum hny_error
 hny_remove_recursive(const char *path) {
 	enum hny_error error = HnyErrorNone;
+	struct rlimit rl;
+	int fd_limit;
 
-	if(nftw(path, hny_remove_fn, 1, FTW_DEPTH | FTW_PHYS) != 0) {
+	if(getrlimit(RLIMIT_NOFILE, &rl) == 0) {
+		fd_limit = rl.rlim_cur;
+	} else {
+#ifdef HNY_VERBOSE
+		perror("hny erase getrlimit");
+#endif
+		fd_limit = 1024; /* Arbitrary limit, better than panic */
+	}
+
+	if(nftw(path, hny_remove_fn, fd_limit, FTW_DEPTH | FTW_PHYS) != 0) {
 		error = hny_errno(errno);
 	}
 
