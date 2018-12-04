@@ -62,7 +62,7 @@ verify(int cmdargc,
 	char **cmdargv) {
 	enum hny_error error, retval = HnyErrorNone;
 	char **iterator = cmdargv;
-	char **end = &cmdargv[cmdargc];
+	char **end = cmdargv + cmdargc;
 
 	while(iterator != end) {
 		char *file = *iterator;
@@ -118,7 +118,7 @@ export(int cmdargc,
 	struct hny_geist *package;
 
 	if(cmdargc != 2
-		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
+		|| (package = hny_alloc_geister((const char **)(cmdargv + 1), 1)) == NULL) {
 		print_error(BOLD MAGENTA "expected" DEFAULT ": hny export [package file] [package name]\n");
 		out(HnyErrorInvalidArgs);
 	}
@@ -150,7 +150,7 @@ shift(int cmdargc,
 	struct hny_geist *package;
 
 	if(cmdargc != 2
-		|| (package = hny_alloc_geister((const char **)&cmdargv[1], 1)) == NULL) {
+		|| (package = hny_alloc_geister((const char **)(cmdargv + 1), 1)) == NULL) {
 		print_error(BOLD MAGENTA "expected" DEFAULT ": hny shift [target geist] [source geist]\n");
 		out(HnyErrorInvalidArgs);
 	}
@@ -191,7 +191,7 @@ list(int cmdargc,
 
 		if(hny_list(hny, list, &geister, &len) == HnyErrorNone) {
 			struct hny_geist *iterator = geister,
-				*end = &geister[len];
+				*end = geister + len;
 
 			while(iterator != end) {
 				if(iterator->version != NULL) {
@@ -227,7 +227,7 @@ erase(int cmdargc,
 		int i;
 
 		for(i = 0; i < cmdargc; i++) {
-			switch(hny_erase(hny, &geister[i])) {
+			switch(hny_erase(hny, geister + i)) {
 			case HnyErrorNone:
 				if(geister[i].version == NULL) {
 					print("Geist %s unlinked\n", geister[i].name);
@@ -281,7 +281,7 @@ status(int cmdargc,
 		for(i = 0; i < cmdargc; i++) {
 			struct hny_geist *target;
 
-			switch(hny_status(hny, &geister[i], &target)) {
+			switch(hny_status(hny, geister + i, &target)) {
 			case HnyErrorNone:
 				print("%s-%s\n", target->name, target->version);
 				hny_free_geister(target, 1);
@@ -330,7 +330,7 @@ execute(enum hny_action action,
 		int i;
 
 		for(i = 0; i < cmdargc; i++) {
-			switch(hny_execute(hny, action, &geister[i])) {
+			switch(hny_execute(hny, action, geister + i)) {
 			case HnyErrorNone:
 				break;
 			case HnyErrorUnavailable:
@@ -399,7 +399,7 @@ main(int argc,
 
 	if(argc >= 2) {
 		int cmdargc = argc - 2;
-		char **cmdargv = &argv[2];
+		char **cmdargv = argv + 2;
 		char *cmd = argv[1];
 
 		if(strcmp("verify", cmd) == 0) {

@@ -2,7 +2,7 @@
 
 for arg in $@
 do
-	if echo "$arg" | grep -Eq '^[A-Z]+=.+$'
+	if echo "$arg" | grep -Eq '[A-Z]+=.+'
 	then
 		# The following is not secure at all
 		eval "$arg"
@@ -49,12 +49,12 @@ Some influential environment variables:
   NAME            honey executable and library name
   CC              C compiler command, default in clang gcc cc
   CFLAGS          C compiler flags, default -O3 -ansi -pedantic -Wall
-  HEADERS         where to look for headers, default -I./include
+  HEADERS         where to look for headers, default -I./include (for hny.h)
   LD              linker to use, default \$CC
   LDFLAGS         linker flags, e.g. -L<lib dir> if you have libraries in a
                   nonstandard directory <lib dir>.
   LIBS            libraries to pass to the linker, e.g. -l<library>
-  LIBARCHIVE      if set, where to find headers and binaries for libarchive,
+  LIBARCHIVE      if set, where to find headers for libarchive,
                   default /usr/include
   BUILDDIR        where the binaries and documentations will be built
 
@@ -147,6 +147,7 @@ esac
 echo "Using Linker '$LD'"
 
 # LDFLAGS
+# None default
 
 # LIBS
 [ -z "$LIBS" ] && LIBS="-l$WITH_LIBARCHIVE -l$WITH_PTHREAD"
@@ -157,8 +158,7 @@ cat <<EOF > Makefile
 NAME=$NAME
 
 CC=$CC
-CFLAGS=$CFLAGS
-HEADERS=$HEADERS
+CFLAGS=$CFLAGS $HEADERS
 LD=$LD
 LD_SHAREDFLAG=$LD_SHAREDFLAG
 LDFLAGS=$LDFLAGS
@@ -181,10 +181,10 @@ INSTALLMANDIR=$MANDIR
 INSTALLDIRS=\$(INSTALLBINDIR) \$(INSTALLLIBDIR) \$(INSTALLMANDIR)
 EOF
 
-# LIBARCHIVEDIR
+# LIBARCHIVE
 if [ ! -z "$LIBARCHIVE" ]
 then
-	echo "CFLAGS += -I$LIBARCHIVE" >> Makefile
+	echo "HEADERS += -I$LIBARCHIVE" >> Makefile
 fi
 
 # HNY_VERBOSE
