@@ -36,18 +36,18 @@ static enum hny_error
 hny_remove_recursive(const char *path) {
 	enum hny_error error = HnyErrorNone;
 	struct rlimit rl;
-	int fd_limit;
+	int fdlimit;
 
 	if(getrlimit(RLIMIT_NOFILE, &rl) == 0) {
-		fd_limit = rl.rlim_cur;
+		fdlimit = rl.rlim_cur;
 	} else {
 #ifdef HNY_VERBOSE
 		perror("hny erase getrlimit");
 #endif
-		fd_limit = 1024; /* Arbitrary limit, better than panic */
+		fdlimit = 1024; /* Arbitrary limit, better than panic */
 	}
 
-	if(nftw(path, hny_remove_fn, fd_limit, FTW_DEPTH | FTW_PHYS) != 0) {
+	if(nftw(path, hny_remove_fn, fdlimit, FTW_DEPTH | FTW_PHYS) != 0) {
 		error = hny_errno(errno);
 	}
 
