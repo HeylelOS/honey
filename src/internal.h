@@ -8,38 +8,35 @@
 #ifndef INTERNAL_H
 #define INTERNAL_H
 
+#ifdef __linux__
+#define _XOPEN_SOURCE 700
+#define _DEFAULT_SOURCE
+#endif
+
 #include <hny.h>
 
-#include <dirent.h>
-#include <pthread.h>
+#include <dirent.h> /* DIR */
+#include <sys/types.h> /* ssize_t size_t */
 
 struct hny {
-	DIR *dirp;		/* export prefix */
-	char *path;		/* export prefix absolute path */
-	int block;		/* blocking behavior */
-
-	pthread_mutex_t mutex;
+	DIR *dirp;  /* export prefix */
+	char *path; /* export prefix absolute path */
+	int flags;  /* blocking behavior */
 };
 
 enum hny_error
-hny_lock(hny_t hny);
+hny_lock(hny_t *hny);
 
 void
-hny_unlock(hny_t hny);
+hny_unlock(hny_t *hny);
 
 enum hny_error
 hny_errno(int err);
 
 ssize_t
-hny_fill_packagename(char *buf,
+hny_fillname(char *buf,
 	size_t bufsize,
 	const struct hny_geist *geist);
-
-char *
-hny_target(int dirfd,
-	char *orig,
-	char *target,
-	size_t bufsize);
 
 /* INTERNAL_H */
 #endif

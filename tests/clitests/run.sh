@@ -5,47 +5,51 @@ export HNY_PREFIX="$1"
 
 hnytest() {
 	$@
-	[ "$?" -ne 0 ] && exit 1
+	if [ "$?" -ne 0 ]
+	then echo "[X] Test failure in command '$@'" ; exit 1
+	fi
 }
 
-echo "Testing prefix $HNY_PREFIX"
+echo "- Testing prefix $HNY_PREFIX"
 
-echo "Verifying test archives"
+echo "- Verifying test archives"
 hnytest ./build/bin/hny -a verify "tests/clitests/test1.hny" "tests/clitests/test2.hny"
 
-echo "Exporting test archives"
+echo "- Exporting test archives"
 hnytest ./build/bin/hny export "tests/clitests/test1.hny" "test1-0.0.1"
 hnytest ./build/bin/hny export "tests/clitests/test2.hny" "test2-0.0.1"
 
-echo "Shifting test archives"
+echo "- Shifting test archives"
 hnytest ./build/bin/hny shift "test1" "test1-0.0.1"
 hnytest ./build/bin/hny shift "test2" "test2-0.0.1"
 
-echo "Statuses"
+echo "- Statuses"
 hnytest ./build/bin/hny status "test1" "test2"
 
-echo "Setups"
+echo "- Setups"
 hnytest ./build/bin/hny setup "test1" "test2"
 
-echo "Testing links above links"
+echo "- Testing links above links"
 hnytest ./build/bin/hny shift "test" "test1"
 hnytest ./build/bin/hny status "test"
-hnytest ./build/bin/hny erase "test"
 
-echo "Listing active"
+echo "- Listing active"
 hnytest ./build/bin/hny list active
-echo "Listing packages"
+
+echo "- Listing packages"
 hnytest ./build/bin/hny list packages
 
-echo "Testing links above links"
+echo "- Testing links above links"
 hnytest ./build/bin/hny shift "test" "test2"
 hnytest ./build/bin/hny status "test"
 hnytest ./build/bin/hny erase "test"
 
-echo "Cleans"
+echo "- Cleans"
 hnytest ./build/bin/hny clean "test1" "test2"
 
-echo "Erasing"
+echo "- Erasing"
+hnytest ./build/bin/hny erase "test1" "test2"
 hnytest ./build/bin/hny erase "test1-0.0.1" "test2-0.0.1"
 
+echo "[O] All tests passed"
 exit 0

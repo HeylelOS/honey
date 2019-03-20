@@ -11,13 +11,13 @@
 #include <string.h>
 
 enum hny_error
-hny_list(hny_t hny,
+hny_list(hny_t *hny,
 	enum hny_listing listing,
 	struct hny_geist **list,
-	size_t *len) {
-	enum hny_error error = HnyErrorNone;
+	hny_size_t *len) {
+	enum hny_error retval = HNY_ERROR_NONE;
 
-	if(hny_lock(hny) == HnyErrorNone) {
+	if(hny_lock(hny) == HNY_ERROR_NONE) {
 		struct dirent *entry;
 		size_t alloced = 0;
 
@@ -27,7 +27,7 @@ hny_list(hny_t hny,
 		rewinddir(hny->dirp);
 		while((entry = readdir(hny->dirp)) != NULL) {
 
-			if(hny_check_package(entry->d_name) == HnyErrorNone) {
+			if(hny_check_package(entry->d_name) == HNY_ERROR_NONE) {
 				char *stringp;
 
 				if(*len == alloced) {
@@ -35,7 +35,7 @@ hny_list(hny_t hny,
 					*list = realloc(*list, sizeof(**list) * alloced);
 				}
 
-				if(listing == HnyListPackages
+				if(listing == HNY_LIST_PACKAGES
 					&& entry->d_type == DT_DIR) {
 
 					stringp = strdup(entry->d_name);
@@ -45,18 +45,18 @@ hny_list(hny_t hny,
 					if(stringp != NULL) {
 						(*list)[*len].version = stringp;
 
-						(*len)++;
+						++(*len);
 					} else {
 						free(stringp);
 					}
-				} else if(listing == HnyListActive
+				} else if(listing == HNY_LIST_ACTIVE
 					&& entry->d_type == DT_LNK
 					&& strchr(entry->d_name, '-') == NULL) {
 
 					(*list)[*len].name = strdup(entry->d_name);
 					(*list)[*len].version = NULL;
 
-					(*len)++;
+					++(*len);
 				}
 			}
 		}
@@ -65,9 +65,9 @@ hny_list(hny_t hny,
 
 		hny_unlock(hny);
 	} else {
-		error = HnyErrorUnavailable;
+		retval = HNY_ERROR_UNAVAILABLE;
 	}
 
-	return error;
+	return retval;
 }
 

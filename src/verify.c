@@ -9,6 +9,7 @@
 
 #include <archive.h>
 #include <archive_entry.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -23,11 +24,10 @@
 				| HNY_ARCHIVE_HAS_EULA)
 
 enum hny_error
-hny_verify(hny_t hny,
-	const char *file,
+hny_verify(const char *file,
 	char **eula,
-	size_t *len) {
-	enum hny_error error = HnyErrorNone;
+	hny_size_t *len) {
+	enum hny_error retval = HNY_ERROR_NONE;
 	struct archive *a;
 	int aerr;
 	char *alloc = NULL;
@@ -45,7 +45,7 @@ hny_verify(hny_t hny,
 
 		while((aerr = archive_read_next_header(a, &entry)) == ARCHIVE_OK
 			&& archive_has != HNY_ARCHIVE_HAS_EULA
-			&& error == HnyErrorNone) {
+			&& retval == HNY_ERROR_NONE) {
 			const char *entry_name = archive_entry_pathname(entry);
 
 			if(strncmp("hny/", entry_name, 4) == 0) {
@@ -63,10 +63,10 @@ hny_verify(hny_t hny,
 
 							archive_has |= HNY_ARCHIVE_HAS_EULA;
 						} else {
-							error = HnyErrorUnavailable;
+							retval = HNY_ERROR_UNAVAILABLE;
 						}
 					} else {
-						error = HnyErrorNonExistant;
+						retval = HNY_ERROR_MISSING;
 					}
 				} else {
 					if(entry_name[4] == '\0') {
@@ -82,26 +82,26 @@ hny_verify(hny_t hny,
 			}
 		}
 
-		if(error == HnyErrorNone
+		if(retval == HNY_ERROR_NONE
 			&& (archive_has != HNY_ARCHIVE_HAS_ALL
 				|| aerr != ARCHIVE_EOF)) {
-			error = HnyErrorNonExistant;
+			retval = HNY_ERROR_MISSING;
 		}
 
 		archive_read_close(a);
 	} else {
-		error = HnyErrorInvalidArgs;
+		retval = HNY_ERROR_INVALID_ARGS;
 	}
 
 	archive_read_free(a);
 
-	if(error == HnyErrorNone) {
+	if(retval == HNY_ERROR_NONE) {
 		*eula = alloc;
 		*len = size;
 	} else {
 		free(alloc);
 	}
 
-	return error;
+	return retval;
 }
 
