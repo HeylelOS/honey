@@ -235,7 +235,9 @@ hny_status(hny_t *hny,
 
 /**
  * Executes the given script associated to geist
- * the script will execute into the package prefix
+ * the script will execute into the package prefix.
+ * Environnements variable for the honey prefix absolute path as HNY_PREFIX.
+ * and each error code will be available for the executed process.
  * @param hny honey prefix
  * @param action script to execute
  * @param geist the geist or package for which the script shall be executed

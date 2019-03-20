@@ -30,7 +30,7 @@ hny_spawn(hny_t *hny,
 			|| putenv("HNY_ERROR_NONE=0") != 0
 			|| putenv("HNY_ERROR_INVALID_ARGS=1") != 0
 			|| putenv("HNY_ERROR_UNAVAILABLE=2") != 0
-			|| putenv("HNY_ERROR_NON_EXISTANT=3") != 0
+			|| putenv("HNY_ERROR_MISSING=3") != 0
 			|| putenv("HNY_ERROR_UNAUTHORIZED=4") != 0) {
 			_Exit(HNY_ERROR_UNAVAILABLE);
 		}
