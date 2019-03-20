@@ -4,8 +4,7 @@ for arg in $@
 do
 	if echo "$arg" | grep -Eq '[A-Z]+=.+'
 	then
-		# The following is not secure at all
-		eval "$arg"
+		export "$arg"
 	else
 		case `echo "$arg" | cut -d'=' -f1` in
 		'-h' | '--help')
