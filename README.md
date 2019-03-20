@@ -18,9 +18,6 @@ shell script providers, recovery or advanced users.
 The honey library only have one non-standard dependency:
 - [libarchive](https://github.com/libarchive/libarchive), with xz and tar support
 
-honey also depends on POSIX threads but you can be sure they
-will be available on any UNIX/Linux like distribution.
-
 ## Build
 
 You should be able to configure and build it with:
@@ -31,9 +28,9 @@ make
 Note this is an ansi C library/program,
 with a few exceptions on some features. So you
 shouldn't have any problem building it on most systems.
-It has been built on Debian 9 and Ubuntu 16.04 successfully.
+It has been built on Debian 9, Ubuntu 18.04 and void linux successfully.
 macOS only have a linking problem due to not having the latest
-[libarchive](https://github.com/libarchive/libarchive) on the system
+[libarchive](https://github.com/libarchive/libarchive) on the system.
 
 ## Documentation
 
