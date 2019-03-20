@@ -7,14 +7,14 @@
 */
 #include "internal.h"
 
-#include <stdio.h> /* remove() */
-#include <unistd.h> /* unlinkat() */
-#include <sys/param.h> /* MAXPATHLEN, NAME_MAX */
-#include <sys/resource.h> /* getrlimit() */
+#include <stdio.h>
 #include <string.h>
+#include <ftw.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/resource.h>
 #include <alloca.h>
 #include <errno.h>
-#include <ftw.h>
 
 static int
 hny_remove_fn(const char *path,
@@ -24,7 +24,7 @@ hny_remove_fn(const char *path,
 
 	if(remove(path) == -1) {
 #ifdef HNY_VERBOSE
-		perror("hny remove package");
+		perror("hny_erase remove");
 #endif
 		return 1;
 	}
@@ -34,57 +34,60 @@ hny_remove_fn(const char *path,
 
 static enum hny_error
 hny_remove_recursive(const char *path) {
-	enum hny_error error = HnyErrorNone;
+	enum hny_error retval = HNY_ERROR_NONE;
 	struct rlimit rl;
-	int fd_limit;
+	int fdlimit;
 
 	if(getrlimit(RLIMIT_NOFILE, &rl) == 0) {
-		fd_limit = rl.rlim_cur;
+		fdlimit = rl.rlim_cur;
 	} else {
+		fdlimit = 1024; /* Arbitrary limit, better than panic */
 #ifdef HNY_VERBOSE
-		perror("hny erase getrlimit");
+		perror("hny_erase getrlimit");
 #endif
-		fd_limit = 1024; /* Arbitrary limit, better than panic */
 	}
 
-	if(nftw(path, hny_remove_fn, fd_limit, FTW_DEPTH | FTW_PHYS) != 0) {
-		error = hny_errno(errno);
+	if(nftw(path, hny_remove_fn, fdlimit, FTW_DEPTH | FTW_PHYS) != 0) {
+		retval = hny_errno(errno);
 	}
 
-	return error;
+	return retval;
 }
 
 enum hny_error
-hny_erase(hny_t hny,
+hny_erase(hny_t *hny,
 	const struct hny_geist *geist) {
-	enum hny_error error = HnyErrorNone;
+	enum hny_error retval = HNY_ERROR_NONE;
 
-	if(hny_check_geister(geist, 1) == HnyErrorNone) {
+	if(hny_check_geister(geist, 1) == HNY_ERROR_NONE) {
 
-		if(hny_lock(hny) == HnyErrorNone) {
+		if(hny_lock(hny) == HNY_ERROR_NONE) {
 			if(geist->version != NULL) {
-				const size_t length = strlen(hny->path) + 2
+				const size_t size = strlen(hny->path) + 3
 					+ strlen(geist->name) + strlen(geist->version);
-				char *prefix = alloca(length);
+				char *prefix = alloca(size);
 
-				snprintf(prefix, MAXPATHLEN,
+				snprintf(prefix, size,
 					"%s/%s-%s", hny->path,
 					geist->name, geist->version);
-				error = hny_remove_recursive(prefix);
+				retval = hny_remove_recursive(prefix);
 			} else {
 				if(unlinkat(dirfd(hny->dirp), geist->name, 0) == -1) {
-					error = hny_errno(errno);
+					retval = hny_errno(errno);
+#ifdef HNY_VERBOSE
+					perror("hny_erase unlinkat");
+#endif
 				}
 			}
 
 			hny_unlock(hny);
 		} else {
-			error = HnyErrorUnavailable;
+			retval = HNY_ERROR_UNAVAILABLE;
 		}
 	} else {
-		error = HnyErrorInvalidArgs;
+		retval = HNY_ERROR_INVALID_ARGS;
 	}
 
-	return error;
+	return retval;
 }
 

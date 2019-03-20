@@ -7,55 +7,63 @@
 */
 #include "internal.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/param.h> /* NAME_MAX */
 #include <unistd.h>
-#include <stdlib.h>
 #include <errno.h>
 
 enum hny_error
-hny_shift(hny_t hny,
+hny_shift(hny_t *hny,
 	const char *geist,
 	const struct hny_geist *package) {
-	enum hny_error error = HnyErrorNone;
+	enum hny_error retval = HNY_ERROR_NONE;
 
-	if(hny_check_name(geist) == HnyErrorNone
-		&& hny_check_geister(package, 1) == HnyErrorNone) {
+	if(hny_check_name(geist) == HNY_ERROR_NONE
+		&& hny_check_geister(package, 1) == HNY_ERROR_NONE) {
 
-		if(hny_lock(hny) == HnyErrorNone) {
+		if(hny_lock(hny) == HNY_ERROR_NONE) {
 			struct stat st;
 			char name[NAME_MAX];
 
-			hny_fill_packagename(name, sizeof(name), package);
+			hny_fillname(name, sizeof(name), package);
 
 			/* We follow symlink, this is only to check if the file exists */
 			if(fstatat(dirfd(hny->dirp), name, &st, 0) == 0) {
 				/* We check if the target exists, if it does, we unlink it */
 				if((fstatat(dirfd(hny->dirp), geist, &st, 0) == 0)
 					&& (unlinkat(dirfd(hny->dirp), geist, 0) == -1)) {
-
-					error = hny_errno(errno);
+					retval = hny_errno(errno);
+#ifdef HNY_VERBOSE
+					perror("hny_shift unlinkat");
+#endif
 				}
 
-				if(error == HnyErrorNone) {
+				if(retval == HNY_ERROR_NONE) {
 					if(symlinkat(name, dirfd(hny->dirp), geist) == -1) {
-						error = hny_errno(errno);
+						retval = hny_errno(errno);
+#ifdef HNY_VERBOSE
+						perror("hny_shift symlinkat");
+#endif
 					}
 				}
 			} else {
-				error = hny_errno(errno);
+				retval = hny_errno(errno);
+#ifdef HNY_VERBOSE
+				perror("hny_shift fstatat");
+#endif
 			}
 
 			hny_unlock(hny);
 		} else {
-			error = HnyErrorUnavailable;
+			retval = HNY_ERROR_UNAVAILABLE;
 		}
 
 	} else {
-		error = HnyErrorInvalidArgs;
+		retval = HNY_ERROR_INVALID_ARGS;
 	}
 
-
-	return error;
+	return retval;
 }
 
