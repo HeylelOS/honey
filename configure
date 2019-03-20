@@ -42,7 +42,6 @@ Optional Features:
 
 Optional Packages:
   --with-libarchive=library  archive library to be used [archive]
-  --with-pthread=library     pthread library to be used [pthread]
 
 Some influential environment variables:
   NAME            honey executable and library name
@@ -82,9 +81,6 @@ EOF
 		'--with-libarchive')
 			WITH_LIBARCHIVE=`echo "$arg" | cut -d'=' -f2-`
 			;;
-		'--with-pthread')
-			WITH_PTHREAD=`echo "$arg" | cut -d'=' -f2-`
-			;;
 		*)
 			echo "Unknown option: $arg"
 			;;
@@ -97,7 +93,6 @@ done
 [ -z "$LIBDIR" ] && LIBDIR="$PREFIX/lib"
 [ -z "$MANDIR" ] && MANDIR="$PREFIX/man"
 [ -z "$WITH_LIBARCHIVE" ] && WITH_LIBARCHIVE='archive'
-[ -z "$WITH_PTHREAD" ] && WITH_PTHREAD='pthread'
 
 # NAME
 [ -z "$NAME" ] && NAME='hny'
@@ -149,7 +144,7 @@ echo "Using Linker '$LD'"
 # None default
 
 # LIBS
-[ -z "$LIBS" ] && LIBS="-l$WITH_LIBARCHIVE -l$WITH_PTHREAD"
+[ -z "$LIBS" ] && LIBS="-l$WITH_LIBARCHIVE"
 
 echo "Using Linker flags ldflags: '$LDFLAGS', libs: '$LIBS'"
 
@@ -172,7 +167,7 @@ BUILDDIRS=\$(BUILDDIR)/ \$(BUILDDIR)/obj \$(BUILDDIR)/bin \$(BUILDDIR)/lib
 LIB=\$(BUILDDIR)/lib/lib\$(NAME)$LD_LIBEXT
 BIN=\$(BUILDDIR)/bin/\$(NAME)
 
-TESTDIR=tests/prefix
+TESTDIR=$(pwd)/tests/prefix
 
 INSTALLBINDIR=$BINDIR
 INSTALLLIBDIR=$LIBDIR

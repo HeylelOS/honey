@@ -7,7 +7,7 @@
 */
 #include "internal.h"
 
-#include <sys/param.h> /* MAXPATHLEN */
+#include <sys/param.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -15,10 +15,10 @@
 #include <string.h>
 
 static enum hny_error
-hny_spawn(hny_t hny,
+hny_spawn(hny_t *hny,
 	const struct hny_geist *geist,
 	char *name) {
-	enum hny_error error = HnyErrorNone;
+	enum hny_error retval = HNY_ERROR_NONE;
 	pid_t pid = fork();
 
 	if(pid == 0) {
@@ -32,14 +32,14 @@ hny_spawn(hny_t hny,
 			|| putenv("HNY_ERROR_UNAVAILABLE=2") != 0
 			|| putenv("HNY_ERROR_NON_EXISTANT=3") != 0
 			|| putenv("HNY_ERROR_UNAUTHORIZED=4") != 0) {
-			_Exit(HnyErrorUnavailable);
+			_Exit(HNY_ERROR_UNAVAILABLE);
 		}
 
 		argv[0] = name;
 
 		hny->path[length] = '/';
-		length++;
-		length += hny_fill_packagename(hny->path + length,
+		++length;
+		length += hny_fillname(hny->path + length,
 			MAXPATHLEN - length, geist);
 
 		if(length > 0
@@ -52,48 +52,48 @@ hny_spawn(hny_t hny,
 		}
 
 #ifdef HNY_VERBOSE
-		perror("hny execve");
+		perror("hny_execute execve");
 #endif
-		_Exit(HnyErrorUnavailable);
+		_Exit(HNY_ERROR_UNAVAILABLE);
 	} else {
 		int status;
 
 		if(waitpid(pid, &status, 0) != -1
 			&& WIFEXITED(status)) {
-			error = WEXITSTATUS(status);
+			retval = WEXITSTATUS(status);
 		} else {
-			error = HnyErrorUnavailable;
+			retval = HNY_ERROR_UNAVAILABLE;
 		}
 	}
 
-	return error;
+	return retval;
 }
 
 enum hny_error
-hny_execute(hny_t hny,
+hny_execute(hny_t *hny,
 	enum hny_action action,
 	const struct hny_geist *geist) {
-	enum hny_error error = HnyErrorNone;
+	enum hny_error retval = HNY_ERROR_NONE;
 
-	if(hny_check_geister(geist, 1) == HnyErrorNone) {
+	if(hny_check_geister(geist, 1) == HNY_ERROR_NONE) {
 
-		if(hny_lock(hny) == HnyErrorNone) {
+		if(hny_lock(hny) == HNY_ERROR_NONE) {
 			char *straction;
 
 			switch(action) {
-			case HnyActionSetup:
+			case HNY_ACTION_SETUP:
 				straction = "setup";
 				break;
-			case HnyActionClean:
+			case HNY_ACTION_CLEAN:
 				straction = "clean";
 				break;
-			case HnyActionReset:
+			case HNY_ACTION_RESET:
 				straction = "reset";
 				break;
-			case HnyActionCheck:
+			case HNY_ACTION_CHECK:
 				straction = "check";
 				break;
-			case HnyActionPurge:
+			case HNY_ACTION_PURGE:
 				straction = "purge";
 				break;
 			default:
@@ -102,19 +102,19 @@ hny_execute(hny_t hny,
 			}
 
 			if(straction != NULL) {
-				error = hny_spawn(hny, geist, straction);
+				retval = hny_spawn(hny, geist, straction);
 			} else {
-				error = HnyErrorInvalidArgs;
+				retval = HNY_ERROR_INVALID_ARGS;
 			}
 
 			hny_unlock(hny);
 		} else {
-			error = HnyErrorUnavailable;
+			retval = HNY_ERROR_UNAVAILABLE;
 		}
 	} else {
-		error = HnyErrorInvalidArgs;
+		retval = HNY_ERROR_INVALID_ARGS;
 	}
 
-	return error;
+	return retval;
 }
 
