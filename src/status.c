@@ -7,10 +7,11 @@
 */
 #include "internal.h"
 
-#include <sys/param.h> /* NAME_MAX */
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <errno.h>
 
 static char *
@@ -34,10 +35,12 @@ hny_target(int dirfd,
 	if(errno == EINVAL) {
 		/* reached a non-symlink */
 		return strdup(target);
-	} else if(errno == ENOENT) {
-		/* broken symlink */
-		unlinkat(dirfd, orig, 0);
 	}
+#ifdef HNY_VERBOSE
+	else {
+		perror("hny_status readlinkat");
+	}
+#endif
 
 	return NULL;
 }
@@ -51,27 +54,25 @@ hny_status(hny_t *hny,
 	if(hny_check_geister(geist, 1) == HNY_ERROR_NONE) {
 
 		if(hny_lock(hny) == HNY_ERROR_NONE) {
-			/* NAME_MAX because of the package dir format */
-			char *name1, *name2, *name;
+			char *buffer;
 
-			name1 = malloc(NAME_MAX);
-			name2 = malloc(NAME_MAX);
+			if((buffer = malloc((NAME_MAX + 1) * 2)) != NULL
+				&& hny_fillname(buffer, NAME_MAX + 1, geist) != -1) {
+				char *name = hny_target(dirfd(hny->dirp), buffer,
+					buffer + NAME_MAX + 1, NAME_MAX + 1);
 
-			hny_fillname(name2, NAME_MAX, geist);
+				if(name != NULL) {
+					*target = malloc(sizeof(**target));
 
-			name = hny_target(dirfd(hny->dirp), name2, name1, NAME_MAX);
-			if(name != NULL) {
+					(*target)->name = strsep(&name, "-");
+					(*target)->version = name;
+				} else {
+					retval = HNY_ERROR_MISSING;
+				}
 
-				*target = malloc(sizeof(**target));
-
-				(*target)->name = strsep(&name, "-");
-				(*target)->version = name;
-			} else {
-				retval = HNY_ERROR_MISSING;
 			}
 
-			free(name1);
-			free(name2);
+			free(buffer);
 
 			hny_unlock(hny);
 		} else {
