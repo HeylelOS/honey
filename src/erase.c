@@ -8,12 +8,12 @@
 #include "internal.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ftw.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/resource.h>
-#include <alloca.h>
 #include <errno.h>
 
 static int
@@ -65,12 +65,14 @@ hny_erase(hny_t *hny,
 			if(geist->version != NULL) {
 				const size_t size = strlen(hny->path) + 3
 					+ strlen(geist->name) + strlen(geist->version);
-				char *prefix = alloca(size);
+				char *prefix = malloc(size);
 
 				snprintf(prefix, size,
 					"%s/%s-%s", hny->path,
 					geist->name, geist->version);
 				retval = hny_remove_recursive(prefix);
+
+				free(prefix);
 			} else {
 				if(unlinkat(dirfd(hny->dirp), geist->name, 0) == -1) {
 					retval = hny_errno(errno);

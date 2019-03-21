@@ -19,7 +19,7 @@ hny_list(hny_t *hny,
 
 	if(hny_lock(hny) == HNY_ERROR_NONE) {
 		struct dirent *entry;
-		size_t alloced = 0;
+		size_t capacity = 0;
 
 		*list = NULL;
 		*len = 0;
@@ -30,9 +30,9 @@ hny_list(hny_t *hny,
 			if(hny_check_package(entry->d_name) == HNY_ERROR_NONE) {
 				char *stringp;
 
-				if(*len == alloced) {
-					alloced += 16;
-					*list = realloc(*list, sizeof(**list) * alloced);
+				if(*len == capacity) {
+					capacity += 16;
+					*list = realloc(*list, sizeof(**list) * capacity);
 				}
 
 				if(listing == HNY_LIST_PACKAGES

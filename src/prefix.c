@@ -17,23 +17,31 @@ hny_open(const char *path,
 	int flags,
 	hny_t **hnyp) {
 	enum hny_error retval = HNY_ERROR_NONE;
-	DIR *dirp = opendir(path);
-	size_t pathsize;
-	char *ptr;
+	DIR *dirp;
 
-	if(dirp != NULL
-		&& !(errno = 0)
-		&& (ptr = malloc(sizeof(hny_t)
-			+ (pathsize = strlen(path) + 1))) != NULL) {
-		*hnyp = (hny_t *)ptr;
+	errno = ENOTDIR; /* If not absolute path */
+	if(*path == '/'
+		&& (dirp = opendir(path)) != NULL) {
+		size_t pathsize = strlen(path) + 1;
+		char *ptr = malloc(sizeof(**hnyp) + pathsize);
 
-		(*hnyp)->dirp = dirp;
+		if(ptr != NULL) {
+			*hnyp = (hny_t *)ptr;
 
-		ptr += sizeof(hny_t);
-		strncpy(ptr, path, pathsize);
-		(*hnyp)->path = ptr;
+			(*hnyp)->dirp = dirp;
 
-		(*hnyp)->flags = flags;
+			ptr += sizeof(**hnyp);
+			strncpy(ptr, path, pathsize);
+			(*hnyp)->path = ptr;
+
+			(*hnyp)->flags = flags;
+		} else {
+			retval = HNY_ERROR_UNAVAILABLE;
+#ifdef HNY_VERBOSE
+			perror("hny_open malloc");
+#endif
+			closedir(dirp);
+		}
 	} else {
 		switch(errno) {
 		case EACCES:

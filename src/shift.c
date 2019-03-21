@@ -9,9 +9,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/param.h> /* NAME_MAX */
 #include <unistd.h>
+#include <limits.h>
+#include <sys/stat.h>
 #include <errno.h>
 
 enum hny_error
@@ -25,7 +25,7 @@ hny_shift(hny_t *hny,
 
 		if(hny_lock(hny) == HNY_ERROR_NONE) {
 			struct stat st;
-			char name[NAME_MAX];
+			char name[NAME_MAX + 1]; /* NAME_MAX doesn't include nul termination */
 
 			hny_fillname(name, sizeof(name), package);
 
