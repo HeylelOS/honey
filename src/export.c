@@ -11,8 +11,8 @@
 #include <archive_entry.h>
 
 #include <stdio.h>
-#include <sys/param.h> /* MAXPATHLEN */
 #include <string.h>
+#include <limits.h>
 
 enum hny_error
 hny_export(hny_t *hny,
@@ -32,12 +32,11 @@ hny_export(hny_t *hny,
 		&& hny_check_geister(package, 1) == HNY_ERROR_NONE) {
 
 		if(hny_lock(hny) == HNY_ERROR_NONE) {
-			char path[MAXPATHLEN];
-			ssize_t length;
-			char *end = stpncpy(path, hny->path, MAXPATHLEN);
+			char path[PATH_MAX];
+			char * const end = stpncpy(path, hny->path, PATH_MAX);
+			ssize_t length = hny_fillname(end + 1,
+				path + PATH_MAX - (end + 1), package);
 
-			length = hny_fillname(end + 1,
-				path + MAXPATHLEN - end - 1, package);
 			if(length > 0) {
 				struct archive *aw;
 				struct archive_entry *entry;

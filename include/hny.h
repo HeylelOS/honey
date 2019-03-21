@@ -120,9 +120,9 @@ void
 hny_close(hny_t *hny);
 
 /**
- * Sets honey prefix behavior on locking, default is #HNY_BLOCK
+ * Sets honey prefix parameters on behaviour
  * @param hny honey prefix
- * @param block the behavior to set, either #HNY_BLOCK or #HNY_NONBLOCK
+ * @param flags behaviour, see ::hny_flags
  * @return Previous flags
  */
 int

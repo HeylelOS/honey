@@ -134,7 +134,7 @@ export(int cmdargc,
 			print_error("Cannot export \"%s\", invalid integrity\n", cmdargv[0]);
 			break;
 		default: /* HNY_ERROR_MISSING */
-			print_error("Cannot export \"%s\", one of the file couldn't be extracted\n", cmdargv[0]);
+			print_error("Cannot export \"%s\", missing resource\n", cmdargv[0]);
 			break;
 		}
 		out(error);
@@ -242,7 +242,7 @@ erase(int cmdargc,
 				retval = HNY_ERROR_UNAVAILABLE;
 				break;
 			case HNY_ERROR_MISSING:
-				print_error("Unable to erase %s, a needed resource is missing\n",
+				print_error("Unable to erase %s, missing resource\n",
 					cmdargv[i]);
 				retval = HNY_ERROR_MISSING;
 				break;

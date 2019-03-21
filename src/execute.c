@@ -7,12 +7,12 @@
 */
 #include "internal.h"
 
-#include <sys/param.h>
-#include <sys/wait.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <limits.h>
+#include <sys/wait.h>
 
 static enum hny_error
 hny_spawn(hny_t *hny,
@@ -22,11 +22,15 @@ hny_spawn(hny_t *hny,
 	pid_t pid = fork();
 
 	if(pid == 0) {
-		char *argv[2] = { NULL };
 		extern char **environ;
-		size_t length = strlen(hny->path);
+		char *argv[2] = { NULL };
+		char path[PATH_MAX];
+		size_t prefixsize = stpncpy(path, hny->path, sizeof(path)) - path + 1;
+		ssize_t filled = hny_fillname(path + prefixsize,
+			PATH_MAX - prefixsize, geist);
 
-		if(setenv("HNY_PREFIX", hny->path, 1) != 0
+		if(filled == -1
+			|| setenv("HNY_PREFIX", hny->path, 1) != 0
 			|| putenv("HNY_ERROR_NONE=0") != 0
 			|| putenv("HNY_ERROR_INVALID_ARGS=1") != 0
 			|| putenv("HNY_ERROR_UNAVAILABLE=2") != 0
@@ -37,23 +41,25 @@ hny_spawn(hny_t *hny,
 
 		argv[0] = name;
 
-		hny->path[length] = '/';
-		++length;
-		length += hny_fillname(hny->path + length,
-			MAXPATHLEN - length, geist);
+		path[prefixsize-1] = '/';
 
-		if(length > 0
-			&& chdir(hny->path) == 0) {
-
-			snprintf(hny->path + length, MAXPATHLEN - length,
+		if(chdir(hny->path) == 0) {
+			snprintf(path + prefixsize + filled,
+				PATH_MAX - prefixsize - filled,
 				"/hny/%s", name);
 
-			execve(hny->path, argv, environ);
-		}
+			execve(path, argv, environ);
 
 #ifdef HNY_VERBOSE
-		perror("hny_execute execve");
+			perror("hny_execute execve");
 #endif
+		}
+#ifdef HNY_VERBOSE
+		else {
+			perror("hny_execute chdir");
+		}
+#endif
+
 		_Exit(HNY_ERROR_UNAVAILABLE);
 	} else {
 		int status;
