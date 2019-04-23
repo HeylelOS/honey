@@ -1,7 +1,3 @@
-CC=clang
-CFLAGS=-ansi -pedantic -Wall
-LDFLAGS=
-INSTALL_DIRECTORY=/opt/hny-0.9.5
 BUILD_DIRECTORY_LIB=build/lib/
 BUILD_DIRECTORY_BIN=build/bin/
 LIBHNY_SRC=$(wildcard src/libhny/*.c)
@@ -34,10 +30,4 @@ $(LIBHNY): $(LIBHNY_SRC) $(BUILD_DIRECTORY_LIB)
 
 $(HNY): $(LIBHNY) $(HNY_SRC) $(BUILD_DIRECTORY_BIN)
 	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -o $@ $(HNY_SRC) -Lbuild/lib -lhny
-
-man: $(wildcard uman/*)
-	uman $^ $@
-
-documentation: man
-	doxygen
 

@@ -56,14 +56,35 @@ fi
 
 # CFLAGS
 [ -z "$CFLAGS" ] && CFLAGS="-O3 -ansi -pedantic -Wall"
+echo "Using C flags '$CFLAGS'"
 
 # LDFLAGS
 # Empty by default
+echo "Using linker flags '$LDFLAGS'"
 
 # ENABLE_VERBOSE
-# Empty by default
+[ ! -z "$ENABLE_VERBOSE" ] && CFLAGS="$CFLAGS -DHNY_VERBOSE" && echo "Enabled verbose honey library"
 
 # PREFIX
 [ -z "$PREFIX" ] && PREFIX="/usr/local"
 
+cat - Makefile.part <<EOF > Makefile
+CC=$CC
+CFLAGS=$CFLAGS
+LDFLAGS=$LDFLAGS
+INSTALL_DIRECTORY=$PREFIX
+
+EOF
+
+echo 'man: $(wildcard uman/*)' >> Makefile
+if [ ! -z `which uman` ]
+then printf '\tuman $^ $@\n\n' >> Makefile && echo "Using uman to build man pages"
+else echo "uman not found, we won't be able to build man pages"
+fi
+
+echo 'documentation: man' >> Makefile
+if [ ! -z `which doxygen` ]
+then printf '\tdoxygen\n' >> Makefile && echo "Using doxygen to build code documentation"
+else echo "doxygen not found, we won't be able to build code documentation"
+fi
 
