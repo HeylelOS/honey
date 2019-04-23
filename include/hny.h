@@ -3,7 +3,7 @@
 	Copyright (c) 2018, Valentin Debon
 
 	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE.txt
+	subject the BSD 3-Clause License, see LICENSE
 */
 #ifndef HNY_H
 #define HNY_H

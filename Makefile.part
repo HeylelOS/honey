@@ -1,45 +1,43 @@
+CC=clang
+CFLAGS=-ansi -pedantic -Wall
+LDFLAGS=
+INSTALL_DIRECTORY=/opt/hny-0.9.5
+BUILD_DIRECTORY_LIB=build/lib/
+BUILD_DIRECTORY_BIN=build/bin/
+LIBHNY_SRC=$(wildcard src/libhny/*.c)
+HNY_SRC=$(wildcard src/hny/*.c)
+LIBHNY=build/lib/libhny.so
+HNY=build/bin/hny
 
-.PHONY: all install installdoc doc tests clean
+.PHONY: all test install clean man documentation
 
-all: $(BUILDDIRS) $(BIN)
+all: $(HNY)
 
-install: $(INSTALLDIRS) $(BIN)
-	cp -r $(BUILDDIR)/bin/* $(INSTALLBINDIR)
-	cp -r $(BUILDDIR)/lib/* $(INSTALLLIBDIR)
+test: $(HNY)
+	./test/hny/run.sh
 
-installdoc: $(INSTALLDIRS) doc
-	cp -r $(BUILDDIR)/man/* $(INSTALLMANDIR)
-
-doc: $(BUILDDIRS)
-	doxygen doc/Doxyfile
-	cp -r doc/man1/ $(BUILDDIR)/man/
-	mv $(BUILDDIR)/man/man3/hny.h.3 $(BUILDDIR)/man/man3/hny.3
-	rm $(BUILDDIR)/man/man3/_*
-
-tests: $(TESTDIR) all
-	./tests/clitests/run.sh $(TESTDIR)
+install: $(HNY)
+	cp -r $(BUILD_DIRECTORY_LIB) $(INSTALL_DIRECTORY)
+	cp -r $(BUILD_DIRECTORY_BIN) $(INSTALL_DIRECTORY)
 
 clean:
-	rm -rf $(BUILDDIR)
-	rm -rf $(TESTDIR)
+	rm -rf build/ man/
 
-$(BUILDDIR)/obj/%.o: src/%.c
-	$(CC) $(CFLAGS) -fPIC -o $@ -c $<
+$(BUILD_DIRECTORY_LIB):
+	mkdir -p $@
 
-$(BUILDDIRS):
-	mkdir $@
+$(BUILD_DIRECTORY_BIN):
+	mkdir -p $@
 
-$(TESTDIR):
-	mkdir $@
+$(LIBHNY): $(LIBHNY_SRC) $(BUILD_DIRECTORY_LIB)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -shared -fPIC -o $@ $(LIBHNY_SRC) -larchive
 
-$(INSTALLDIRS):
-	mkdir $@
+$(HNY): $(LIBHNY) $(HNY_SRC) $(BUILD_DIRECTORY_BIN)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -o $@ $(HNY_SRC) -Lbuild/lib -lhny
 
-$(OBJECTS): $(SOURCES)
+man: $(wildcard uman/*)
+	uman $^ $@
 
-$(LIB): $(OBJECTS)
-	$(LD) $(LD_SHAREDFLAG) -o $@ $^ $(LDFLAGS) $(LIBS)
-
-$(BIN): $(BINSOURCE) $(LIB)
-	$(CC) $(CFLAGS) -o $@ $< -l$(NAME) -L$(BUILDDIR)/lib
+documentation: man
+	doxygen
 

@@ -1,6 +1,10 @@
 # Honey Package format
 
-The honey package file format consists of a simple .tar.xz archive which implements the following files:
+The package is an archive which implements several mandatory files, and may implements others as features.
+
+## Archive
+The honey package file format is an _XZ stream with crc32_ compressing an _odc cpio file archive_.
+The choice for such a specific archive is to make honey packages as embeddable as possible without adding a huge backend to handle it.
 
 ## Mandatory:
 hny/ : the directory containing all package related files.

@@ -3,7 +3,7 @@
 	Copyright (c) 2018, Valentin Debon
 
 	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE.txt
+	subject the BSD 3-Clause License, see LICENSE
 */
 #include "internal.h"
 
@@ -24,7 +24,7 @@ hny_export(hny_t *hny,
 
 	a = archive_read_new();
 	archive_read_support_filter_xz(a);
-	archive_read_support_format_tar(a);
+	archive_read_support_format_cpio(a);
 
 	aerr = archive_read_open_filename(a, file, 4096);
 	if(aerr == ARCHIVE_OK
