@@ -3,19 +3,29 @@
 	Copyright (c) 2018, Valentin Debon
 
 	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE.txt
+	subject the BSD 3-Clause License, see LICENSE
 */
 #include <hny.h>
 
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
+
+#ifdef __clang__
+#define HNY_NORETURN __attribute__((__noreturn__))
+#else
+#define HNY_NORETURN
+#endif
 
 #define DEFAULT		"\x1b[0m"
 #define BOLD		"\x1b[1m"
 #define RED		"\x1b[31m"
 #define MAGENTA		"\x1b[35m"
+
+#define usage() usage_with_error(HNY_ERROR_INVALID_ARGS)
 
 static hny_t *hny;
 static int hny_already_accepted;
@@ -40,7 +50,7 @@ print_error(const char *format,
 	va_end(args);
 }
 
-static void __attribute__ ((__noreturn__))
+static void HNY_NORETURN
 out(enum hny_error error) {
 
 	if(hny != NULL) {
@@ -51,10 +61,10 @@ out(enum hny_error error) {
 }
 
 static void
-usage(void) {
+usage_with_error(enum hny_error error) {
 
-	print_error(BOLD RED "usage" DEFAULT ": hny [--help] [--accepted-eulas|-a] [--prefix=<path>] <command> <args>\n");
-	out(HNY_ERROR_INVALID_ARGS);
+	print_error(BOLD RED "usage" DEFAULT ": hny [-h|-a|-b] [-p path] <command> [arguments...]\n");
+	out(error);
 }
 
 static void
@@ -367,32 +377,34 @@ main(int argc,
 	char **argv) {
 	char *prefix = getenv("HNY_PREFIX");
 	int flags = HNY_FLAGS_NONE;
+	int opt;
 
-	while(argc >= 2
-		&& argv[1][0] == '-') {
-
-		if(strcmp("--accepted-eulas", argv[1]) == 0
-			|| strcmp("-a", argv[1]) == 0) {
+	while((opt = getopt(argc, argv, ":habp:")) != -1) {
+		switch(opt) {
+		case 'h':
+			usage_with_error(HNY_ERROR_NONE);
+		case 'a':
 			hny_already_accepted = 1;
-		} else if(strcmp("--blocking", argv[1]) == 0) {
+			break;
+		case 'b':
 			flags |= HNY_FLAGS_BLOCK;
-		} else if(strncmp("--prefix=", argv[1], 9) == 0) {
-			prefix = &argv[1][9];
-		} else {
-			if(strcmp("--help", argv[1]) != 0) {
-				print_error("Invalid argument \"%s\"\n", argv[1]);
-			}
+			break;
+		case 'p':
+			prefix = optarg;
+			break;
+		case ':':
+			print_error("Option -%c requires an operand\n", optopt);
+			usage();
+		case '?':
+			print_error("Unrecognized option -%c\n", optopt);
 			usage();
 		}
-
-		argc--;
-		argv++;
 	}
 
-	if(argc >= 2) {
-		int cmdargc = argc - 2;
-		char **cmdargv = argv + 2;
-		char *cmd = argv[1];
+	if(optind < argc) {
+		int cmdargc = argc - (optind + 1);
+		char **cmdargv = argv + optind + 1;
+		char *cmd = argv[optind];
 
 		if(strcmp("verify", cmd) == 0) {
 			verify(cmdargc, cmdargv);

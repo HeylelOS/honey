@@ -2,7 +2,7 @@
   
 honey is intended to be a unix-like OS package manager and
 archive structure format for packages. It is distributed under BSD 3-Clause
-license, see [LICENSE.txt](https://github.com/ValentinDebon/honey/blob/master/LICENSE.txt).
+license, see [LICENSE](https://github.com/ValentinDebon/honey/blob/master/LICENSE).
 
 It is meant to be composed of an ansi C library and
 a command line utility.
@@ -13,14 +13,24 @@ meant to be used directly, you should build your
 providers around it. The command line utility is meant for
 shell script providers, recovery or advanced users.
 
+## How to make and extract a package?
+
+The format is documented in the repository. Supposing the archive name is in _$PACKAGE_
+you may respectively create and extract honey packages with the following commands:
+
+	cpio -c -o | xz -C crc32 > "$PACKAGE"
+
+	cat "$PACKAGE" | unxz -C crc32 | cpio -c -i
+
 ## Dependencies
 
 The honey library only have one non-standard dependency:
-- [libarchive](https://github.com/libarchive/libarchive), with xz and tar support
+- [libarchive](https://github.com/libarchive/libarchive), with xz and cpio support
 
 ## Build
 
 You should be able to configure and build it with:
+
 ```sh
 ./configure
 make
@@ -34,15 +44,19 @@ macOS only have a linking problem due to not having the latest
 
 ## Documentation
 
-HTML and man documentations for the library are built using
+man pages for the command line utility is built using
+[uman](https://github.com/HeylelOS/srcutils):
+
+	make man
+
+HTML documentation for the library are built using
 [Doxygen](https://github.com/doxygen/doxygen):
-```sh
-make doc
-```
+
+	make documentation
 
 ## Tests
 
 You should be able to run tests by executing:
-```sh
-make tests
-```
+
+	make test
+

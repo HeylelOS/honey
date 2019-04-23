@@ -1,3 +1,4 @@
 /Makefile
 /build
-/tests/prefix
+/test/hny/prefix
+/man
