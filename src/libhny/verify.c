@@ -3,7 +3,7 @@
 	Copyright (c) 2018, Valentin Debon
 
 	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE.txt
+	subject the BSD 3-Clause License, see LICENSE
 */
 #include "internal.h"
 
@@ -35,7 +35,7 @@ hny_verify(const char *file,
 
 	a = archive_read_new();
 	archive_read_support_filter_xz(a);
-	archive_read_support_format_tar(a);
+	archive_read_support_format_cpio(a);
 
 	aerr = archive_read_open_filename(a, file, 4096);
 
@@ -48,8 +48,8 @@ hny_verify(const char *file,
 			&& retval == HNY_ERROR_NONE) {
 			const char *entry_name = archive_entry_pathname(entry);
 
-			if(strncmp("hny/", entry_name, 4) == 0) {
-				if(strcmp(entry_name + 4, "eula") == 0) {
+			if(strncmp("hny", entry_name, 3) == 0) {
+				if(strcmp("/eula", entry_name + 3) == 0) {
 					const void *buff;
 					int64_t offset;
 
@@ -69,11 +69,11 @@ hny_verify(const char *file,
 						retval = HNY_ERROR_MISSING;
 					}
 				} else {
-					if(entry_name[4] == '\0') {
+					if(entry_name[3] == '\0') {
 						archive_has |= HNY_ARCHIVE_HAS_HNY;
-					} else if(strcmp("setup", entry_name + 4) == 0) {
+					} else if(strcmp("/setup", entry_name + 3) == 0) {
 						archive_has |= HNY_ARCHIVE_HAS_SETUP;
-					} else if(strcmp("clean", entry_name + 4) == 0) {
+					} else if(strcmp("/clean", entry_name + 3) == 0) {
 						archive_has |= HNY_ARCHIVE_HAS_CLEAN;
 					}
 
