@@ -1,12 +1,14 @@
 /*
 	hny.h
-	Copyright (c) 2018, Valentin Debon
+	Copyright (c) 2018-2019, Valentin Debon
 
 	This file is part of the honey package manager
 	subject the BSD 3-Clause License, see LICENSE
 */
 #ifndef HNY_H
 #define HNY_H
+
+#include <sys/types.h>
 
 /**
  * @mainpage honey package manager
@@ -24,6 +26,10 @@
  * shell script providers or advanced users.
  */
 
+/********************
+    PREFIX SECTION
+*********************/
+
 /**
  * Opaque data type to represent a honey prefix
  * thread-safe through the library
@@ -31,86 +37,26 @@
 struct hny;
 
 /**
- * Honey's equivalent of size_t, avoid include of <sys/types.h>
- */
-typedef unsigned long hny_size_t;
-
-/**
- * enum type to represent errors, numeric values
- * are used as error codes for honey packages scripts
- */
-enum hny_error {
-	HNY_ERROR_NONE = 0,         /**< No error occured */
-	HNY_ERROR_INVALID_ARGS = 1, /**< An argument is invalid */
-	HNY_ERROR_UNAVAILABLE = 2,  /**< The prefix is busy, or a resource is missing */
-	HNY_ERROR_MISSING = 3,      /**< Something is missing, procedure dependant */
-	HNY_ERROR_UNAUTHORIZED = 4  /**< The user lacks privileges */
-};
-
-/**
  * Values used for honey prefix' flags configuration
  * @see hny_open @see hny_flags
  */
 enum hny_flags {
-	HNY_FLAGS_NONE = 0, /**< No flags */
-	HNY_FLAGS_BLOCK = 1 /**< The prefix blocks until availability */
+	HNY_FLAGS_NONE  = 0,     /**< No flags */
+	HNY_FLAGS_BLOCK = 1 << 0 /**< The prefix blocks until availability */
 };
-
-/**
- * Listing conditions. #HNY_LIST_PACKAGES lists
- * all packages, even unactive ones. #HNY_LIST_ACTIVE
- * lists all active packages.
- * @see hny_list
- */
-enum hny_listing {
-	HNY_LIST_PACKAGES, /**< Lists packages in the prefix (dirs) */
-	HNY_LIST_ACTIVE    /**< Lists active geister in the prefix (symlinks) */
-};
-
-/**
- * List of valid honey package scripts,
- * see the package file format for further informations
- * @see hny_execute
- */
-enum hny_action {
-	HNY_ACTION_SETUP, /**< Action which installs necessary files on the system */
-	HNY_ACTION_CLEAN, /**< Action which removes setup files */
-	HNY_ACTION_RESET, /**< Action reseting packages' configuration */
-	HNY_ACTION_CHECK, /**< Action checking files from packages (not the one installed) */
-	HNY_ACTION_PURGE  /**< Action which removes every user-related data */
-};
-
-/**
- * Internal representation of a geist,
- * a reference geist has a NULL version,
- * a package has a name and a version.
- * Both must be valid values
- * @see hny_check_geister
- */
-struct hny_geist {
-	char *name;	/**< name of the geist @see hny_check_name */
-	char *version;	/**< version of the geist @see hny_check_version */
-};
-
-/********************
-    PREFIX SECTION
-*********************/
 
 /**
  * Hook on a honey prefix
  * @param path prefix directory absolute path
  * @param flags prefix flags, see ::hny_flags
- * @param hnyp Pointer to return honey prefix on success, which MUST be closed with
- * hny_close(). Untouched if an error happens.
- * @return #HNY_ERROR_NONE on success, #HNY_ERROR_INVALID_ARGS if prefix is not a directory,
- * #HNY_ERROR_UNAVAILABLE if the operation couldn't be performed,
- * #HNY_ERROR_MISSING if prefix couldn't be found,
- * #HNY_ERROR_UNAUTHORIZED if you don't have permissions to access the prefix.
+ * @param hnyp Pointer to return honey prefix on success, which may be closed
+   with hny_close(). Untouched if an error happens.
+ * @return 0 on success, an error code else.
  */
-enum hny_error
-hny_open(const char *path,
-	int flags,
-	struct hny **hnyp);
+int
+hny_open(struct hny **hnyp,
+	const char *path,
+	int flags);
 
 /**
  * Unhook a honey prefix.
@@ -129,194 +75,130 @@ int
 hny_flags(struct hny *hny,
 	int flags);
 
+/**
+ * Locks a prefix, must be used if you create/destroy/modify an entry in the directory
+ * @param hny prefix to lock
+ * @return 0 on success, an error code else.
+ */
+int
+hny_lock(struct hny *hny);
+
+/**
+ * Unlocks a prefix.
+ * @param hny prefix to unlock
+ */
+void
+hny_unlock(struct hny *hny);
+
 /********************
   OPERATIONS SECTION
 *********************/
 
 /**
- * Checks archive integrity, this special operation doesn't need a prefix.
- * @param file file to verify
- * @param eula pointer for returning a buffer to the end user license agreement,
- * should be free()'d if no error
- * @param len pointer for returning eula buffer size
- * @return #HNY_ERROR_NONE on success,
- * #HNY_ERROR_INVALID_ARGS if file couldn't get opened,
- * #HNY_ERROR_MISSING if the structure is invalid
- * and #HNY_ERROR_UNAVAILABLE if a problem
- * happened while extracting end user license agreement.
+ * Opaque data type to represent a package extraction
  */
-enum hny_error
-hny_verify(const char *file,
-	char **eula,
-	hny_size_t *len);
+struct hny_extraction;
 
 /**
- * Deflates the package in the associated prefix, if the
- * process running this function has effective user id 0,
- * owners will be extracted from the archive.
- * @param hny honey prefix
- * @param file archive to deflate, MUST have been hny_verify()'d
- * and the user MUST have accepted the eula
- * @param package the package installed, name and version provided
- * @return #HNY_ERROR_NONE on success,
- * #HNY_ERROR_UNAVAILABLE if prefix busy,
- * #HNY_ERROR_INVALID_ARGS if an argument is invalid
- * (archive format invalid, etc...)
- * #HNY_ERROR_MISSING if one of the files couldn't
- * be extracted
+ * Progress status of an extraction
+ * @see hny_extraction_extract
  */
-enum hny_error
-hny_export(struct hny *hny,
-	const char *file,
-	const struct hny_geist *package);
+enum hny_extraction_status {
+	HNY_EXTRACTION_STATUS_OK,
+	HNY_EXTRACTION_STATUS_END,
+	HNY_EXTRACTION_STATUS_ERROR_DECOMPRESSION,
+	HNY_EXTRACTION_STATUS_ERROR_UNARCHIVE,
+};
 
 /**
- * Replaces the target of a geist
- * @param hny honey prefix
- * @param geist the geist to modify
- * @param dest the new target of the geist
- * @return #HNY_ERROR_NONE on success,
- * #HNY_ERROR_UNAVAILABLE if prefix busy
+ * Create an extraction handler.
+ * @param extractionp pointer to the handler
+ * @param hny prefix of the package
+ * @param package name of the package
+ * @return 0 on success, an error code else.
  */
-enum hny_error
+int
+hny_extraction_create(struct hny_extraction **extractionp,
+	struct hny *hny, const char *package);
+
+/**
+ * Destroys a previously hny_extraction_create()'d extraction handler
+ * @param extraction Handler to destroy
+ */
+void
+hny_extraction_destroy(struct hny_extraction *extraction);
+
+/**
+ * Extracts an archive from a byte stream
+ * @param extraction extraction handler
+ * @param buffer bytes to extract
+ * @param size size of @buffer
+ * @param errcode return value of a potential error code
+ * @return #HNY_EXTRACTION_STATUS_OK if extracting, #HNY_EXTRACTION_STATUS_END
+ * when successfull extraction is done. Else the step in which an error occurred.
+ */
+enum hny_extraction_status
+hny_extraction_extract(struct hny_extraction *extraction,
+	const char *buffer, size_t size, int *errcode);
+
+/**
+ * Replaces the target of a geist.
+ * @param hny honey prefix
+ * @param geist geist to modify, must be of type #HNY_TYPE_GEIST
+ * @param target the new target of the geist
+ * @return 0 on success, an error code else.
+ */
+int
 hny_shift(struct hny *hny,
 	const char *geist,
-	const struct hny_geist *dest);
+	const char *target);
 
 /**
- * Lists all packages following condition
+ * Depending on type of @entry, it will unlink a #HNY_TYPE_GEIST
+ * and recursively remove a #HNY_TYPE_PACKAGE.
  * @param hny honey prefix
- * @param listing the listing condition
- * @param list pointer for returning the list,
- * should be hny_free_geister()'d if no error and not empty
- * @param len pointer for returning list length
- * @return #HNY_ERROR_NONE on success and a list of
- * len geister in list,
- * #HNY_ERROR_UNAVAILABLE if prefix busy,
- * list and len untouched.
+ * @param entry entry to remove
+ * @return 0 on success, an error code else.
  */
-enum hny_error
-hny_list(struct hny *hny,
-	enum hny_listing listing,
-	struct hny_geist **list,
-	hny_size_t *len);
+int
+hny_remove(struct hny *hny,
+	const char *entry);
 
 /**
- * Erases the package from prefix, remove all files.
- * If its an active geist, deactivates it.
- * Note: Doesn't dereference a package's references.
+ * Executes the given action associated to @entry
+ * the process will execute into the package prefix.
+ * Environnement variable for the honey prefix absolute path as HNY_PREFIX.
  * @param hny honey prefix
- * @param geist the geist to erase/deactivate
- * @return #HNY_ERROR_NONE on success,
- * #HNY_ERROR_UNAVAILABLE if prefix busy
- * #HNY_ERROR_MISSING if a ressource doesn't exist
- * #HNY_ERROR_INVALID_ARGS if a filename is too long or too much symlinks...
- * #HNY_ERROR_UNAUTHORIZED if not authorized
+ * @param entry the geist or package for which the script shall be executed
+ * @param action action to execute must be a lower-alpha ascii only identifier
+ * @param pid PID of the spawned process
+ * @return 0 on success, an error code else.
  */
-enum hny_error
-hny_erase(struct hny *hny,
-	const struct hny_geist *geist);
-
-/**
- * Status follows the symlinks and/or file in the
- * prefix until it finds a problem or a directory.
- * @param hny honey prefix
- * @param geist the geist or package to query
- * @param target pointer for returning the final target, should be hny_free_geister()'d if no error
- * @return #HNY_ERROR_NONE on success,
- * #HNY_ERROR_UNAVAILABLE if prefix busy,
- * #HNY_ERROR_INVALID_ARGS if geist isn't valid and
- * #HNY_ERROR_MISSING if the status couldn't be fetched
- */
-enum hny_error
-hny_status(struct hny *hny,
-	const struct hny_geist *geist,
-	struct hny_geist **target);
-
-/**
- * Executes the given script associated to geist
- * the script will execute into the package prefix.
- * Environnements variable for the honey prefix absolute path as HNY_PREFIX.
- * and each error code will be available for the executed process.
- * @param hny honey prefix
- * @param action script to execute
- * @param geist the geist or package for which the script shall be executed
- * @return #HNY_ERROR_NONE on success,
- * #HNY_ERROR_UNAVAILABLE if prefix busy
- */
-enum hny_error
-hny_execute(struct hny *hny,
-	enum hny_action action,
-	const struct hny_geist *geist);
+int
+hny_spawn(struct hny *hny, const char *entry,
+	const char *action, pid_t *pid);
 
 /********************
   UTILITIES SECTION
 *********************/
 
 /**
- * Allocates a structure for each name, or none if an error occured
- * @param names valid full-names of packages or geister
- * @param count count of names
- * @return NULL if an error occured. A list of count geister otherwise, which must be hny_free_geister()'d
+ * Type of an entry
+ * @see hny_type_of
  */
-struct hny_geist *
-hny_alloc_geister(const char **names,
-	hny_size_t count);
+enum hny_type {
+	HNY_TYPE_NONE,    /**< The entry is invalid */
+	HNY_TYPE_PACKAGE, /**< The entry references a package */
+	HNY_TYPE_GEIST    /**< The entry references a geist */
+};
 
 /**
- * Frees an hny_geist vector or unit allocated by the library
- * @param geister the vector to free
- * @param count the number of elements in the vector
+ * Returns the type of an entry
+ * @param entry entry
+ * @return #HNY_TYPE_NONE on error
  */
-void
-hny_free_geister(struct hny_geist *geister,
-	hny_size_t count);
-
-/**
- * Checks if two geister are equals
- * @param g1 first geist
- * @param g2 second geist
- * @return #HNY_ERROR_NONE if equals, something else else
- */
-enum hny_error
-hny_equals_geister(const struct hny_geist *g1,
-	const struct hny_geist *g2);
-
-/**
- * @defgroup hny_check Checking strings integrity
- * Checks syntaxic integrity of packages/geister names
- * hny_checks_name() checks the prefix, a "pure" geist name,
- * hny_check_version() checks the version suffix and
- * hny_check_package() checks the mix of both, packages
- * entry names (name + '-' + version).
- * hny_check_geister() checks geister instance(s)
- * @{
- */
-enum hny_error
-hny_check_name(const char *name);
-enum hny_error
-hny_check_version(const char *version);
-enum hny_error
-hny_check_package(const char *packagename);
-enum hny_error
-hny_check_geister(const struct hny_geist *geister,
-	hny_size_t n);
-/** @} */
-
-/**
- * Macro to cast hny_compare_versions to qsort type
- * @see hny_compare_versions
- */
-#define HNY_CMP_QSORT(x)	((int (*)(const void *, const void *))(x))
-/**
- * Compare versions of geister
- * @param p1 first version
- * @param p2 second version
- * @return qsort valid comparison
- */
-int
-hny_compare_versions(const char **p1,
-	const char **p2);
+enum hny_type
+hny_type_of(const char *entry);
 
 /* HNY_H */
 #endif

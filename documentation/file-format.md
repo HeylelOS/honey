@@ -3,7 +3,7 @@
 The package is an archive which implements several mandatory files, and may implements others as features.
 
 ## Archive
-The honey package file format is an _XZ stream with crc32_ compressing an _odc cpio file archive_.
+The honey package file format is an _XZ stream with one lzma2 filter and crc32_ compressing an _odc cpio file archive_.
 The choice for such a specific archive is to make honey packages as embeddable as possible without adding a huge backend to handle it.
 
 ## Mandatory

@@ -1,33 +1,21 @@
-BUILD_DIRECTORY_LIB=build/lib/
-BUILD_DIRECTORY_BIN=build/bin/
 LIBHNY_SRC=$(wildcard src/libhny/*.c)
+LIBHNY=$(BUILDDIR)/lib/libhny.so
 HNY_SRC=$(wildcard src/hny/*.c)
-LIBHNY=build/lib/libhny.so
-HNY=build/bin/hny
+HNY=$(BUILDDIR)/bin/hny
 
-.PHONY: all test install clean man documentation
+.PHONY: all clean
 
-all: $(HNY)
-
-test: $(HNY)
-	./test/hny/run.sh
-
-install: $(HNY)
-	cp -r $(BUILD_DIRECTORY_LIB) $(INSTALL_DIRECTORY)
-	cp -r $(BUILD_DIRECTORY_BIN) $(INSTALL_DIRECTORY)
+all: $(LIBHNY) $(HNY)
 
 clean:
-	rm -rf build/ man/
+	rm -rf $(BUILDDIR)
 
-$(BUILD_DIRECTORY_LIB):
-	mkdir -p $@
+$(BUILDDIR):
+	mkdir -p $@/bin $@/lib
 
-$(BUILD_DIRECTORY_BIN):
-	mkdir -p $@
+$(LIBHNY): $(LIBHNY_SRC) $(BUILDDIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -shared -o $@ $(LIBHNY_SRC)
 
-$(LIBHNY): $(LIBHNY_SRC) $(BUILD_DIRECTORY_LIB)
-	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -shared -fPIC -o $@ $(LIBHNY_SRC) -larchive
-
-$(HNY): $(LIBHNY) $(HNY_SRC) $(BUILD_DIRECTORY_BIN)
-	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -o $@ $(HNY_SRC) -Lbuild/lib -lhny
+$(HNY): $(HNY_SRC) $(BUILDDIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -L$(BUILDDIR)/lib -o $@ $(HNY_SRC) -lhny
 

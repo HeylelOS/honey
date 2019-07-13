@@ -1,45 +1,50 @@
 #!/bin/sh
 
-while getopts hvc:f:l:p: opt
+CONFIG_DEBUG=1
+
+while getopts hrd opt
 do
 	case $opt in
-	v) ENABLE_VERBOSE=1;;
-	c) CC="$OPTARG";;
-	f) CFLAGS="$OPTARG";;
-	l) LDFLAGS="$OPTARG";;
-	p) PREFIX="$OPTARG";;
-	h|?) cat <<EOF
+	h) cat <<EOF
 \`configure' configures this package to adapt to many kinds of systems.
-Usage: ./configure [-h] [-v] [-c CC] [-f CFLAGS] [-l LDFLAGS] [-p PREFIX]
+
+Usage: ./configure [-h] [-r|-d] [VAR=VALUE]...
+
+To assign environment variables (e.g., CC, CFLAGS...), specify them as
+VAR=VALUE.  See below for descriptions of some of the useful variables.
+
 Defaults for the options are specified in brackets.
+
 Configuration:
   -h                      display this help and exit
-Installation directories:
-  -p PREFIX               install files in PREFIX
-                          [/usr/local]
-By default, \`make install' will install all the files in
-\`/usr/local/bin', \`/usr/local/lib' etc.  You can specify
-an installation prefix other than \`/usr/local' using \`-p',
-for instance \`-p \$HOME'.
-For better control, use the options below.
+
 Optional Features:
-  -v                         Enable error messages from honey library.
+  -d                      configure a debug build (default)
+  -r                      configure a release build
+
 Some influential environment variables:
-  CC              C compiler command, default in clang gcc cc
-  CFLAGS          C compiler flags, default -O3 -ansi -pedantic -Wall
-  LDFLAGS         linker flags, e.g. -L<lib dir> if you have libraries in a
-                  nonstandard directory <lib dir>, default none.
-  ENABLE_VERBOSE  Enable error messages from honey library, default false.
-  PREFIX          Where to install files, default \`/usr/local'.
+  CC              C compiler command [clang gcc cc]
+  CFLAGS          C compiler flags [-O3 -Wall -fPIC] when -r specified, [-g -Wall -fPIC] else
+  LDFLAGS         linker flags []
+
+  BUILDDIR        where the binaries and documentations will be built [./build]
+
 Use these variables to override the choices made by \`configure' or to help
 it to find libraries and programs with nonstandard names/locations.
+
 Report bugs to the package provider.
 EOF
-		exit 2;;
+		exit 2 ;;
+	r) unset CONFIG_DEBUG ;;
+	d) CONFIG_DEBUG=1 ;;
+	?) echo "Unknown option: $opt" ;;
 	esac
 done
 
-# CC
+shift $((OPTIND - 1))
+[ ! -z "$*" ] && export -- "$@"
+
+# Compilation
 if [ -z "$CC" ]
 then
 	for CC in clang gcc cc
@@ -49,42 +54,27 @@ fi
 
 if [ ! -z "$CC" ]
 then echo "Using C compiler '$CC'"
-else
-	echo "Unable to find C compiler"
-	exit 1
+else echo "Unable to find C compiler" ; exit 1
 fi
 
-# CFLAGS
-[ -z "$CFLAGS" ] && CFLAGS="-O3 -ansi -pedantic -Wall"
+if [ -z "$CFLAGS" ]
+then
+	if [ ! -z "$CONFIG_DEBUG" ]
+	then CFLAGS='-g -Wall -fPIC'
+	else CFLAGS='-O3 -Wall -fPIC'
+	fi
+fi
 echo "Using C flags '$CFLAGS'"
 
-# LDFLAGS
-# Empty by default
-echo "Using linker flags '$LDFLAGS'"
+echo "Using Linker flags: '$LDFLAGS'"
 
-# ENABLE_VERBOSE
-[ ! -z "$ENABLE_VERBOSE" ] && CFLAGS="$CFLAGS -DHNY_VERBOSE" && echo "Enabled verbose honey library"
-
-# PREFIX
-[ -z "$PREFIX" ] && PREFIX="/usr/local"
+[ -z "$BUILDDIR" ] && BUILDDIR='./build'
 
 cat - Makefile.part <<EOF > Makefile
 CC=$CC
 CFLAGS=$CFLAGS
 LDFLAGS=$LDFLAGS
-INSTALL_DIRECTORY=$PREFIX
 
+BUILDDIR=$BUILDDIR
 EOF
-
-echo 'man: $(wildcard uman/*)' >> Makefile
-if [ ! -z `which uman` ]
-then printf '\tuman $^ $@\n\n' >> Makefile && echo "Using uman to build man pages"
-else echo "uman not found, we won't be able to build man pages"
-fi
-
-echo 'documentation: man' >> Makefile
-if [ ! -z `which doxygen` ]
-then printf '\tdoxygen\n' >> Makefile && echo "Using doxygen to build code documentation"
-else echo "doxygen not found, we won't be able to build code documentation"
-fi
 
