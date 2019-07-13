@@ -27,7 +27,7 @@
 
 #define usage() usage_with_error(HNY_ERROR_INVALID_ARGS)
 
-static hny_t *hny;
+static struct hny *hny;
 static int hny_already_accepted;
 
 static void

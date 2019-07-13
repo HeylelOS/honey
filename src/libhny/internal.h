@@ -25,10 +25,10 @@ struct hny {
 };
 
 enum hny_error
-hny_lock(hny_t *hny);
+hny_lock(struct hny *hny);
 
 void
-hny_unlock(hny_t *hny);
+hny_unlock(struct hny *hny);
 
 enum hny_error
 hny_errno(int err);

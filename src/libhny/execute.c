@@ -15,7 +15,7 @@
 #include <sys/wait.h>
 
 static enum hny_error
-hny_spawn(hny_t *hny,
+hny_spawn(struct hny *hny,
 	const struct hny_geist *geist,
 	char *name) {
 	enum hny_error retval = HNY_ERROR_NONE;
@@ -76,7 +76,7 @@ hny_spawn(hny_t *hny,
 }
 
 enum hny_error
-hny_execute(hny_t *hny,
+hny_execute(struct hny *hny,
 	enum hny_action action,
 	const struct hny_geist *geist) {
 	enum hny_error retval = HNY_ERROR_NONE;

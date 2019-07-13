@@ -15,7 +15,7 @@
 #include <errno.h>
 
 enum hny_error
-hny_shift(hny_t *hny,
+hny_shift(struct hny *hny,
 	const char *geist,
 	const struct hny_geist *package) {
 	enum hny_error retval = HNY_ERROR_NONE;

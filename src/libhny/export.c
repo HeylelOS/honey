@@ -15,7 +15,7 @@
 #include <limits.h>
 
 enum hny_error
-hny_export(hny_t *hny,
+hny_export(struct hny *hny,
 	const char *file,
 	const struct hny_geist *package) {
 	enum hny_error retval = HNY_ERROR_NONE;

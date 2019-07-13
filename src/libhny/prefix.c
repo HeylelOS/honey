@@ -15,7 +15,7 @@
 enum hny_error
 hny_open(const char *path,
 	int flags,
-	hny_t **hnyp) {
+	struct hny **hnyp) {
 	enum hny_error retval = HNY_ERROR_NONE;
 	DIR *dirp;
 
@@ -26,7 +26,7 @@ hny_open(const char *path,
 		char *ptr = malloc(sizeof(**hnyp) + pathsize);
 
 		if(ptr != NULL) {
-			*hnyp = (hny_t *)ptr;
+			*hnyp = (struct hny *)ptr;
 
 			(*hnyp)->dirp = dirp;
 
@@ -66,7 +66,7 @@ hny_open(const char *path,
 }
 
 void
-hny_close(hny_t *hny) {
+hny_close(struct hny *hny) {
 
 	hny_lock(hny);
 	hny_unlock(hny);
@@ -75,7 +75,7 @@ hny_close(hny_t *hny) {
 }
 
 int
-hny_flags(hny_t *hny,
+hny_flags(struct hny *hny,
 	int flags) {
 	int oldflags = hny->flags;
 

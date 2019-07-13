@@ -46,7 +46,7 @@ hny_target(int dirfd,
 }
 
 enum hny_error
-hny_status(hny_t *hny,
+hny_status(struct hny *hny,
 	const struct hny_geist *geist,
 	struct hny_geist **target) {
 	enum hny_error retval = HNY_ERROR_NONE;

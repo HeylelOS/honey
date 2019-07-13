@@ -11,7 +11,7 @@
 #include <string.h>
 
 enum hny_error
-hny_list(hny_t *hny,
+hny_list(struct hny *hny,
 	enum hny_listing listing,
 	struct hny_geist **list,
 	hny_size_t *len) {
