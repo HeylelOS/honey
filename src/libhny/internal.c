@@ -14,7 +14,7 @@
 #include <errno.h>
 
 enum hny_error
-hny_lock(hny_t *hny) {
+hny_lock(struct hny *hny) {
 
 	if(flock(dirfd(hny->dirp),
 		LOCK_EX | ((hny->flags & HNY_FLAGS_BLOCK) == 0 ? LOCK_NB : 0))
@@ -31,7 +31,7 @@ hny_lock(hny_t *hny) {
 }
 
 void
-hny_unlock(hny_t *hny) {
+hny_unlock(struct hny *hny) {
 
 	flock(dirfd(hny->dirp), LOCK_UN);
 }

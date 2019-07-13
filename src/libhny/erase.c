@@ -55,7 +55,7 @@ hny_remove_recursive(const char *path) {
 }
 
 enum hny_error
-hny_erase(hny_t *hny,
+hny_erase(struct hny *hny,
 	const struct hny_geist *geist) {
 	enum hny_error retval = HNY_ERROR_NONE;
 

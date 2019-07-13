@@ -28,7 +28,7 @@
  * Opaque data type to represent a honey prefix
  * thread-safe through the library
  */
-typedef struct hny hny_t;
+struct hny;
 
 /**
  * Honey's equivalent of size_t, avoid include of <sys/types.h>
@@ -110,14 +110,14 @@ struct hny_geist {
 enum hny_error
 hny_open(const char *path,
 	int flags,
-	hny_t **hnyp);
+	struct hny **hnyp);
 
 /**
  * Unhook a honey prefix.
  * @param hny Previously hny_open()'d valid honey prefix to close
  */
 void
-hny_close(hny_t *hny);
+hny_close(struct hny *hny);
 
 /**
  * Sets honey prefix parameters on behaviour
@@ -126,7 +126,7 @@ hny_close(hny_t *hny);
  * @return Previous flags
  */
 int
-hny_flags(hny_t *hny,
+hny_flags(struct hny *hny,
 	int flags);
 
 /********************
@@ -166,7 +166,7 @@ hny_verify(const char *file,
  * be extracted
  */
 enum hny_error
-hny_export(hny_t *hny,
+hny_export(struct hny *hny,
 	const char *file,
 	const struct hny_geist *package);
 
@@ -179,7 +179,7 @@ hny_export(hny_t *hny,
  * #HNY_ERROR_UNAVAILABLE if prefix busy
  */
 enum hny_error
-hny_shift(hny_t *hny,
+hny_shift(struct hny *hny,
 	const char *geist,
 	const struct hny_geist *dest);
 
@@ -196,7 +196,7 @@ hny_shift(hny_t *hny,
  * list and len untouched.
  */
 enum hny_error
-hny_list(hny_t *hny,
+hny_list(struct hny *hny,
 	enum hny_listing listing,
 	struct hny_geist **list,
 	hny_size_t *len);
@@ -214,7 +214,7 @@ hny_list(hny_t *hny,
  * #HNY_ERROR_UNAUTHORIZED if not authorized
  */
 enum hny_error
-hny_erase(hny_t *hny,
+hny_erase(struct hny *hny,
 	const struct hny_geist *geist);
 
 /**
@@ -229,7 +229,7 @@ hny_erase(hny_t *hny,
  * #HNY_ERROR_MISSING if the status couldn't be fetched
  */
 enum hny_error
-hny_status(hny_t *hny,
+hny_status(struct hny *hny,
 	const struct hny_geist *geist,
 	struct hny_geist **target);
 
@@ -245,7 +245,7 @@ hny_status(hny_t *hny,
  * #HNY_ERROR_UNAVAILABLE if prefix busy
  */
 enum hny_error
-hny_execute(hny_t *hny,
+hny_execute(struct hny *hny,
 	enum hny_action action,
 	const struct hny_geist *geist);
 
