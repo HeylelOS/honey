@@ -13,39 +13,32 @@ sections:
         by advanced users, either for fun or to repair a broken prefix.
     options:
         "-h": "Prints usage and exits."
-        "-a": "Specify you accepted all eulas, to automatically verify without prompting."
         "-b": >
             Sets the honey blocking behavior to blocking,
             as it is non-blocking by default.
         "-p path": >
             To specify a prefix manualy, overrides the value in \fBHNY_PREFIX\fR.
-        "verify [filenames...]": >
-            Verifies integrity of archive, and prompts whether
-            or not you want to accept the EULA.
-        "export filename geistname": >
+        "export package [filename]": >
             Unpacks \fBfilename\fR in the prefix, with the specified \fBgeistname\fR.
-        "shift targetgeist geistname": >
+        "shift target geist": >
             Associates \fBtargetgeist\fR to \fBgeistname\fR.
         "list [active|packages]": >
             Lists respectively symlinks, or directories in the prefix.
-        "erase [geistnames...]": >
-            Removes \fBgeistnames\fR, unlinks it if a symlink, removes files if a package
-        "status [geistnames...]":
+        "remove [entry...]": >
+            Removes \fBentry\fR, unlinks it if a symlink, removes files if a package
+        "status [entry...]":
             Returns which package \fBgeistname\fR points too.
-        "setup [geistnames...]":
-            Executes the \fBsetup\fR routine for the specified \fBgeistnames\fR.
-        "clean [geistnames...]":
-            Executes the \fBclean\fR routine for the specified \fBgeistnames\fR.
-        "reset [geistnames...]":
-            Executes the \fBreset\fR routine for the specified \fBgeistnames\fR.
-        "check [geistnames...]":
-            Executes the \fBcheck\fR routine for the specified \fBgeistnames\fR.
-        "purge [geistnames...]":
-            Executes the \fBpurge\fR routine for the specified \fBgeistnames\fR.
+        "setup [entry...]":
+            Executes the \fBsetup\fR routine for the specified \fBentry\fR.
+        "clean [entry...]":
+            Executes the \fBclean\fR routine for the specified \fBentry\fR.
+        "reset [entry...]":
+            Executes the \fBreset\fR routine for the specified \fBentry\fR.
+        "check [entry...]":
+            Executes the \fBcheck\fR routine for the specified \fBentry\fR.
+        "purge [entry...]":
+            Executes the \fBpurge\fR routine for the specified \fBentry\fR.
     author: "Valentin Debon (valentin.debon@heylelos.org)"
     "see also":
-        hny: [ 3 ]
-        hny_geist: [ 3 ]
-        hny_check: [ 3 ]
         cpio: [ 1 ]
         xz: [ 1 ]
