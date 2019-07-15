@@ -76,6 +76,14 @@ hny_flags(struct hny *hny,
 	int flags);
 
 /**
+ * Get absolute path of the honey prefix
+ * @param hny honey prefix
+ * @return honey prefix absolute path, must not be free()'d
+ */
+const char *
+hny_path(struct hny *hny);
+
+/**
  * Locks a prefix, must be used if you create/destroy/modify an entry in the directory
  * @param hny prefix to lock
  * @return 0 on success, an error code else.

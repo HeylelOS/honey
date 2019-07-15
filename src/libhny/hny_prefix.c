@@ -67,6 +67,12 @@ hny_flags(struct hny *hny,
 	return oldflags;
 }
 
+const char *
+hny_path(struct hny *hny) {
+
+	return hny->path;
+}
+
 int
 hny_lock(struct hny *hny) {
 	int flags = LOCK_EX;
