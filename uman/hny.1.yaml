@@ -7,7 +7,11 @@ header:
 sections:
     name: "command line utility to repair or access honey prefixes"
     synopsis:
-        - "hny [-h|-a|-b] [-p path] <command> [arguments...]"
+        - "hny [-hb] [-p <prefix>] extract [<geist>] <file>"
+        - "hny [-h] [-p <prefix>] list [packages|geister]"
+        - "hny [-hb] [-p <prefix>] remove [<entry>...]"
+        - "hny [-hb] [-p <prefix>] shift <geist> <target>"
+        - "hny [-h] [-p <prefix>] status [<geist>...]"
     description: >
         This command line interface is only meant to be used in shell scripts or
         by advanced users, either for fun or to repair a broken prefix.
@@ -16,18 +20,18 @@ sections:
         "-b": >
             Sets the honey blocking behavior to blocking,
             as it is non-blocking by default.
-        "-p path": >
+        "-p <prefix>": >
             To specify a prefix manualy, overrides the value in \fBHNY_PREFIX\fR.
-        "export package [filename]": >
-            Unpacks \fBfilename\fR in the prefix, with the specified \fBgeistname\fR.
-        "shift target geist": >
-            Associates \fBtargetgeist\fR to \fBgeistname\fR.
-        "list [active|packages]": >
-            Lists respectively symlinks, or directories in the prefix.
-        "remove [entry...]": >
-            Removes \fBentry\fR, unlinks it if a symlink, removes files if a package
-        "status [entry...]":
-            Returns which package \fBgeistname\fR points too.
+        "extract [<geist>] <file>": >
+            Unpacks \fBfile\fR in the prefix, with the specified \fBgeist\fR, or its basename else.
+        "list [packages|geister]": >
+            Lists respectively directories, or symlinks in the prefix.
+        "remove [<entry>...]": >
+            Removes \fBentry\fR, unlinks it if a symlink, removes files if a package.
+        "shift <geist> <target>": >
+            Associates \fBtarget\fR to \fBgeist\fR.
+        "status [<geist>...]":
+            Returns which package \fBgeist\fR points too.
         "setup [entry...]":
             Executes the \fBsetup\fR routine for the specified \fBentry\fR.
         "clean [entry...]":
