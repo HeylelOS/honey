@@ -1,16 +1,18 @@
 #include "hny.h"
 
+#include <dirent.h>
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <libgen.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <libgen.h>
-#include <dirent.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <err.h>
 
 #define HNY_STATUS_BUFFER_DEFAULT_SIZE 64
 
@@ -57,30 +59,40 @@ hny_command_extract(struct hny *hny, char **argpos, char **argend) {
 
 	hny_extract_file_init(&file, argpos, argend);
 	if((errno = hny_extraction_create(&extraction, hny, file.package)) != 0) {
-		err(EXIT_FAILURE, "Unable to extract '%s'", file.name);
+		err(EXIT_FAILURE, "extract: Unable to extract '%s'", file.name);
+	}
+
+	if((errno = hny_lock(hny)) != 0) {
+		err(EXIT_FAILURE, "extract: Unable to lock prefix '%s'", file.name);
 	}
 
 	char buffer[file.blocksize];
 	ssize_t readval;
 	int errcode;
-	while((readval = read(file.fd, buffer, file.blocksize)) > 0) {
+	bool done = false;
+	while(!done && (readval = read(file.fd, buffer, file.blocksize)) > 0) {
 		switch(hny_extraction_extract(extraction, buffer, readval, &errcode)) {
 		case HNY_EXTRACTION_STATUS_ERROR_UNARCHIVE:
 			errno = errcode;
-			err(EXIT_FAILURE, "Unable to extract '%s', error when unarchiving", file.name);
+			warn("extract: Unable to extract '%s', error when unarchiving", file.name);
+			break;
 		case HNY_EXTRACTION_STATUS_ERROR_DECOMPRESSION:
 			errno = errcode;
-			err(EXIT_FAILURE, "Unable to extract '%s', error when decompressing", file.name);
+			warn("extract: Unable to extract '%s', error when decompressing", file.name);
+			break;
 		case HNY_EXTRACTION_STATUS_END:
-			return;
+			done = true;
+			break;
 		default: /* HNY_EXTRACTION_STATUS_OK */
 			break;
 		}
 	}
 
 	if(readval == -1) {
-		err(EXIT_FAILURE, "Unable to read from '%s'", file.name);
+		warn("extract: Unable to read from '%s'", file.name);
 	}
+
+	hny_unlock(hny);
 }
 
 static inline bool
@@ -153,8 +165,15 @@ hny_command_remove(struct hny *hny, char **argpos, char **argend) {
 
 	if(argpos != argend) {
 		while(argpos != argend) {
-			if((errno = hny_remove(hny, *argpos)) != 0) {
-				warn("Unable to remove '%s'", *argpos);
+			if((errno = hny_lock(hny)) == 0) {
+				errno = hny_remove(hny, *argpos);
+				hny_unlock(hny);
+
+				if(errno != 0) {
+					warn("Unable to remove '%s'", *argpos);
+				}
+			} else {
+				warn("shift: Unable to lock prefix");
 			}
 
 			argpos++;
@@ -179,8 +198,15 @@ hny_command_shift(struct hny *hny, char **argpos, char **argend) {
 			errx(EXIT_FAILURE, "shift: '%s' is not a valid entry name", target);
 		}
 
-		if((errno = hny_shift(hny, geist, target)) != 0) {
-			errx(EXIT_FAILURE, "shift: Unable to shift '%s' to '%s'", geist, target);
+		if(hny_lock(hny) == 0) {
+			errno = hny_shift(hny, geist, target);
+			hny_unlock(hny);
+
+			if(errno != 0) {
+				errx(EXIT_FAILURE, "shift: Unable to shift '%s' to '%s'", geist, target);
+			}
+		} else {
+			warn("shift: Unable to lock prefix");
 		}
 	} else {
 		errx(EXIT_FAILURE, "shift: Expected 2 arguments");
@@ -281,6 +307,64 @@ hny_command_status(struct hny *hny, char **argpos, char **argend) {
 }
 
 static void
+hny_action(struct hny *hny, const char *path, const char *action,
+	char **argpos, char **argend) {
+
+	signal(SIGCHLD, SIG_IGN);
+	while(argpos != argend) {
+		char *entry = *argpos;
+
+		if(hny_type_of(entry) != HNY_TYPE_NONE) {
+			pid_t pid;
+			int errcode = hny_spawn(hny, entry, path, &pid);
+
+			if(errcode == 0) {
+				printf("%s: Started for '%s' with pid: %d\n", action, entry, pid);
+			} else {
+				errno = errcode;
+				warn("%s: Unable to start for '%s'", action, entry);
+			}
+		} else {
+			warnx("%s: '%s' is not a valid entry name", action, entry);
+		}
+
+		argpos++;
+	}
+
+	siginfo_t info;
+	while(waitid(P_ALL, 0, &info, WEXITED) == 0);
+
+	if(errno != ECHILD) {
+		err(EXIT_FAILURE, "%s: waitid", action);
+	}
+}
+
+static void
+hny_command_setup(struct hny *hny, char **argpos, char **argend) {
+	hny_action(hny, "hny/setup", "setup", argpos, argend);
+}
+
+static void
+hny_command_clean(struct hny *hny, char **argpos, char **argend) {
+	hny_action(hny, "hny/clean", "clean", argpos, argend);
+}
+
+static void
+hny_command_reset(struct hny *hny, char **argpos, char **argend) {
+	hny_action(hny, "hny/reset", "reset", argpos, argend);
+}
+
+static void
+hny_command_check(struct hny *hny, char **argpos, char **argend) {
+	hny_action(hny, "hny/check", "check", argpos, argend);
+}
+
+static void
+hny_command_purge(struct hny *hny, char **argpos, char **argend) {
+	hny_action(hny, "hny/purge", "purge", argpos, argend);
+}
+
+static void
 hny_usage(const char *hnyname, int status) {
 
 	fprintf(stderr, "usage: %s [-hb] [-p <prefix>] extract [<geist>] <file>\n"
@@ -338,6 +422,11 @@ static const struct hny_command {
 	{ "remove", hny_command_remove },
 	{ "shift", hny_command_shift },
 	{ "status", hny_command_status },
+	{ "setup", hny_command_setup },
+	{ "clean", hny_command_clean },
+	{ "reset", hny_command_reset },
+	{ "check", hny_command_check },
+	{ "purge", hny_command_purge },
 	{ NULL, NULL },
 };
 

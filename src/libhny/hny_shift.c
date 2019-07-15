@@ -8,11 +8,10 @@ int
 hny_shift(struct hny *hny,
 	const char *geist,
 	const char *target) {
-	int errcode = EINVAL;
+	int errcode = 0;
 
 	if(hny_type_of(geist) == HNY_TYPE_GEIST
-		&& hny_type_of(target) != HNY_TYPE_NONE
-		&& (errcode = hny_lock(hny)) == 0) {
+		&& hny_type_of(target) != HNY_TYPE_NONE) {
 
 		if(faccessat(dirfd(hny->dirp), geist, F_OK, AT_SYMLINK_NOFOLLOW) == 0
 			&& unlinkat(dirfd(hny->dirp), geist, 0) == -1) {
@@ -23,8 +22,8 @@ hny_shift(struct hny *hny,
 			&& symlinkat(target, dirfd(hny->dirp), geist) == -1) {
 			errcode = errno;
 		}
-
-		hny_unlock(hny);
+	} else {
+		errcode = EINVAL;
 	}
 
 	return errcode;

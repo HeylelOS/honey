@@ -26,14 +26,7 @@ hny_extraction_create(struct hny_extraction **extractionp,
 		goto hny_extraction_create_err1;
 	}
 
-	if((errcode = hny_lock(hny)) != 0) {
-		goto hny_extraction_create_err2;
-	}
-
-	errcode = hny_extraction_cpio_init(&extraction->cpio, dirfd(hny->dirp), package);
-	hny_unlock(hny);
-
-	if(errcode != 0) {
+	if((errcode = hny_extraction_cpio_init(&extraction->cpio, dirfd(hny->dirp), package)) != 0) {
 		goto hny_extraction_create_err2;
 	}
 

@@ -206,11 +206,8 @@ hny_remove_package(struct hny *hny, const char *package) {
 
 		while(hny_removal_remove(&removal, &errcode) == 0);
 
-		if((errcode = hny_lock(hny)) == 0) {
-			if(unlinkat(dirfd(hny->dirp), package, AT_REMOVEDIR) == -1) {
-				errcode = errno;
-			}
-			hny_unlock(hny);
+		if(unlinkat(dirfd(hny->dirp), package, AT_REMOVEDIR) == -1) {
+			errcode = errno;
 		}
 
 		hny_removal_deinit(&removal);
@@ -229,11 +226,8 @@ hny_remove(struct hny *hny,
 		errcode = hny_remove_package(hny, entry);
 		break;
 	case HNY_TYPE_GEIST:
-		if((errcode = hny_lock(hny)) == 0) {
-			if(unlinkat(dirfd(hny->dirp), entry, 0) == -1) {
-				errcode = errno;
-			}
-			hny_unlock(hny);
+		if(unlinkat(dirfd(hny->dirp), entry, 0) == -1) {
+			errcode = errno;
 		}
 		break;
 	default: /* HNY_TYPE_NONE */
