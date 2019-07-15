@@ -1,3 +1,10 @@
+/*
+	hny_internal.h
+	Copyright (c) 2018-2019, Valentin Debon
+
+	This file is part of the honey package manager
+	subject the BSD 3-Clause License, see LICENSE
+*/
 #ifndef HNY_INTERNAL_H
 #define HNY_INTERNAL_H
 

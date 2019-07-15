@@ -1,3 +1,10 @@
+/*
+	main.c
+	Copyright (c) 2018-2019, Valentin Debon
+
+	This file is part of the honey package manager
+	subject the BSD 3-Clause License, see LICENSE
+*/
 #include "hny.h"
 
 #include <dirent.h>
@@ -309,8 +316,8 @@ hny_command_status(struct hny *hny, char **argpos, char **argend) {
 static void
 hny_action(struct hny *hny, const char *path, const char *action,
 	char **argpos, char **argend) {
+	int failed = 0;
 
-	signal(SIGCHLD, SIG_IGN);
 	while(argpos != argend) {
 		char *entry = *argpos;
 
@@ -323,6 +330,7 @@ hny_action(struct hny *hny, const char *path, const char *action,
 			} else {
 				errno = errcode;
 				warn("%s: Unable to start for '%s'", action, entry);
+				failed++;
 			}
 		} else {
 			warnx("%s: '%s' is not a valid entry name", action, entry);
@@ -331,11 +339,36 @@ hny_action(struct hny *hny, const char *path, const char *action,
 		argpos++;
 	}
 
+	int count = argend - argpos;
 	siginfo_t info;
-	while(waitid(P_ALL, 0, &info, WEXITED) == 0);
+
+	while(waitid(P_ALL, 0, &info, WEXITED | WNOHANG) == 0) {
+		switch(info.si_code) {
+		case CLD_EXITED:
+			if(info.si_status == 0) {
+				printf("%s: process %d successful\n", action, info.si_pid);
+			} else {
+				printf("%s: process %d terminated with exit status %d\n", action, info.si_pid, info.si_status);
+				failed++;
+			}
+			break;
+		case CLD_KILLED:
+			printf("%s: process %d killed by signal (%d)\n", action, info.si_pid, info.si_status);
+			failed++;
+			break;
+		case CLD_DUMPED:
+			printf("%s: process %d dumped core (%d)\n", action, info.si_pid, info.si_status);
+			failed++;
+			break;
+		default:
+			break;
+		}
+	}
 
 	if(errno != ECHILD) {
 		err(EXIT_FAILURE, "%s: waitid", action);
+	} else if(failed != 0) {
+		err(EXIT_FAILURE, "%s: %d out of %d failed\n", action, failed, count);
 	}
 }
 
@@ -368,10 +401,10 @@ static void
 hny_usage(const char *hnyname, int status) {
 
 	fprintf(stderr, "usage: %s [-hb] [-p <prefix>] extract [<geist>] <file>\n"
-		"       %s [-hb] [-p <prefix>] list [packages|geister]\n"
+		"       %s [-h] [-p <prefix>] list [packages|geister]\n"
 		"       %s [-hb] [-p <prefix>] remove [<entry>...]\n"
 		"       %s [-hb] [-p <prefix>] shift <geist> <target>\n"
-		"       %s [-hb] [-p <prefix>] status [<geist>...]\n",
+		"       %s [-h] [-p <prefix>] status [<geist>...]\n",
 		hnyname, hnyname, hnyname, hnyname, hnyname);
 	exit(status);
 }

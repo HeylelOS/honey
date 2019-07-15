@@ -27,7 +27,7 @@ Some influential environment variables:
   CFLAGS          C compiler flags [-O3 -Wall -fPIC] when -r specified, [-g -Wall -fPIC] else
   LDFLAGS         linker flags []
 
-  BUILDDIR        where the binaries and documentations will be built [./build]
+  BUILDDIR        where the binaries and documentations will be built [`pwd`/build]
 
 Use these variables to override the choices made by \`configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -68,7 +68,7 @@ echo "Using C flags '$CFLAGS'"
 
 echo "Using Linker flags: '$LDFLAGS'"
 
-[ -z "$BUILDDIR" ] && BUILDDIR='./build'
+[ -z "$BUILDDIR" ] && BUILDDIR="`pwd`/build"
 
 cat - Makefile.part <<EOF > Makefile
 CC=$CC
