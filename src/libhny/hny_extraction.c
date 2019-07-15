@@ -1,3 +1,10 @@
+/*
+	hny_extraction.c
+	Copyright (c) 2018-2019, Valentin Debon
+
+	This file is part of the honey package manager
+	subject the BSD 3-Clause License, see LICENSE
+*/
 #include "hny_internal.h"
 #include "hny_extraction_xz.h"
 #include "hny_extraction_cpio.h"

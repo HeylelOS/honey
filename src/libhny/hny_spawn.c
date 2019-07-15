@@ -1,3 +1,10 @@
+/*
+	hny_spawn.c
+	Copyright (c) 2018-2019, Valentin Debon
+
+	This file is part of the honey package manager
+	subject the BSD 3-Clause License, see LICENSE
+*/
 #include "hny_internal.h"
 
 #include <stdlib.h>
@@ -33,11 +40,11 @@ hny_spawn(struct hny *hny, const char *entry,
 
 		if(fchdir(dirfd(hny->dirp)) == -1
 			|| chdir(entry) == -1) {
-			err(HNY_SPAWN_STATUS_ERROR, "Unable to chdir");
+			err(HNY_SPAWN_STATUS_ERROR, "Unable to chdir %s/%s", hny->path, entry);
 		}
 
-		if(execv(entry, (argv[0] = basename(argv[0]), argv)) == -1) {
-			err(HNY_SPAWN_STATUS_ERROR, "Unable to execv");
+		if(execv(path, (argv[0] = basename(argv[0]), argv)) == -1) {
+			err(HNY_SPAWN_STATUS_ERROR, "Unable to execv '%s' for %s", path, entry);
 		}
 	} else if(spawned > 0) {
 		*pid = spawned;

@@ -2,16 +2,47 @@ LIBHNY_SRC=$(wildcard src/libhny/*.c)
 LIBHNY=$(BUILDDIR)/lib/libhny.so
 HNY_SRC=$(wildcard src/hny/*.c)
 HNY=$(BUILDDIR)/bin/hny
+TEST_ARCHIVE_1=test/hny/test_archive-1.hny
+TEST_ARCHIVE_2=test/hny/test_archive-2.hny
+TEST_ARCHIVES=$(TEST_ARCHIVE_1) $(TEST_ARCHIVE_2)
 
-.PHONY: all clean
+.PHONY: all clean test
 
 all: $(LIBHNY) $(HNY)
 
 clean:
 	rm -rf $(BUILDDIR)
 
+test: $(HNY) $(TEST_ARCHIVE_1) $(TEST_ARCHIVE_2) $(BUILDDIR)
+	@echo "- Testing extract"
+	$< -p $(BUILDDIR)/hub extract $(TEST_ARCHIVE_1)
+	$< -p $(BUILDDIR)/hub extract $(TEST_ARCHIVE_2)
+	@echo "- Testing shift (creation)"
+	$< -p $(BUILDDIR)/hub shift test_archive1 test_archive-1
+	$< -p $(BUILDDIR)/hub shift test_archive2 test_archive-2
+	@echo "- Testing status (one level)"
+	$< -p $(BUILDDIR)/hub status test_archive1 test_archive2
+	@echo "- Testing setup"
+	$< -p $(BUILDDIR)/hub setup test_archive1 test_archive2
+	@echo "- Testing shift (two levels)"
+	$< -p $(BUILDDIR)/hub shift test_archive test_archive1
+	@echo "- Testing status (two levels)"
+	$< -p $(BUILDDIR)/hub status test_archive
+	@echo "- Testing list (geister)"
+	$< -p $(BUILDDIR)/hub list geister
+	@echo "- Testing list (packages)"
+	$< -p $(BUILDDIR)/hub list packages
+	@echo "- Testing list (all)"
+	$< -p $(BUILDDIR)/hub list
+	@echo "- Testing remove (geister)"
+	$< -p $(BUILDDIR)/hub remove test_archive test_archive1 test_archive2
+	@echo "- Testing clean"
+	$< -p $(BUILDDIR)/hub clean test_archive-1 test_archive-2
+	@echo "- Testing remove (packages)"
+	$< -p $(BUILDDIR)/hub remove test_archive-1 test_archive-2
+
 $(BUILDDIR):
-	mkdir -p $@/bin $@/lib
+	mkdir -p $@/bin $@/lib $@/hub
 
 $(LIBHNY): $(LIBHNY_SRC) $(BUILDDIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -shared -o $@ $(LIBHNY_SRC)

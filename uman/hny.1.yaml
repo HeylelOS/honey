@@ -12,6 +12,7 @@ sections:
         - "hny [-hb] [-p <prefix>] remove [<entry>...]"
         - "hny [-hb] [-p <prefix>] shift <geist> <target>"
         - "hny [-h] [-p <prefix>] status [<geist>...]"
+        - "hny [-h] [-p <prefix>] <command> [<entry>...]"
     description: >
         This command line interface is only meant to be used in shell scripts or
         by advanced users, either for fun or to repair a broken prefix.
@@ -32,17 +33,18 @@ sections:
             Associates \fBtarget\fR to \fBgeist\fR.
         "status [<geist>...]":
             Returns which package \fBgeist\fR points too.
-        "setup [entry...]":
+        "setup [<entry>...]":
             Executes the \fBsetup\fR routine for the specified \fBentry\fR.
-        "clean [entry...]":
+        "clean [<entry>...]":
             Executes the \fBclean\fR routine for the specified \fBentry\fR.
-        "reset [entry...]":
+        "reset [<entry>...]":
             Executes the \fBreset\fR routine for the specified \fBentry\fR.
-        "check [entry...]":
+        "check [<entry>...]":
             Executes the \fBcheck\fR routine for the specified \fBentry\fR.
-        "purge [entry...]":
+        "purge [<entry>...]":
             Executes the \fBpurge\fR routine for the specified \fBentry\fR.
     author: "Valentin Debon (valentin.debon@heylelos.org)"
     "see also":
-        cpio: [ 1 ]
-        xz: [ 1 ]
+        cpio: [ 5 ]
+        xz: [ 5 ]
+
