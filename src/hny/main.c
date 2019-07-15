@@ -21,6 +21,8 @@ hny_export_file_init(struct hny_export_file *file,
 	char **argpos, char **argend) {
 
 	switch(argend - argpos) {
+	case 0:
+		errx(EXIT_FAILURE, "export: Expected arguments");
 	case 1: {
 		char *base = basename(*argpos);
 		char *dot = strrchr(base, '.');
@@ -77,6 +79,25 @@ hny_export(struct hny *hny, char **argpos, char **argend) {
 }
 
 static void
+hny_remove_list(struct hny *hny, char **argpos, char **argend) {
+
+	if(argpos != argend) {
+		while(argpos != argend) {
+			int errcode = hny_remove(hny, *argpos);
+
+			if(errcode != 0) {
+				errno = errcode;
+				warn("Unable to remove %s", *argpos);
+			}
+
+			argpos++;
+		}
+	} else {
+		errx(EXIT_FAILURE, "remove: Expected arguments");
+	}
+}
+
+static void
 hny_usage(const char *hnyname, int status) {
 
 	fprintf(stderr, "usage: %s [-h] [-p <prefix>] export [filename]\n",
@@ -126,6 +147,7 @@ static const struct hny_command {
 	void (*handle)(struct hny *, char **, char **);
 } hnycommands[] = {
 	{ "export", hny_export },
+	{ "remove", hny_remove_list },
 	{ NULL, NULL },
 };
 

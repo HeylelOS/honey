@@ -75,8 +75,7 @@ hny_lock(struct hny *hny) {
 		flags |= LOCK_NB;
 	}
 
-	if(flock(dirfd(hny->dirp), flags) == -1
-		&& errno != EWOULDBLOCK) {
+	if(flock(dirfd(hny->dirp), flags) == -1) {
 		return errno;
 	}
 
