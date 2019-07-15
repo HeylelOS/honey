@@ -165,18 +165,21 @@ hny_remove(struct hny *hny,
 	const char *entry);
 
 /**
- * Executes the given action associated to @entry
+ * Executes the given file associated to @entry
  * the process will execute into the package prefix.
- * Environnement variable for the honey prefix absolute path as HNY_PREFIX.
+ * The argument list only contains the basename of @path.
+ * The @hny absolute path is an environment variable named HNY_PREFIX.
+ * Note the execution can fail even if the return value is 0. In this case
+ * the process returns with an exit code 127.
  * @param hny honey prefix
  * @param entry the geist or package for which the script shall be executed
- * @param action action to execute must be a lower-alpha ascii only identifier
+ * @param path path relative to the package directory of the executable
  * @param pid PID of the spawned process
  * @return 0 on success, an error code else.
  */
 int
 hny_spawn(struct hny *hny, const char *entry,
-	const char *action, pid_t *pid);
+	const char *path, pid_t *pid);
 
 /********************
   UTILITIES SECTION
