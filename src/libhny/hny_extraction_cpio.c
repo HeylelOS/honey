@@ -19,16 +19,6 @@
 #define HNY_EXTRACTION_CPIO_HEADER_SIZE 76
 #define HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY 32
 
-static int
-hny_extraction_cpio_header_serialize_at(struct hny_extraction_cpio_stat *cpiostatp,
-	unsigned char byte, size_t position);
-
-static int
-hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode);
-
-static int
-hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int *errcode);
-
 int
 hny_extraction_cpio_init(struct hny_extraction_cpio *cpio, int dirfd, const char *path) {
 	int errcode;
@@ -75,128 +65,6 @@ hny_extraction_cpio_deinit(struct hny_extraction_cpio *cpio) {
 	free(cpio->link);
 	free(cpio->filename);
 	close(cpio->dirfd);
-}
-
-enum hny_extraction_cpio_status
-hny_extraction_cpio_decode(struct hny_extraction_cpio *cpio,
-	const char *buffer, size_t size, int *errcode) {
-	const char * const bufferend = buffer + size;
-
-	while(buffer != bufferend) {
-		switch(cpio->state) {
-		case HNY_EXTRACTION_CPIO_HEADER: {
-			const char *headerend = buffer + HNY_EXTRACTION_CPIO_HEADER_SIZE - cpio->offset;
-			if(bufferend < headerend) {
-				headerend = bufferend;
-			}
-
-			int valid;
-			while(buffer != headerend
-				&& (valid = hny_extraction_cpio_header_serialize_at(&cpio->stat,
-					*buffer, cpio->offset)) == 0) {
-				buffer++;
-				cpio->offset++;
-			}
-
-			if(valid == 0) {
-				if(cpio->offset == HNY_EXTRACTION_CPIO_HEADER_SIZE) {
-					if(cpio->stat.cs_namesize != 0) {
-						cpio->state = HNY_EXTRACTION_CPIO_FILENAME;
-						cpio->offset = 0;
-						break;
-					}
-				} else {
-					break;
-				}
-			}
-
-			*errcode = EINVAL;
-			return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-		}
-		case HNY_EXTRACTION_CPIO_FILENAME: {
-			const char *filenameend = buffer + cpio->stat.cs_namesize - cpio->offset;
-
-			while(cpio->capacity < cpio->stat.cs_namesize) {
-				char *newfilename = realloc(cpio->filename, cpio->capacity * 2);
-
-				if(newfilename != NULL) {
-					cpio->filename = newfilename;
-					cpio->capacity *= 2;
-				} else {
-					*errcode = ENOMEM;
-					return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-				}
-			}
-
-			if(bufferend < filenameend) {
-				filenameend = bufferend;
-			}
-
-			size_t copied = filenameend - buffer;
-			memcpy(cpio->filename + cpio->offset, buffer, copied);
-			cpio->offset += copied;
-			if(cpio->offset == cpio->stat.cs_namesize) {
-				cpio->filename[cpio->stat.cs_namesize - 1] = '\0';
-				if(strncmp("TRAILER!!!", cpio->filename, cpio->stat.cs_namesize) != 0) {
-					if(hny_extraction_cpio_open(cpio, errcode) == 0) {
-						cpio->state = HNY_EXTRACTION_CPIO_FILE;
-						cpio->offset = 0;
-					} else {
-						return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-					}
-				} else {
-					cpio->state = HNY_EXTRACTION_CPIO_END;
-					cpio->offset = 0;
-				}
-			}
-
-			buffer = filenameend;
-		} break;
-		case HNY_EXTRACTION_CPIO_FILE: {
-			const char *fileend = buffer + cpio->stat.cs_filesize - cpio->offset;
-			const mode_t filetype = cpio->stat.cs_mode & 0770000;
-
-			if(bufferend < fileend) {
-				fileend = bufferend;
-			}
-
-			size_t copied = fileend - buffer;
-			if(filetype == C_ISLNK) {
-				memcpy(cpio->filename + cpio->offset, buffer, copied);
-			} else if(cpio->fd != -1) {
-				size_t written = 0;
-				ssize_t writeval;
-
-				while(written != copied
-					&& (writeval = write(cpio->fd, buffer, copied - written)) > 0) {
-					written += writeval;
-				}
-
-				if(writeval == -1) {
-					warn("write %s", cpio->filename);
-					*errcode = errno;
-					return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-				}
-			}
-
-			cpio->offset += copied;
-			if(cpio->offset == cpio->stat.cs_filesize) {
-				if(hny_extraction_cpio_close(cpio, filetype, errcode) == 0) {
-					cpio->state = HNY_EXTRACTION_CPIO_HEADER;
-					cpio->offset = 0;
-				} else {
-					return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-				}
-			}
-
-			buffer = fileend;
-		} break;
-		default: /* HNY_EXTRACTION_CPIO_END */
-			return HNY_EXTRACTION_CPIO_STATUS_END;
-		}
-	}
-
-	return HNY_EXTRACTION_CPIO_STATUS_OK;
 }
 
 static int
@@ -334,6 +202,39 @@ hny_extraction_cpio_header_serialize_at(struct hny_extraction_cpio_stat *cpiosta
 	return valid;
 }
 
+static const char *
+hny_extraction_cpio_decode_header(struct hny_extraction_cpio *cpio,
+	const char *buffer, const char *bufferend, int *errcode) {
+	const char *headerend = buffer + HNY_EXTRACTION_CPIO_HEADER_SIZE - cpio->offset;
+	int valid = -1;
+
+	if(bufferend < headerend) {
+		headerend = bufferend;
+	}
+
+	while(buffer != headerend
+		&& (valid = hny_extraction_cpio_header_serialize_at(&cpio->stat,
+			*buffer, cpio->offset)) == 0) {
+		buffer++;
+		cpio->offset++;
+	}
+
+	if(valid == 0) {
+		if(cpio->offset == HNY_EXTRACTION_CPIO_HEADER_SIZE) {
+			if(cpio->stat.cs_namesize != 0) {
+				cpio->state = HNY_EXTRACTION_CPIO_FILENAME;
+				cpio->offset = 0;
+				return buffer;
+			}
+		} else {
+			return buffer;
+		}
+	}
+
+	*errcode = EINVAL;
+	return NULL;
+}
+
 static int
 hny_extraction_cpio_filename_has_dot_dot(const char *filename) {
 	const char *dotdot;
@@ -415,6 +316,36 @@ hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 	return 0;
 }
 
+static const char *
+hny_extraction_cpio_decode_filename(struct hny_extraction_cpio *cpio,
+	const char *buffer, const char *bufferend, int *errcode) {
+	const char *filenameend = buffer + cpio->stat.cs_namesize - cpio->offset;
+
+	if(bufferend < filenameend) {
+		filenameend = bufferend;
+	}
+
+	size_t copied = filenameend - buffer;
+	memcpy(cpio->filename + cpio->offset, buffer, copied);
+	cpio->offset += copied;
+	if(cpio->offset == cpio->stat.cs_namesize) {
+		cpio->filename[cpio->stat.cs_namesize - 1] = '\0';
+		if(strncmp("TRAILER!!!", cpio->filename, cpio->stat.cs_namesize) != 0) {
+			if(hny_extraction_cpio_open(cpio, errcode) == 0) {
+				cpio->state = HNY_EXTRACTION_CPIO_FILE;
+				cpio->offset = 0;
+			} else {
+				return NULL;
+			}
+		} else {
+			cpio->state = HNY_EXTRACTION_CPIO_END;
+			cpio->offset = 0;
+		}
+	}
+
+	return filenameend;
+}
+
 static int
 hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int *errcode) {
 	const char *pathname = cpio->filename;
@@ -462,5 +393,89 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 	umask(savedmask);
 
 	return retval;
+}
+
+static const char *
+hny_extraction_cpio_decode_file(struct hny_extraction_cpio *cpio,
+	const char *buffer, const char *bufferend, int *errcode) {
+	const char *fileend = buffer + cpio->stat.cs_filesize - cpio->offset;
+	const mode_t filetype = cpio->stat.cs_mode & 0770000;
+
+	if(bufferend < fileend) {
+		fileend = bufferend;
+	}
+
+	size_t copied = fileend - buffer;
+	if(filetype == C_ISLNK) {
+		memcpy(cpio->link + cpio->offset, buffer, copied);
+	} else if(cpio->fd != -1) {
+		size_t written = 0;
+		ssize_t writeval;
+
+		while(written != copied
+			&& (writeval = write(cpio->fd, buffer + written, copied - written)) > 0) {
+			written += writeval;
+		}
+
+		if(writeval == -1) {
+			warn("write %s", cpio->filename);
+			*errcode = errno;
+			return NULL;
+		}
+	}
+
+	cpio->offset += copied;
+	if(cpio->offset == cpio->stat.cs_filesize) {
+		if(hny_extraction_cpio_close(cpio, filetype, errcode) == 0) {
+			cpio->state = HNY_EXTRACTION_CPIO_HEADER;
+			cpio->offset = 0;
+		} else {
+			return NULL;
+		}
+	}
+
+	return fileend;
+}
+
+enum hny_extraction_cpio_status
+hny_extraction_cpio_decode(struct hny_extraction_cpio *cpio,
+	const char *buffer, size_t size, int *errcode) {
+	const char * const bufferend = buffer + size;
+
+	while(buffer != bufferend) {
+		switch(cpio->state) {
+		case HNY_EXTRACTION_CPIO_HEADER:
+			if((buffer = hny_extraction_cpio_decode_header(cpio, buffer, bufferend, errcode)) == NULL) {
+				return HNY_EXTRACTION_CPIO_STATUS_ERROR;
+			}
+			break;
+		case HNY_EXTRACTION_CPIO_FILENAME:
+			while(cpio->capacity < cpio->stat.cs_namesize) {
+				char *newfilename = realloc(cpio->filename, cpio->capacity * 2);
+
+				if(newfilename != NULL) {
+					cpio->filename = newfilename;
+					cpio->capacity *= 2;
+				} else {
+					*errcode = ENOMEM;
+					return HNY_EXTRACTION_CPIO_STATUS_ERROR;
+				}
+			}
+
+			if((buffer = hny_extraction_cpio_decode_filename(cpio, buffer, bufferend, errcode)) == NULL) {
+				return HNY_EXTRACTION_CPIO_STATUS_ERROR;
+			}
+			break;
+		case HNY_EXTRACTION_CPIO_FILE:
+			if((buffer = hny_extraction_cpio_decode_file(cpio, buffer, bufferend, errcode)) == NULL) {
+				return HNY_EXTRACTION_CPIO_STATUS_ERROR;
+			}
+			break;
+		default: /* HNY_EXTRACTION_CPIO_END */
+			return HNY_EXTRACTION_CPIO_STATUS_END;
+		}
+	}
+
+	return HNY_EXTRACTION_CPIO_STATUS_OK;
 }
 
