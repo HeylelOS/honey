@@ -14,8 +14,6 @@
 #include <errno.h>
 #include <err.h>
 
-#define HNY_SPAWN_STATUS_ERROR 127
-
 int
 hny_spawn(struct hny *hny, const char *entry,
 	const char *path, pid_t *pid) {
@@ -34,7 +32,8 @@ hny_spawn(struct hny *hny, const char *entry,
 		}
 		argv[0] = basename(argv[0]);
 
-		if(setenv("HNY_PREFIX", hny->path, 1) == -1) {
+		if(setenv("HNY_PREFIX", hny->path, 1) == -1
+			|| setenv("HNY_ENTRY", entry, 1) == -1) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to setup environment variables");
 		}
 

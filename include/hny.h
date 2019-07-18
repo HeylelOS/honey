@@ -172,13 +172,16 @@ int
 hny_remove(struct hny *hny,
 	const char *entry);
 
+#define HNY_SPAWN_STATUS_ERROR 127
+
 /**
  * Executes the given file associated to @entry
  * the process will execute into the package prefix.
  * The argument list only contains the basename of @path.
  * The @hny absolute path is an environment variable named HNY_PREFIX.
+ * The @entry is an environment variable named HNY_ENTRY.
  * Note the execution can fail even if the return value is 0. In this case
- * the process returns with an exit code 127.
+ * the process returns with an exit code #HNY_SPAWN_STATUS_ERROR.
  * @param hny honey prefix
  * @param entry the geist or package for which the script shall be executed
  * @param path path relative to the package directory of the executable

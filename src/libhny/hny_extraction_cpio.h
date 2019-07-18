@@ -17,16 +17,16 @@ enum hny_extraction_cpio_status {
 };
 
 struct hny_extraction_cpio_stat {
-	dev_t cs_dev;
-	ino_t cs_ino;
-	mode_t cs_mode;
-	uid_t cs_uid;
-	gid_t cs_gid;
-	nlink_t cs_nlink;
-	dev_t cs_rdev;
-	time_t cs_mtime;
-	size_t cs_namesize;
-	off_t cs_filesize;
+	dev_t c_dev;
+	ino_t c_ino;
+	mode_t c_mode;
+	uid_t c_uid;
+	gid_t c_gid;
+	nlink_t c_nlink;
+	dev_t c_rdev;
+	time_t c_mtime;
+	size_t c_namesize;
+	off_t c_filesize;
 };
 
 struct hny_extraction_cpio {

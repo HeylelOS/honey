@@ -92,70 +92,70 @@ hny_extraction_cpio_header_serialize_at(struct hny_extraction_cpio_stat *cpiosta
 			}
 			break;
 		case 6:
-			cpiostatp->cs_dev = 0;
+			cpiostatp->c_dev = 0;
 		case 7:
 		case 8:
 		case 9:
 		case 10:
 		case 11:
-			cpiostatp->cs_dev = cpiostatp->cs_dev * 8 + byte;
+			cpiostatp->c_dev = cpiostatp->c_dev * 8 + byte;
 			break;
 		case 12:
-			cpiostatp->cs_ino = 0;
+			cpiostatp->c_ino = 0;
 		case 13:
 		case 14:
 		case 15:
 		case 16:
 		case 17:
-			cpiostatp->cs_ino = cpiostatp->cs_ino * 8 + byte;
+			cpiostatp->c_ino = cpiostatp->c_ino * 8 + byte;
 			break;
 		case 18:
-			cpiostatp->cs_mode = 0;
+			cpiostatp->c_mode = 0;
 		case 19:
 		case 20:
 		case 21:
 		case 22:
 		case 23:
-			cpiostatp->cs_mode = cpiostatp->cs_mode * 8 + byte;
+			cpiostatp->c_mode = cpiostatp->c_mode * 8 + byte;
 			break;
 		case 24:
-			cpiostatp->cs_uid = 0;
+			cpiostatp->c_uid = 0;
 		case 25:
 		case 26:
 		case 27:
 		case 28:
 		case 29:
-			cpiostatp->cs_uid = cpiostatp->cs_uid * 8 + byte;
+			cpiostatp->c_uid = cpiostatp->c_uid * 8 + byte;
 			break;
 		case 30:
-			cpiostatp->cs_gid = 0;
+			cpiostatp->c_gid = 0;
 		case 31:
 		case 32:
 		case 33:
 		case 34:
 		case 35:
-			cpiostatp->cs_gid = cpiostatp->cs_gid * 8 + byte;
+			cpiostatp->c_gid = cpiostatp->c_gid * 8 + byte;
 			break;
 		case 36:
-			cpiostatp->cs_nlink = 0;
+			cpiostatp->c_nlink = 0;
 		case 37:
 		case 38:
 		case 39:
 		case 40:
 		case 41:
-			cpiostatp->cs_nlink = cpiostatp->cs_nlink * 8 + byte;
+			cpiostatp->c_nlink = cpiostatp->c_nlink * 8 + byte;
 			break;
 		case 42:
-			cpiostatp->cs_rdev = 0;
+			cpiostatp->c_rdev = 0;
 		case 43:
 		case 44:
 		case 45:
 		case 46:
 		case 47:
-			cpiostatp->cs_rdev = cpiostatp->cs_rdev * 8 + byte;
+			cpiostatp->c_rdev = cpiostatp->c_rdev * 8 + byte;
 			break;
 		case 48:
-			cpiostatp->cs_mtime = 0;
+			cpiostatp->c_mtime = 0;
 		case 49:
 		case 50:
 		case 51:
@@ -166,19 +166,19 @@ hny_extraction_cpio_header_serialize_at(struct hny_extraction_cpio_stat *cpiosta
 		case 56:
 		case 57:
 		case 58:
-			cpiostatp->cs_mtime = cpiostatp->cs_mtime * 8 + byte;
+			cpiostatp->c_mtime = cpiostatp->c_mtime * 8 + byte;
 			break;
 		case 59:
-			cpiostatp->cs_namesize = 0;
+			cpiostatp->c_namesize = 0;
 		case 60:
 		case 61:
 		case 62:
 		case 63:
 		case 64:
-			cpiostatp->cs_namesize = cpiostatp->cs_namesize * 8 + byte;
+			cpiostatp->c_namesize = cpiostatp->c_namesize * 8 + byte;
 			break;
 		case 65:
-			cpiostatp->cs_filesize = 0;
+			cpiostatp->c_filesize = 0;
 		case 66:
 		case 67:
 		case 68:
@@ -189,7 +189,7 @@ hny_extraction_cpio_header_serialize_at(struct hny_extraction_cpio_stat *cpiosta
 		case 73:
 		case 74:
 		case 75:
-			cpiostatp->cs_filesize = cpiostatp->cs_filesize * 8 + byte;
+			cpiostatp->c_filesize = cpiostatp->c_filesize * 8 + byte;
 			break;
 		default:
 			valid = -1;
@@ -221,7 +221,7 @@ hny_extraction_cpio_decode_header(struct hny_extraction_cpio *cpio,
 
 	if(valid == 0) {
 		if(cpio->offset == HNY_EXTRACTION_CPIO_HEADER_SIZE) {
-			if(cpio->stat.cs_namesize != 0) {
+			if(cpio->stat.c_namesize != 0) {
 				cpio->state = HNY_EXTRACTION_CPIO_FILENAME;
 				cpio->offset = 0;
 				return buffer;
@@ -263,7 +263,7 @@ hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 		return -1;
 	}
 
-	switch(cpio->stat.cs_mode & 0770000) {
+	switch(cpio->stat.c_mode & 0770000) {
 	case C_ISDIR:
 		if(mkdirat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
 			warn("mkdir %s", pathname);
@@ -288,15 +288,15 @@ hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 		break;
 	case C_ISBLK:
 	case C_ISCHR:
-		if(mknodat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR, cpio->stat.cs_rdev) == -1) {
+		if(mknodat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR, cpio->stat.c_rdev) == -1) {
 			warn("mknod %s", pathname);
 			*errcode = errno;
 			return -1;
 		}
 		break;
 	case C_ISLNK:
-		if(cpio->linkcapacity < cpio->stat.cs_filesize) {
-			char *newlink = realloc(cpio->link, cpio->stat.cs_filesize);
+		if(cpio->linkcapacity < cpio->stat.c_filesize) {
+			char *newlink = realloc(cpio->link, cpio->stat.c_filesize);
 
 			if(newlink == NULL) {
 				*errcode = errno;
@@ -304,7 +304,7 @@ hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 			}
 
 			cpio->link = newlink;
-			cpio->linkcapacity = cpio->stat.cs_filesize;
+			cpio->linkcapacity = cpio->stat.c_filesize;
 		}
 		break;
 	case C_ISSOCK:
@@ -319,7 +319,7 @@ hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 static const char *
 hny_extraction_cpio_decode_filename(struct hny_extraction_cpio *cpio,
 	const char *buffer, const char *bufferend, int *errcode) {
-	const char *filenameend = buffer + cpio->stat.cs_namesize - cpio->offset;
+	const char *filenameend = buffer + cpio->stat.c_namesize - cpio->offset;
 
 	if(bufferend < filenameend) {
 		filenameend = bufferend;
@@ -328,9 +328,9 @@ hny_extraction_cpio_decode_filename(struct hny_extraction_cpio *cpio,
 	size_t copied = filenameend - buffer;
 	memcpy(cpio->filename + cpio->offset, buffer, copied);
 	cpio->offset += copied;
-	if(cpio->offset == cpio->stat.cs_namesize) {
-		cpio->filename[cpio->stat.cs_namesize - 1] = '\0';
-		if(strncmp("TRAILER!!!", cpio->filename, cpio->stat.cs_namesize) != 0) {
+	if(cpio->offset == cpio->stat.c_namesize) {
+		cpio->filename[cpio->stat.c_namesize - 1] = '\0';
+		if(strncmp("TRAILER!!!", cpio->filename, cpio->stat.c_namesize) != 0) {
 			if(hny_extraction_cpio_open(cpio, errcode) == 0) {
 				cpio->state = HNY_EXTRACTION_CPIO_FILE;
 				cpio->offset = 0;
@@ -354,7 +354,7 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 	}
 
 	if(filetype == C_ISLNK) {
-		cpio->link[cpio->stat.cs_filesize - 1] = '\0';
+		cpio->link[cpio->stat.c_filesize - 1] = '\0';
 		if(symlinkat(cpio->link, cpio->dirfd, cpio->filename) == -1) {
 			warn("symlink %s", pathname);
 			*errcode = errno;
@@ -369,8 +369,8 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 	gid_t group;
 
 	if(cpio->extractids == 1) {
-		owner = cpio->stat.cs_uid;
-		group = cpio->stat.cs_gid;
+		owner = cpio->stat.c_uid;
+		group = cpio->stat.c_gid;
 	} else {
 		owner = cpio->owner;
 		group = cpio->group;
@@ -386,7 +386,7 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 	int retval = 0;
 	/* AT_SYMLINK_NOFOLLOW not yet implemented, generates 'Unsupported operation' on linux */
 	if((retval = fchmodat(cpio->dirfd, pathname,
-			cpio->stat.cs_mode & 0007777, 0)) == -1) {
+			cpio->stat.c_mode & 0007777, 0)) == -1) {
 		warn("chmod %s", pathname);
 		*errcode = errno;
 	}
@@ -398,8 +398,8 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 static const char *
 hny_extraction_cpio_decode_file(struct hny_extraction_cpio *cpio,
 	const char *buffer, const char *bufferend, int *errcode) {
-	const char *fileend = buffer + cpio->stat.cs_filesize - cpio->offset;
-	const mode_t filetype = cpio->stat.cs_mode & 0770000;
+	const char *fileend = buffer + cpio->stat.c_filesize - cpio->offset;
+	const mode_t filetype = cpio->stat.c_mode & 0770000;
 
 	if(bufferend < fileend) {
 		fileend = bufferend;
@@ -425,7 +425,7 @@ hny_extraction_cpio_decode_file(struct hny_extraction_cpio *cpio,
 	}
 
 	cpio->offset += copied;
-	if(cpio->offset == cpio->stat.cs_filesize) {
+	if(cpio->offset == cpio->stat.c_filesize) {
 		if(hny_extraction_cpio_close(cpio, filetype, errcode) == 0) {
 			cpio->state = HNY_EXTRACTION_CPIO_HEADER;
 			cpio->offset = 0;
@@ -450,7 +450,7 @@ hny_extraction_cpio_decode(struct hny_extraction_cpio *cpio,
 			}
 			break;
 		case HNY_EXTRACTION_CPIO_FILENAME:
-			while(cpio->capacity < cpio->stat.cs_namesize) {
+			while(cpio->capacity < cpio->stat.c_namesize) {
 				char *newfilename = realloc(cpio->filename, cpio->capacity * 2);
 
 				if(newfilename != NULL) {
