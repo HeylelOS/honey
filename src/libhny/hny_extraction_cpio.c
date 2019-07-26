@@ -16,6 +16,59 @@
 #include <errno.h>
 #include <err.h>
 
+#ifdef __APPLE__
+/* "Solution" to non existant *at for Darwin */
+#include <sys/param.h>
+
+static int
+mkfifoat(int dirfd, const char *path, mode_t mode) {
+	char buffer[MAXPATHLEN];
+
+	if(fcntl(dirfd, F_GETPATH, buffer) == -1) {
+		return -1;
+	}
+
+	size_t dirlen = strnlen(buffer, sizeof(buffer));
+	if(sizeof(buffer) - dirlen == 0) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	buffer[dirlen] = '/';
+	if(stpncpy(buffer + dirlen + 1, path, sizeof(buffer) - (dirlen + 1))
+		>= buffer + sizeof(buffer)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	return mkfifo(buffer, mode);
+}
+
+static int
+mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
+	char buffer[MAXPATHLEN];
+
+	if(fcntl(dirfd, F_GETPATH, buffer) == -1) {
+		return -1;
+	}
+
+	size_t dirlen = strnlen(buffer, sizeof(buffer));
+	if(sizeof(buffer) - dirlen == 0) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	buffer[dirlen] = '/';
+	if(stpncpy(buffer + dirlen + 1, path, sizeof(buffer) - (dirlen + 1))
+		>= buffer + sizeof(buffer)) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	return mknod(buffer, mode, dev);
+}
+#endif
+
 #define HNY_EXTRACTION_CPIO_HEADER_SIZE 76
 #define HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY 32
 
