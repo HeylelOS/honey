@@ -2,8 +2,8 @@ LIBHNY_SRC=$(wildcard src/libhny/*.c)
 LIBHNY=$(BUILDDIR)/lib/libhny.so
 HNY_SRC=$(wildcard src/hny/*.c)
 HNY=$(BUILDDIR)/bin/hny
-TEST_ARCHIVE_1=test/hny/test_archive-1.hny
-TEST_ARCHIVE_2=test/hny/test_archive-2.hny
+TEST_ARCHIVE_1=$(BUILDDIR)/test_archive-1.hny
+TEST_ARCHIVE_2=$(BUILDDIR)/test_archive-2.hny
 TEST_ARCHIVES=$(TEST_ARCHIVE_1) $(TEST_ARCHIVE_2)
 
 .PHONY: all clean test
@@ -13,7 +13,7 @@ all: $(LIBHNY) $(HNY)
 clean:
 	rm -rf $(BUILDDIR)
 
-test: $(HNY) $(TEST_ARCHIVE_1) $(TEST_ARCHIVE_2) $(BUILDDIR)
+test: $(HNY) $(TEST_ARCHIVES) $(BUILDDIR)
 	@echo "- Testing extract"
 	$< -p $(BUILDDIR)/hub extract $(TEST_ARCHIVE_1)
 	$< -p $(BUILDDIR)/hub extract $(TEST_ARCHIVE_2)
@@ -44,9 +44,12 @@ test: $(HNY) $(TEST_ARCHIVE_1) $(TEST_ARCHIVE_2) $(BUILDDIR)
 $(BUILDDIR):
 	mkdir -p $@/bin $@/lib $@/hub
 
+$(TEST_ARCHIVES): %: $(BUILDDIR)
+	cd test/hny/$(basename $(notdir $@)) && cpio -co < ../name-list > $@
+
 $(LIBHNY): $(LIBHNY_SRC) $(BUILDDIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -shared -o $@ $(LIBHNY_SRC)
 
-$(HNY): $(HNY_SRC) $(BUILDDIR)
+$(HNY): $(HNY_SRC) $(LIBHNY) $(BUILDDIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -L$(BUILDDIR)/lib -o $@ $(HNY_SRC) -lhny
 
