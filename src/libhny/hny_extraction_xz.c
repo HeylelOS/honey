@@ -10,7 +10,7 @@
 int
 hny_extraction_xz_init(struct hny_extraction_xz *xz) {
 
-	(void)xz;
+	xz->state = HNY_EXTRACTION_XZ_STREAM_HEADER;
 
 	return 0;
 }

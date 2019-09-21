@@ -319,31 +319,31 @@ hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 	switch(cpio->stat.c_mode & 0770000) {
 	case C_ISDIR:
 		if(mkdirat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
-			warn("mkdir %s", pathname);
 			*errcode = errno;
+			warn("mkdir %s", pathname);
 			return -1;
 		}
 		break;
 	case C_ISFIFO:
 		if(mkfifoat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR) == -1) {
-			warn("mkfifo %s", pathname);
 			*errcode = errno;
+			warn("mkfifo %s", pathname);
 			return -1;
 		}
 		break;
 	case C_ISREG:
 		if((cpio->fd = openat(cpio->dirfd, pathname,
 			O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR)) == -1) {
-			warn("creat %s", pathname);
 			*errcode = errno;
+			warn("creat %s", pathname);
 			return -1;
 		}
 		break;
 	case C_ISBLK:
 	case C_ISCHR:
 		if(mknodat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR, cpio->stat.c_rdev) == -1) {
-			warn("mknod %s", pathname);
 			*errcode = errno;
+			warn("mknod %s", pathname);
 			return -1;
 		}
 		break;
@@ -409,8 +409,8 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 	if(filetype == C_ISLNK) {
 		cpio->link[cpio->stat.c_filesize - 1] = '\0';
 		if(symlinkat(cpio->link, cpio->dirfd, cpio->filename) == -1) {
-			warn("symlink %s", pathname);
 			*errcode = errno;
+			warn("symlink %s", pathname);
 			return -1;
 		}
 	} else if(cpio->fd != -1) {
@@ -430,8 +430,8 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 	}
 
 	if(fchownat(cpio->dirfd, pathname, owner, group, AT_SYMLINK_NOFOLLOW) == -1) {
-		warn("chown %s", pathname);
 		*errcode = errno;
+		warn("chown %s", pathname);
 		return -1;
 	}
 
@@ -440,8 +440,8 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 	/* AT_SYMLINK_NOFOLLOW not yet implemented, generates 'Unsupported operation' on linux */
 	if((retval = fchmodat(cpio->dirfd, pathname,
 			cpio->stat.c_mode & 0007777, 0)) == -1) {
-		warn("chmod %s", pathname);
 		*errcode = errno;
+		warn("chmod %s", pathname);
 	}
 	umask(savedmask);
 
@@ -471,8 +471,8 @@ hny_extraction_cpio_decode_file(struct hny_extraction_cpio *cpio,
 		}
 
 		if(writeval == -1) {
-			warn("write %s", cpio->filename);
 			*errcode = errno;
+			warn("write %s", cpio->filename);
 			return NULL;
 		}
 	}
