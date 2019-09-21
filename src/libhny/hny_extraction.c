@@ -49,6 +49,8 @@ hny_extraction_create2(struct hny_extraction **extractionp,
 		goto hny_extraction_create_err0;
 	}
 
+	extraction->buffersize = buffersize;
+
 	if((errcode = hny_extraction_xz_init(&extraction->xz, dictionarymax)) != 0) {
 		goto hny_extraction_create_err1;
 	}
@@ -79,14 +81,32 @@ hny_extraction_destroy(struct hny_extraction *extraction) {
 enum hny_extraction_status
 hny_extraction_extract(struct hny_extraction *extraction,
 	const char *buffer, size_t size, int *errcode) {
-	enum hny_extraction_status cpiostatus;
+	enum hny_extraction_status status;
+	struct hny_extraction_xz_io buffers = {
+		.input = buffer, .inputsize = size,
+		.output = extraction->buffer, .outputsize = extraction->buffersize
+	};
 
-	cpiostatus = hny_extraction_cpio_decode(&extraction->cpio, buffer, size, errcode);
+	while(!HNY_EXTRACTION_STATUS_IS_ERROR(status = hny_extraction_xz_decode(&extraction->xz, &buffers))) {
+		enum hny_extraction_status cpiostatus = hny_extraction_cpio_decode(&extraction->cpio,
+			extraction->buffer, extraction->buffersize - buffers.outputsize, errcode);
 
-	if(cpiostatus == HNY_EXTRACTION_STATUS_END_CPIO) {
-		return HNY_EXTRACTION_STATUS_END;
+		if(!HNY_EXTRACTION_STATUS_IS_ERROR(cpiostatus)) {
+			buffers.output = extraction->buffer;
+			buffers.outputsize = extraction->buffersize;
+
+			if(buffers.inputsize == 0 || status == HNY_EXTRACTION_STATUS_END) {
+				if(status == HNY_EXTRACTION_STATUS_END && cpiostatus != HNY_EXTRACTION_STATUS_END) {
+					status = HNY_EXTRACTION_STATUS_ERROR_UNFINISHED_CPIO;
+				}
+				break;
+			}
+		} else {
+			status = cpiostatus;
+			break;
+		}
 	}
 
-	return cpiostatus;
+	return status;
 }
 

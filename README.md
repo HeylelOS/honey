@@ -4,8 +4,7 @@ honey is intended to be a unix-like OS package manager and
 archive structure format for packages. It is distributed under BSD 3-Clause
 license, see [LICENSE](https://github.com/ValentinDebon/honey/blob/master/LICENSE).
 
-It is meant to be composed of a C library and
-a command line utility.
+It is meant to be composed of a C library and a command line utility.
 
 It keeps in mind the desire to stay embeddable without
 any compromise on its scalability. However it isn't
@@ -21,6 +20,8 @@ you may respectively create and extract honey packages with the following comman
 	cpio -c -o | xz -C crc32 --lzma2 > "$PACKAGE"
 
 	unxz -C crc32 --lzma2 < "$PACKAGE" | cpio -c -i
+
+Note: You can also replace `crc32` with `none`.
 
 ## Build
 
