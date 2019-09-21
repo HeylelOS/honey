@@ -67,7 +67,7 @@ struct hny_extraction_xz {
 };
 
 int
-hny_extraction_xz_init(struct hny_extraction_xz *xz);
+hny_extraction_xz_init(struct hny_extraction_xz *xz, size_t dictionarymax);
 
 void
 hny_extraction_xz_deinit(struct hny_extraction_xz *xz);

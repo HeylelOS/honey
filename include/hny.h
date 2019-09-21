@@ -113,21 +113,49 @@ struct hny_extraction;
  */
 enum hny_extraction_status {
 	HNY_EXTRACTION_STATUS_OK,
+	HNY_EXTRACTION_STATUS_END_CPIO,
 	HNY_EXTRACTION_STATUS_END,
-	HNY_EXTRACTION_STATUS_ERROR_DECOMPRESSION,
-	HNY_EXTRACTION_STATUS_ERROR_UNARCHIVE,
+
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_MAGIC,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_BYTE,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_NAMESIZE,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_FILENAME_MEMORY_EXHAUSTED,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_FILENAME_IS_EMPTY,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_FILENAME_HAS_DOT_DOT,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_MKDIR,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_MKFIFO,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_CREAT,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_MKNOD,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_SYMLINK,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_CHOWN,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_CHMOD,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_WRITE
 };
 
 /**
  * Create an extraction handler.
- * @param extractionp pointer to the handler
- * @param hny prefix of the package
- * @param package name of the package
+ * @param extractionp pointer to the handler.
+ * @param hny prefix of the package.
+ * @param package name of the package.
  * @return 0 on success, an error code else.
  */
 int
 hny_extraction_create(struct hny_extraction **extractionp,
 	struct hny *hny, const char *package);
+
+/**
+ * Create an extraction handler.
+ * @param extractionp pointer to the handler.
+ * @param hny prefix of the package.
+ * @param package name of the package.
+ * @param buffersize size of the intermediate buffer between xz and cpio steps.
+ * @param dictionarymax maximum size of the lzma2 dictionary.
+ * @return 0 on success, an error code else.
+ */
+int
+hny_extraction_create2(struct hny_extraction **extractionp,
+	struct hny *hny, const char *package,
+	size_t buffersize, size_t dictionarymax);
 
 /**
  * Destroys a previously hny_extraction_create()'d extraction handler

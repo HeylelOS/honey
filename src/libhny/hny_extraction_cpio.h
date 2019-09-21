@@ -8,26 +8,9 @@
 #ifndef HNY_EXTRACTION_CPIO_H
 #define HNY_EXTRACTION_CPIO_H
 
-#include <sys/types.h>
+#include "hny_internal.h"
 
-enum hny_extraction_cpio_status {
-	HNY_EXTRACTION_CPIO_STATUS_OK,
-	HNY_EXTRACTION_CPIO_STATUS_END,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_HEADER_INVALID_MAGIC,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_HEADER_INVALID_BYTE,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_HEADER_INVALID_NAMESIZE,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_FILENAME_MEMORY_EXHAUSTED,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_FILENAME_IS_EMPTY,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_FILENAME_HAS_DOT_DOT,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_MKDIR,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_MKFIFO,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_CREAT,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_MKNOD,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_SYMLINK,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_CHOWN,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_CHMOD,
-	HNY_EXTRACTION_CPIO_STATUS_ERROR_WRITE
-};
+#include <sys/types.h>
 
 struct hny_extraction_cpio_stat {
 	dev_t c_dev;
@@ -73,7 +56,7 @@ hny_extraction_cpio_init(struct hny_extraction_cpio *cpio, int dirfd, const char
 void
 hny_extraction_cpio_deinit(struct hny_extraction_cpio *cpio);
 
-enum hny_extraction_cpio_status
+enum hny_extraction_status
 hny_extraction_cpio_decode(struct hny_extraction_cpio *cpio,
 	const char *buffer, size_t size, int *errcode);
 
