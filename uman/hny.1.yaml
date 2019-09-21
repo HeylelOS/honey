@@ -22,7 +22,7 @@ sections:
             Sets the honey blocking behavior to blocking,
             as it is non-blocking by default.
         "-p <prefix>": >
-            To specify a prefix manualy, overrides the value in \fBHNY_PREFIX\fR.
+            To specify a prefix manually, overrides the value in \fBHNY_PREFIX\fR.
         "extract [<geist>] <file>": >
             Unpacks \fBfile\fR in the prefix, with the specified \fBgeist\fR, or its basename else.
         "list [packages|geister]": >

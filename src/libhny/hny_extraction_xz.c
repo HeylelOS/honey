@@ -8,7 +8,7 @@
 #include "hny_extraction_xz.h"
 
 int
-hny_extraction_xz_init(struct hny_extraction_xz *xz) {
+hny_extraction_xz_init(struct hny_extraction_xz *xz, size_t dictionarymax) {
 
 	xz->state = HNY_EXTRACTION_XZ_STREAM_HEADER;
 
