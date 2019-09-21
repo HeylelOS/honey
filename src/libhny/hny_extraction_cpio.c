@@ -72,6 +72,14 @@ mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
 #define HNY_EXTRACTION_CPIO_HEADER_SIZE 76
 #define HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY 32
 
+#define HNY_EXTRACTION_CPIO_MIN(a, b) ((a) < (b) ? (a) : (b))
+
+struct hny_extraction_cpio_input {
+	int *errcode;
+	const char *buffer;
+	size_t size;
+};
+
 int
 hny_extraction_cpio_init(struct hny_extraction_cpio *cpio, int dirfd, const char *path) {
 	int errcode;
@@ -82,7 +90,8 @@ hny_extraction_cpio_init(struct hny_extraction_cpio *cpio, int dirfd, const char
 		goto hny_extraction_cpio_init_err0;
 	}
 
-	if(mkdirat(dirfd, path, 0777) == -1
+	if(mkdirat(dirfd, path, S_IRUSR | S_IWUSR | S_IXUSR
+			| S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == -1
 		|| (cpio->dirfd = openat(dirfd, path, O_DIRECTORY | O_NOFOLLOW)) == -1) {
 		errcode = errno;
 		goto hny_extraction_cpio_init_err1;
@@ -120,28 +129,26 @@ hny_extraction_cpio_deinit(struct hny_extraction_cpio *cpio) {
 	close(cpio->dirfd);
 }
 
-static int
+static inline enum hny_extraction_cpio_status
 hny_extraction_cpio_header_serialize_at(struct hny_extraction_cpio_stat *cpiostatp,
 	unsigned char byte, size_t position) {
-	int valid;
+	enum hny_extraction_cpio_status status = HNY_EXTRACTION_CPIO_STATUS_OK;
 
 	byte -= '0';
 	if(byte <= 7) {
-		valid = 0;
-
 		switch(position) {
 		case 0:
 		case 2:
 		case 4:
 			if(byte != 0) {
-				valid = -1;
+				status = HNY_EXTRACTION_CPIO_STATUS_ERROR_HEADER_INVALID_MAGIC;
 			}
 			break;
 		case 1:
 		case 3:
 		case 5:
 			if(byte != 7) {
-				valid = -1;
+				status = HNY_EXTRACTION_CPIO_STATUS_ERROR_HEADER_INVALID_MAGIC;
 			}
 			break;
 		case 6:
@@ -244,48 +251,40 @@ hny_extraction_cpio_header_serialize_at(struct hny_extraction_cpio_stat *cpiosta
 		case 75:
 			cpiostatp->c_filesize = cpiostatp->c_filesize * 8 + byte;
 			break;
-		default:
-			valid = -1;
-			break;
 		}
 	} else {
-		valid = -1;
+		status = HNY_EXTRACTION_CPIO_STATUS_ERROR_HEADER_INVALID_BYTE;
 	}
 
-	return valid;
+	return status;
 }
 
-static const char *
+static enum hny_extraction_cpio_status
 hny_extraction_cpio_decode_header(struct hny_extraction_cpio *cpio,
-	const char *buffer, const char *bufferend, int *errcode) {
-	const char *headerend = buffer + HNY_EXTRACTION_CPIO_HEADER_SIZE - cpio->offset;
-	int valid = -1;
+	struct hny_extraction_cpio_input *input) {
+	enum hny_extraction_cpio_status status = HNY_EXTRACTION_CPIO_STATUS_OK;
+	const char *headerbegin = input->buffer;
+	const char *headerend = input->buffer + HNY_EXTRACTION_CPIO_MIN(HNY_EXTRACTION_CPIO_HEADER_SIZE - cpio->offset, input->size);
 
-	if(bufferend < headerend) {
-		headerend = bufferend;
-	}
-
-	while(buffer != headerend
-		&& (valid = hny_extraction_cpio_header_serialize_at(&cpio->stat,
-			*buffer, cpio->offset)) == 0) {
-		buffer++;
+	while(status == HNY_EXTRACTION_CPIO_STATUS_OK && input->buffer < headerend) {
+		status = hny_extraction_cpio_header_serialize_at(&cpio->stat, *input->buffer, cpio->offset);
 		cpio->offset++;
+		input->buffer++;
 	}
 
-	if(valid == 0) {
-		if(cpio->offset == HNY_EXTRACTION_CPIO_HEADER_SIZE) {
-			if(cpio->stat.c_namesize != 0) {
-				cpio->state = HNY_EXTRACTION_CPIO_FILENAME;
-				cpio->offset = 0;
-				return buffer;
-			}
+	if(status == HNY_EXTRACTION_CPIO_STATUS_OK
+		&& cpio->offset == HNY_EXTRACTION_CPIO_HEADER_SIZE) {
+		if(cpio->stat.c_namesize != 0) {
+			cpio->state = HNY_EXTRACTION_CPIO_FILENAME;
+			cpio->offset = 0;
 		} else {
-			return buffer;
+			status = HNY_EXTRACTION_CPIO_STATUS_ERROR_HEADER_INVALID_NAMESIZE;
 		}
 	}
 
-	*errcode = EINVAL;
-	return NULL;
+	input->size -= input->buffer - headerbegin;
+
+	return status;
 }
 
 static int
@@ -304,47 +303,46 @@ hny_extraction_cpio_filename_has_dot_dot(const char *filename) {
 	return -1;
 }
 
-static int
+static enum hny_extraction_cpio_status
 hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 	const char *pathname = cpio->filename;
-	if(*pathname == '/') {
+	while(*pathname == '/') {
 		pathname++;
 	}
 
+	if(*pathname == '\0') {
+		return HNY_EXTRACTION_CPIO_STATUS_ERROR_FILENAME_IS_EMPTY;
+	}
+
 	if(hny_extraction_cpio_filename_has_dot_dot(cpio->filename) == 0) {
-		*errcode = EINVAL;
-		return -1;
+		return HNY_EXTRACTION_CPIO_STATUS_ERROR_FILENAME_HAS_DOT_DOT;
 	}
 
 	switch(cpio->stat.c_mode & 0770000) {
 	case C_ISDIR:
 		if(mkdirat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR | S_IXUSR) == -1) {
 			*errcode = errno;
-			warn("mkdir %s", pathname);
-			return -1;
+			return HNY_EXTRACTION_CPIO_STATUS_ERROR_MKDIR;
 		}
 		break;
 	case C_ISFIFO:
 		if(mkfifoat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR) == -1) {
 			*errcode = errno;
-			warn("mkfifo %s", pathname);
-			return -1;
+			return HNY_EXTRACTION_CPIO_STATUS_ERROR_MKFIFO;
 		}
 		break;
 	case C_ISREG:
 		if((cpio->fd = openat(cpio->dirfd, pathname,
 			O_CREAT | O_WRONLY | O_EXCL, S_IRUSR | S_IWUSR)) == -1) {
 			*errcode = errno;
-			warn("creat %s", pathname);
-			return -1;
+			return HNY_EXTRACTION_CPIO_STATUS_ERROR_CREAT;
 		}
 		break;
 	case C_ISBLK:
 	case C_ISCHR:
 		if(mknodat(cpio->dirfd, pathname, S_IRUSR | S_IWUSR, cpio->stat.c_rdev) == -1) {
 			*errcode = errno;
-			warn("mknod %s", pathname);
-			return -1;
+			return HNY_EXTRACTION_CPIO_STATUS_ERROR_MKNOD;
 		}
 		break;
 	case C_ISLNK:
@@ -366,43 +364,43 @@ hny_extraction_cpio_open(struct hny_extraction_cpio *cpio, int *errcode) {
 		break;
 	}
 
-	return 0;
+	return HNY_EXTRACTION_CPIO_STATUS_OK;
 }
 
-static const char *
+static enum hny_extraction_cpio_status
 hny_extraction_cpio_decode_filename(struct hny_extraction_cpio *cpio,
-	const char *buffer, const char *bufferend, int *errcode) {
-	const char *filenameend = buffer + cpio->stat.c_namesize - cpio->offset;
+	struct hny_extraction_cpio_input *input) {
+	enum hny_extraction_cpio_status status = HNY_EXTRACTION_CPIO_STATUS_OK;
+	const char *filenameend = input->buffer + HNY_EXTRACTION_CPIO_MIN(cpio->stat.c_namesize - cpio->offset, input->size);
+	size_t copied = filenameend - input->buffer;
 
-	if(bufferend < filenameend) {
-		filenameend = bufferend;
-	}
-
-	size_t copied = filenameend - buffer;
-	memcpy(cpio->filename + cpio->offset, buffer, copied);
+	memcpy(cpio->filename + cpio->offset, input->buffer, copied);
 	cpio->offset += copied;
+	input->buffer += copied;
+	input->size -= copied;
+
 	if(cpio->offset == cpio->stat.c_namesize) {
 		cpio->filename[cpio->stat.c_namesize - 1] = '\0';
+
 		if(strncmp("TRAILER!!!", cpio->filename, cpio->stat.c_namesize) != 0) {
-			if(hny_extraction_cpio_open(cpio, errcode) == 0) {
+			status = hny_extraction_cpio_open(cpio, input->errcode);
+			if(status == HNY_EXTRACTION_CPIO_STATUS_OK) {
 				cpio->state = HNY_EXTRACTION_CPIO_FILE;
 				cpio->offset = 0;
-			} else {
-				return NULL;
 			}
 		} else {
+			status = HNY_EXTRACTION_CPIO_STATUS_END;
 			cpio->state = HNY_EXTRACTION_CPIO_END;
-			cpio->offset = 0;
 		}
 	}
 
-	return filenameend;
+	return status;
 }
 
-static int
+static enum hny_extraction_cpio_status
 hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int *errcode) {
 	const char *pathname = cpio->filename;
-	if(*pathname == '/') {
+	while(*pathname == '/') {
 		pathname++;
 	}
 
@@ -410,8 +408,7 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 		cpio->link[cpio->stat.c_filesize - 1] = '\0';
 		if(symlinkat(cpio->link, cpio->dirfd, cpio->filename) == -1) {
 			*errcode = errno;
-			warn("symlink %s", pathname);
-			return -1;
+			return HNY_EXTRACTION_CPIO_STATUS_ERROR_SYMLINK;
 		}
 	} else if(cpio->fd != -1) {
 		close(cpio->fd);
@@ -431,76 +428,72 @@ hny_extraction_cpio_close(struct hny_extraction_cpio *cpio, mode_t filetype, int
 
 	if(fchownat(cpio->dirfd, pathname, owner, group, AT_SYMLINK_NOFOLLOW) == -1) {
 		*errcode = errno;
-		warn("chown %s", pathname);
-		return -1;
+		return HNY_EXTRACTION_CPIO_STATUS_ERROR_CHOWN;
 	}
 
 	mode_t savedmask = umask(0);
-	int retval = 0;
+	enum hny_extraction_cpio_status status = HNY_EXTRACTION_CPIO_STATUS_OK;
 	/* AT_SYMLINK_NOFOLLOW not yet implemented, generates 'Unsupported operation' on linux */
-	if((retval = fchmodat(cpio->dirfd, pathname,
-			cpio->stat.c_mode & 0007777, 0)) == -1) {
+	if(fchmodat(cpio->dirfd, pathname, cpio->stat.c_mode & 0007777, 0) == -1) {
 		*errcode = errno;
-		warn("chmod %s", pathname);
+		status = HNY_EXTRACTION_CPIO_STATUS_ERROR_CHMOD;
 	}
 	umask(savedmask);
 
-	return retval;
+	return status;
 }
 
-static const char *
+static enum hny_extraction_cpio_status
 hny_extraction_cpio_decode_file(struct hny_extraction_cpio *cpio,
-	const char *buffer, const char *bufferend, int *errcode) {
-	const char *fileend = buffer + cpio->stat.c_filesize - cpio->offset;
+	struct hny_extraction_cpio_input *input) {
 	const mode_t filetype = cpio->stat.c_mode & 0770000;
+	const char *fileend = input->buffer + HNY_EXTRACTION_CPIO_MIN(cpio->stat.c_filesize - cpio->offset, input->size);
+	size_t copied = fileend - input->buffer;
 
-	if(bufferend < fileend) {
-		fileend = bufferend;
-	}
-
-	size_t copied = fileend - buffer;
 	if(filetype == C_ISLNK) {
-		memcpy(cpio->link + cpio->offset, buffer, copied);
+		memcpy(cpio->link + cpio->offset, input->buffer, copied);
 	} else if(cpio->fd != -1) {
 		size_t written = 0;
 		ssize_t writeval;
 
 		while(written != copied
-			&& (writeval = write(cpio->fd, buffer + written, copied - written)) > 0) {
+			&& (writeval = write(cpio->fd, input->buffer + written, copied - written)) > 0) {
 			written += writeval;
 		}
 
 		if(writeval == -1) {
-			*errcode = errno;
-			warn("write %s", cpio->filename);
-			return NULL;
+			*input->errcode = errno;
+			return HNY_EXTRACTION_CPIO_STATUS_ERROR_WRITE;
 		}
 	}
 
 	cpio->offset += copied;
+	input->buffer += copied;
+	input->size -= copied;
 	if(cpio->offset == cpio->stat.c_filesize) {
-		if(hny_extraction_cpio_close(cpio, filetype, errcode) == 0) {
+		enum hny_extraction_cpio_status status = hny_extraction_cpio_close(cpio, filetype, input->errcode);
+
+		if(status == HNY_EXTRACTION_CPIO_STATUS_OK) {
 			cpio->state = HNY_EXTRACTION_CPIO_HEADER;
 			cpio->offset = 0;
-		} else {
-			return NULL;
 		}
-	}
 
-	return fileend;
+		return status;
+	} else {
+		return HNY_EXTRACTION_CPIO_STATUS_OK;
+	}
 }
 
 enum hny_extraction_cpio_status
 hny_extraction_cpio_decode(struct hny_extraction_cpio *cpio,
 	const char *buffer, size_t size, int *errcode) {
-	const char * const bufferend = buffer + size;
+	enum hny_extraction_cpio_status status = HNY_EXTRACTION_CPIO_STATUS_OK;
+	struct hny_extraction_cpio_input input = { .buffer = buffer, .size = size, .errcode = errcode };
 
-	while(buffer != bufferend) {
+	while(status == HNY_EXTRACTION_CPIO_STATUS_OK && input.size != 0) {
 		switch(cpio->state) {
 		case HNY_EXTRACTION_CPIO_HEADER:
-			if((buffer = hny_extraction_cpio_decode_header(cpio, buffer, bufferend, errcode)) == NULL) {
-				return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-			}
+			status = hny_extraction_cpio_decode_header(cpio, &input);
 			break;
 		case HNY_EXTRACTION_CPIO_FILENAME:
 			while(cpio->capacity < cpio->stat.c_namesize) {
@@ -510,25 +503,21 @@ hny_extraction_cpio_decode(struct hny_extraction_cpio *cpio,
 					cpio->filename = newfilename;
 					cpio->capacity *= 2;
 				} else {
-					*errcode = ENOMEM;
-					return HNY_EXTRACTION_CPIO_STATUS_ERROR;
+					status = HNY_EXTRACTION_CPIO_STATUS_ERROR_FILENAME_MEMORY_EXHAUSTED;
+					break;
 				}
 			}
 
-			if((buffer = hny_extraction_cpio_decode_filename(cpio, buffer, bufferend, errcode)) == NULL) {
-				return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-			}
+			status = hny_extraction_cpio_decode_filename(cpio, &input);
 			break;
 		case HNY_EXTRACTION_CPIO_FILE:
-			if((buffer = hny_extraction_cpio_decode_file(cpio, buffer, bufferend, errcode)) == NULL) {
-				return HNY_EXTRACTION_CPIO_STATUS_ERROR;
-			}
+			status = hny_extraction_cpio_decode_file(cpio, &input);
 			break;
 		default: /* HNY_EXTRACTION_CPIO_END */
 			return HNY_EXTRACTION_CPIO_STATUS_END;
 		}
 	}
 
-	return HNY_EXTRACTION_CPIO_STATUS_OK;
+	return status;
 }
 

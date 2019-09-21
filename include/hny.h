@@ -16,7 +16,7 @@
  * archive structure format for packages.
  * It is distributed under BSD 3-Clause license.
  *
- * It is meant to be composed of an ansi C library and
+ * It is meant to be composed of a C library and
  * a command line utility.
  *
  * It keeps in mind the desire to stay embeddable without
@@ -141,7 +141,7 @@ hny_extraction_destroy(struct hny_extraction *extraction);
  * @param extraction extraction handler
  * @param buffer bytes to extract
  * @param size size of @buffer
- * @param errcode return value of a potential error code
+ * @param errcode Potential error code. Interpretation depends on returned value.
  * @return #HNY_EXTRACTION_STATUS_OK if extracting, #HNY_EXTRACTION_STATUS_END
  * when successfull extraction is done. Else the step in which an error occurred.
  */
