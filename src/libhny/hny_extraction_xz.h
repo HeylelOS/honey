@@ -8,13 +8,17 @@
 #ifndef HNY_EXTRACTION_XZ_H
 #define HNY_EXTRACTION_XZ_H
 
-#include <stdint.h>
-#include <sys/types.h>
+#include "hny_internal.h"
+#include "hny_extraction_lzma2.h"
 
-enum hny_extraction_xz_status {
-	HNY_EXTRACTION_XZ_STATUS_OK,
-	HNY_EXTRACTION_XZ_STATUS_END,
-	HNY_EXTRACTION_XZ_STATUS_ERROR
+#include <stddef.h>
+#include <stdint.h>
+
+struct hny_extraction_xz_io {
+	const char *input;
+	size_t inputsize;
+	char *output;
+	size_t outputsize;
 };
 
 struct hny_extraction_xz_stream_header {
@@ -23,6 +27,13 @@ struct hny_extraction_xz_stream_header {
 };
 
 struct hny_extraction_xz_stream_block {
+	enum {
+		HNY_EXTRACTION_XZ_STREAM_BLOCK_HEADER,
+		HNY_EXTRACTION_XZ_STREAM_BLOCK_DATA,
+		HNY_EXTRACTION_XZ_STREAM_BLOCK_PADDING,
+		HNY_EXTRACTION_XZ_STREAM_BLOCK_CHECK,
+	} state;
+
 	struct {
 		enum {
 			HNY_EXTRACTION_XZ_STREAM_BLOCK_HEADER_FLAGS,
@@ -47,6 +58,38 @@ struct hny_extraction_xz_stream_block {
 		} filters;
 		uint32_t crc32;
 	} header;
+
+	/**
+	 * The following must be a uint64_t to stay coherent with
+	 * the decoded uncompressedsize type in the index to check indexcrc32's
+	 */
+	uint64_t uncompressedsize;
+	size_t compressedsize;
+
+	/* Check */
+	uint32_t crc32;
+};
+
+struct hny_extraction_xz_stream_index {
+	enum {
+		HNY_EXTRACTION_XZ_STREAM_INDEX_RECORDS_COUNT,
+		HNY_EXTRACTION_XZ_STREAM_INDEX_RECORDS_LIST_UNPADDED_SIZE,
+		HNY_EXTRACTION_XZ_STREAM_INDEX_RECORDS_LIST_UNCOMPRESSED_SIZE,
+		HNY_EXTRACTION_XZ_STREAM_INDEX_PADDING,
+		HNY_EXTRACTION_XZ_STREAM_INDEX_CRC32
+	} state;
+
+	uint64_t recordscount;
+	uint64_t recordsleft;
+	uint64_t temporary;
+	uint32_t indexcrc32;
+	uint32_t crc32;
+};
+
+struct hny_extraction_xz_stream_footer {
+	uint64_t backwardsize;
+	uint32_t readcrc32;
+	uint32_t crc32;
 };
 
 struct hny_extraction_xz {
@@ -54,16 +97,22 @@ struct hny_extraction_xz {
 		HNY_EXTRACTION_XZ_STREAM_HEADER,
 		HNY_EXTRACTION_XZ_STREAM_BLOCK_OR_INDEX,
 		HNY_EXTRACTION_XZ_STREAM_BLOCK,
-		HNY_EXTRACTION_XZ_STREAM_BLOCK_DATA,
 		HNY_EXTRACTION_XZ_STREAM_INDEX,
 		HNY_EXTRACTION_XZ_STREAM_FOOTER,
 		HNY_EXTRACTION_XZ_STREAM_END
 	} state;
 
+	uint64_t recordscount;
+	size_t offset;
+	size_t multibyteindex;
+	uint32_t indexcrc32;
+
 	struct hny_extraction_xz_stream_header header;
 	struct hny_extraction_xz_stream_block block;
+	struct hny_extraction_xz_stream_index index;
+	struct hny_extraction_xz_stream_footer footer;
 
-	size_t offset;
+	struct hny_extraction_lzma2 lzma2;
 };
 
 int
@@ -72,11 +121,8 @@ hny_extraction_xz_init(struct hny_extraction_xz *xz, size_t dictionarymax);
 void
 hny_extraction_xz_deinit(struct hny_extraction_xz *xz);
 
-enum hny_extraction_xz_status
-hny_extraction_xz_decode(struct hny_extraction_xz *xz,
-	const char *in, size_t insize,
-	const char **out, size_t *outsize,
-	int *errcode);
+enum hny_extraction_status
+hny_extraction_xz_decode(struct hny_extraction_xz *xz, struct hny_extraction_xz_io *buffers);
 
 /* HNY_EXTRACTION_XZ_H */
 #endif

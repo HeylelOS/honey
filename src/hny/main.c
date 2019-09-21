@@ -76,16 +76,17 @@ hny_command_extract(struct hny *hny, char **argpos, char **argend) {
 	char buffer[file.blocksize];
 	enum hny_extraction_status status;
 	ssize_t readval;
-	int errcode = 0;
 	while((readval = read(file.fd, buffer, file.blocksize)) > 0
-		&& (status = hny_extraction_extract(extraction, buffer, readval, &errcode))
+		&& (status = hny_extraction_extract(extraction, buffer, readval, &errno))
 			== HNY_EXTRACTION_STATUS_OK);
 
+	int errcode = errno;
 	hny_unlock(hny);
+	errno = errcode;
 
 	if(readval == -1) {
 		err(EXIT_FAILURE, "extract: Unable to read from '%s'", file.name);
-	} else if(status != HNY_EXTRACTION_STATUS_END) {
+	} else if(HNY_EXTRACTION_STATUS_IS_ERROR(status)) {
 		err(EXIT_FAILURE, "extract: Unable to extract '%s', error %d with errcode %d", file.name, status, errcode);
 	}
 }

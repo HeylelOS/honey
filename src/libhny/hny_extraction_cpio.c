@@ -514,7 +514,7 @@ hny_extraction_cpio_decode(struct hny_extraction_cpio *cpio,
 			status = hny_extraction_cpio_decode_file(cpio, &input);
 			break;
 		default: /* HNY_EXTRACTION_CPIO_END */
-			status = HNY_EXTRACTION_STATUS_END_CPIO;
+			status = HNY_EXTRACTION_STATUS_END;
 			break;
 		}
 	}
