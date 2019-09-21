@@ -87,7 +87,17 @@ hny_command_extract(struct hny *hny, char **argpos, char **argend) {
 	if(readval == -1) {
 		err(EXIT_FAILURE, "extract: Unable to read from '%s'", file.name);
 	} else if(HNY_EXTRACTION_STATUS_IS_ERROR(status)) {
-		err(EXIT_FAILURE, "extract: Unable to extract '%s', error %d with errcode %d", file.name, status, errcode);
+		if(HNY_EXTRACTION_STATUS_IS_ERROR_XZ(status)) {
+			errx(EXIT_FAILURE, "extract: Unable to extract '%s', error while uncompressing", file.name);
+		} else if(HNY_EXTRACTION_STATUS_IS_ERROR_CPIO(status)) {
+			if(HNY_EXTRACTION_STATUS_IS_ERROR_CPIO_SYSTEM(status)) {
+				err(EXIT_FAILURE, "extract: Unable to extract '%s', error while unarchiving", file.name);
+			} else {
+				errx(EXIT_FAILURE, "extract: Unable to extract '%s', error while unarchiving", file.name);
+			}
+		} else {
+			errx(EXIT_FAILURE, "extract: Unable to extract '%s', archive not finished", file.name);
+		}
 	}
 }
 
