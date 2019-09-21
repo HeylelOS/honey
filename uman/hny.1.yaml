@@ -7,45 +7,44 @@ header:
 sections:
     name: "command line utility to repair or access honey prefixes"
     synopsis:
-        - "hny [-h|-a|-b] [-p path] <command> [arguments...]"
+        - "hny [-hb] [-p <prefix>] extract [<geist>] <file>"
+        - "hny [-h] [-p <prefix>] list [packages|geister]"
+        - "hny [-hb] [-p <prefix>] remove [<entry>...]"
+        - "hny [-hb] [-p <prefix>] shift <geist> <target>"
+        - "hny [-h] [-p <prefix>] status [<geist>...]"
+        - "hny [-h] [-p <prefix>] <command> [<entry>...]"
     description: >
         This command line interface is only meant to be used in shell scripts or
         by advanced users, either for fun or to repair a broken prefix.
     options:
         "-h": "Prints usage and exits."
-        "-a": "Specify you accepted all eulas, to automatically verify without prompting."
         "-b": >
             Sets the honey blocking behavior to blocking,
             as it is non-blocking by default.
-        "-p path": >
-            To specify a prefix manualy, overrides the value in \fBHNY_PREFIX\fR.
-        "verify [filenames...]": >
-            Verifies integrity of archive, and prompts whether
-            or not you want to accept the EULA.
-        "export filename geistname": >
-            Unpacks \fBfilename\fR in the prefix, with the specified \fBgeistname\fR.
-        "shift targetgeist geistname": >
-            Associates \fBtargetgeist\fR to \fBgeistname\fR.
-        "list [active|packages]": >
-            Lists respectively symlinks, or directories in the prefix.
-        "erase [geistnames...]": >
-            Removes \fBgeistnames\fR, unlinks it if a symlink, removes files if a package
-        "status [geistnames...]":
-            Returns which package \fBgeistname\fR points too.
-        "setup [geistnames...]":
-            Executes the \fBsetup\fR routine for the specified \fBgeistnames\fR.
-        "clean [geistnames...]":
-            Executes the \fBclean\fR routine for the specified \fBgeistnames\fR.
-        "reset [geistnames...]":
-            Executes the \fBreset\fR routine for the specified \fBgeistnames\fR.
-        "check [geistnames...]":
-            Executes the \fBcheck\fR routine for the specified \fBgeistnames\fR.
-        "purge [geistnames...]":
-            Executes the \fBpurge\fR routine for the specified \fBgeistnames\fR.
+        "-p <prefix>": >
+            To specify a prefix manually, overrides the value in \fBHNY_PREFIX\fR.
+        "extract [<geist>] <file>": >
+            Unpacks \fBfile\fR in the prefix, with the specified \fBgeist\fR, or its basename else.
+        "list [packages|geister]": >
+            Lists respectively directories, or symlinks in the prefix.
+        "remove [<entry>...]": >
+            Removes \fBentry\fR, unlinks it if a symlink, removes files if a package.
+        "shift <geist> <target>": >
+            Associates \fBtarget\fR to \fBgeist\fR.
+        "status [<geist>...]":
+            Returns which package \fBgeist\fR points too.
+        "setup [<entry>...]":
+            Executes the \fBsetup\fR routine for the specified \fBentry\fR.
+        "clean [<entry>...]":
+            Executes the \fBclean\fR routine for the specified \fBentry\fR.
+        "reset [<entry>...]":
+            Executes the \fBreset\fR routine for the specified \fBentry\fR.
+        "check [<entry>...]":
+            Executes the \fBcheck\fR routine for the specified \fBentry\fR.
+        "purge [<entry>...]":
+            Executes the \fBpurge\fR routine for the specified \fBentry\fR.
     author: "Valentin Debon (valentin.debon@heylelos.org)"
     "see also":
-        hny: [ 3 ]
-        hny_geist: [ 3 ]
-        hny_check: [ 3 ]
-        cpio: [ 1 ]
-        xz: [ 1 ]
+        cpio: [ 5 ]
+        xz: [ 5 ]
+

@@ -13,15 +13,14 @@ And, as they are also directory entries, '/' is also forbidden.
 
 ### Package name form
 
-A directory entry/package name must follow this regular expression, not exceeding the maximum size of a file name:
+A directory entry/package name must follow this regular expression:
 	[^\./][^-/]+-[^/]+
 
 ### Geist name form
 
 A symbolic link/geist must reference another entry in the prefix, which means it holds
-either a directory name or an other geist's name, it must follow this regular expression
-and not exceeding the maximum size of a file name:
+either a directory name or an other geist's name, it must follow this regular expression:
 	[^\./][^-/]+
 which suppose every version-differentiating packages of one
-geist are compatible one to each other.
+geist are compatible one another.
 

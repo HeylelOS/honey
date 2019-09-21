@@ -4,7 +4,7 @@ honey is intended to be a unix-like OS package manager and
 archive structure format for packages. It is distributed under BSD 3-Clause
 license, see [LICENSE](https://github.com/ValentinDebon/honey/blob/master/LICENSE).
 
-It is meant to be composed of an ansi C library and
+It is meant to be composed of a C library and
 a command line utility.
 
 It keeps in mind the desire to stay embeddable without
@@ -18,14 +18,9 @@ shell script providers, recovery or advanced users.
 The format is documented in the repository. Supposing the archive name is in _$PACKAGE_
 you may respectively create and extract honey packages with the following commands:
 
-	cpio -c -o | xz -C crc32 > "$PACKAGE"
+	cpio -c -o | xz -C crc32 --lzma2 > "$PACKAGE"
 
-	cat "$PACKAGE" | unxz -C crc32 | cpio -c -i
-
-## Dependencies
-
-The honey library only have one non-standard dependency:
-- [libarchive](https://github.com/libarchive/libarchive), with xz and cpio support
+	unxz -C crc32 --lzma2 < "$PACKAGE" | cpio -c -i
 
 ## Build
 
@@ -35,12 +30,6 @@ You should be able to configure and build it with:
 ./configure
 make
 ```
-Note this is an ansi C library/program,
-with a few exceptions on some features. So you
-shouldn't have any problem building it on most systems.
-It has been built on Debian 9, Ubuntu 18.04 and void linux successfully.
-macOS only have a linking problem due to not having the latest
-[libarchive](https://github.com/libarchive/libarchive) on the system.
 
 ## Documentation
 

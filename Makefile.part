@@ -1,33 +1,55 @@
-BUILD_DIRECTORY_LIB=build/lib/
-BUILD_DIRECTORY_BIN=build/bin/
 LIBHNY_SRC=$(wildcard src/libhny/*.c)
+LIBHNY=$(BUILDDIR)/lib/libhny.so
 HNY_SRC=$(wildcard src/hny/*.c)
-LIBHNY=build/lib/libhny.so
-HNY=build/bin/hny
+HNY=$(BUILDDIR)/bin/hny
+TEST_ARCHIVE_1=$(BUILDDIR)/test_archive-1.hny
+TEST_ARCHIVE_2=$(BUILDDIR)/test_archive-2.hny
+TEST_ARCHIVES=$(TEST_ARCHIVE_1) $(TEST_ARCHIVE_2)
 
-.PHONY: all test install clean man documentation
+.PHONY: all clean test
 
-all: $(HNY)
-
-test: $(HNY)
-	./test/hny/run.sh
-
-install: $(HNY)
-	cp -r $(BUILD_DIRECTORY_LIB) $(INSTALL_DIRECTORY)
-	cp -r $(BUILD_DIRECTORY_BIN) $(INSTALL_DIRECTORY)
+all: $(LIBHNY) $(HNY)
 
 clean:
-	rm -rf build/ man/
+	rm -rf $(BUILDDIR)
 
-$(BUILD_DIRECTORY_LIB):
-	mkdir -p $@
+test: $(HNY) $(TEST_ARCHIVES) $(BUILDDIR)
+	@echo "- Testing extract"
+	$< -p $(BUILDDIR)/hub extract $(TEST_ARCHIVE_1)
+	$< -p $(BUILDDIR)/hub extract $(TEST_ARCHIVE_2)
+	@echo "- Testing shift (creation)"
+	$< -p $(BUILDDIR)/hub shift test_archive1 test_archive-1
+	$< -p $(BUILDDIR)/hub shift test_archive2 test_archive-2
+	@echo "- Testing status (one level)"
+	$< -p $(BUILDDIR)/hub status test_archive1 test_archive2
+	@echo "- Testing setup"
+	$< -p $(BUILDDIR)/hub setup test_archive1 test_archive2
+	@echo "- Testing shift (two levels)"
+	$< -p $(BUILDDIR)/hub shift test_archive test_archive1
+	@echo "- Testing status (two levels)"
+	$< -p $(BUILDDIR)/hub status test_archive
+	@echo "- Testing list (geister)"
+	$< -p $(BUILDDIR)/hub list geister
+	@echo "- Testing list (packages)"
+	$< -p $(BUILDDIR)/hub list packages
+	@echo "- Testing list (all)"
+	$< -p $(BUILDDIR)/hub list
+	@echo "- Testing remove (geister)"
+	$< -p $(BUILDDIR)/hub remove test_archive test_archive1 test_archive2
+	@echo "- Testing clean"
+	$< -p $(BUILDDIR)/hub clean test_archive-1 test_archive-2
+	@echo "- Testing remove (packages)"
+	$< -p $(BUILDDIR)/hub remove test_archive-1 test_archive-2
 
-$(BUILD_DIRECTORY_BIN):
-	mkdir -p $@
+$(BUILDDIR):
+	mkdir -p $@/bin $@/lib $@/hub
 
-$(LIBHNY): $(LIBHNY_SRC) $(BUILD_DIRECTORY_LIB)
-	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -shared -fPIC -o $@ $(LIBHNY_SRC) -larchive
+$(TEST_ARCHIVES): %: $(BUILDDIR)
+	cd test/hny/$(basename $(notdir $@)) && cpio -co < ../name-list | xz -C crc32 --lzma2 > $@
 
-$(HNY): $(LIBHNY) $(HNY_SRC) $(BUILD_DIRECTORY_BIN)
-	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -o $@ $(HNY_SRC) -Lbuild/lib -lhny
+$(LIBHNY): $(LIBHNY_SRC) $(BUILDDIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -shared -o $@ $(LIBHNY_SRC)
+
+$(HNY): $(HNY_SRC) $(LIBHNY) $(BUILDDIR)
+	$(CC) $(CFLAGS) $(LDFLAGS) -Iinclude -L$(BUILDDIR)/lib -o $@ $(HNY_SRC) -lhny
 
