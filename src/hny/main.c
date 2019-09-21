@@ -341,7 +341,7 @@ hny_action(struct hny *hny, const char *path, const char *action,
 	int count = argend - argpos;
 	siginfo_t info;
 
-	while(waitid(P_ALL, 0, &info, WEXITED | WNOHANG) == 0) {
+	while(waitid(P_ALL, 0, &info, WEXITED) == 0) {
 		switch(info.si_code) {
 		case CLD_EXITED:
 			if(info.si_status == 0) {
