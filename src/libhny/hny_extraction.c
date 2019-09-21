@@ -59,6 +59,16 @@ hny_extraction_destroy(struct hny_extraction *extraction) {
 enum hny_extraction_status
 hny_extraction_extract(struct hny_extraction *extraction,
 	const char *buffer, size_t size, int *errcode) {
+
+	switch(hny_extraction_cpio_decode(&extraction->cpio, buffer, size, errcode)) {
+	case HNY_EXTRACTION_CPIO_STATUS_OK:
+		return HNY_EXTRACTION_STATUS_OK;
+	case HNY_EXTRACTION_CPIO_STATUS_END:
+		return HNY_EXTRACTION_STATUS_END;
+	default: /* HNY_EXTRACTION_CPIO_STATUS_ERROR */
+		return HNY_EXTRACTION_STATUS_ERROR_UNARCHIVE;
+	}
+/*
 	const char *decoded;
 	size_t decodedsize;
 
@@ -70,11 +80,12 @@ hny_extraction_extract(struct hny_extraction *extraction,
 			return HNY_EXTRACTION_STATUS_OK;
 		case HNY_EXTRACTION_CPIO_STATUS_END:
 			return HNY_EXTRACTION_STATUS_END;
-		default: /* HNY_EXTRACTION_CPIO_STATUS_ERROR */
+		default: // HNY_EXTRACTION_CPIO_STATUS_ERROR
 			return HNY_EXTRACTION_STATUS_ERROR_UNARCHIVE;
 		}
 	} else {
 		return HNY_EXTRACTION_STATUS_ERROR_DECOMPRESSION;
 	}
+*/
 }
 
