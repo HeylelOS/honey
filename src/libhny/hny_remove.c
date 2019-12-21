@@ -15,29 +15,30 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <err.h>
+
 #define HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE 128
 #define HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE 16
 
 struct hny_removal {
-	DIR *dirp;
+	DIR *dirp;       /**< Current directory being explored */
 
-	long *locations;
-	size_t count;
-	size_t capacity;
+	long *locations; /**< Where we are in each parent directories */
+	size_t count;    /**< How many directories we are in */
+	size_t capacity; /**< capacity of the pointer locations */
 
-	char *path;
-	char *name;
-	char *pathend;
+	char *path;      /**< String representing the absolute path of each entry */
+	char *name;      /**< Name of the current entry */
+	char *pathend;   /**< Pointer following the last valid one in path */
 };
 
 static inline bool
 hny_remove_is_dot_or_dot_dot(const char *name) {
-
 	return name[0] == '.' && (name[1] == '\0' || (name[1] == '.' && name[2] == '\0'));
 }
 
 static DIR *
-hny_remove_opendirat(int dirfd, const char *path, int *errcode) {
+hny_remove_opendirat(int dirfd, const char *path) {
 	int newdirfd = openat(dirfd, path, O_DIRECTORY | O_NOFOLLOW);
 	DIR *newdirp = NULL;
 
@@ -45,11 +46,8 @@ hny_remove_opendirat(int dirfd, const char *path, int *errcode) {
 		newdirp = fdopendir(newdirfd);
 
 		if(newdirp == NULL) {
-			*errcode = errno;
 			close(newdirfd);
 		}
-	} else {
-		*errcode = errno;
 	}
 
 	return newdirp;
@@ -57,9 +55,9 @@ hny_remove_opendirat(int dirfd, const char *path, int *errcode) {
 
 static int
 hny_removal_init(struct hny_removal *removal,
-	struct hny *hny, const char *package, int *errcode) {
+	struct hny *hny, const char *package) {
 
-	if((removal->dirp = hny_remove_opendirat(dirfd(hny->dirp), package, errcode)) == NULL) {
+	if((removal->dirp = hny_remove_opendirat(dirfd(hny->dirp), package)) == NULL) {
 		goto hny_removal_init_err0;
 	}
 
@@ -94,8 +92,38 @@ hny_removal_deinit(struct hny_removal *removal) {
 	closedir(removal->dirp);
 }
 
-static void
-hny_removal_push(struct hny_removal *removal, const char *name, int *errcode) {
+static int
+hny_removal_leave_directory(struct hny_removal *removal) {
+	if(removal->count != 0) {
+		DIR *dirp = hny_remove_opendirat(dirfd(removal->dirp), "..");
+		if(dirp == NULL) {
+			return -1;
+		}
+
+		do {
+			removal->name--;
+		} while(removal->name[-1] != '/');
+
+		removal->count--;
+
+		if(unlinkat(dirfd(dirp), removal->name, AT_REMOVEDIR) == -1) {
+			removal->locations[removal->count]++;
+		}
+
+		for(long i = 0; i < removal->locations[removal->count];
+			readdir(dirp), i++);
+
+		closedir(removal->dirp);
+		removal->dirp = dirp;
+
+		return 0;
+	} else {
+		return -1;
+	}
+}
+
+static int
+hny_removal_enter_directory(struct hny_removal *removal, const char *name) {
 	char *namenul;
 	DIR *dirp;
 
@@ -110,9 +138,7 @@ hny_removal_push(struct hny_removal *removal, const char *name, int *errcode) {
 			removal->name = newpath + length;
 			removal->pathend = newpath + capacity * 2;
 		} else {
-			*errcode = errno;
-			removal->locations[removal->count]++;
-			return;
+			return -1;
 		}
 	}
 
@@ -124,16 +150,12 @@ hny_removal_push(struct hny_removal *removal, const char *name, int *errcode) {
 			removal->locations = newlocations;
 			removal->capacity *= 2;
 		} else {
-			*errcode = errno;
-			removal->locations[removal->count]++;
-			return;
+			return -1;
 		}
 	}
 
-	if((dirp = hny_remove_opendirat(dirfd(removal->dirp), removal->name, errcode)) == NULL) {
-		*errcode = errno;
-		removal->locations[removal->count]++;
-		return;
+	if((dirp = hny_remove_opendirat(dirfd(removal->dirp), removal->name)) == NULL) {
+		return -1;
 	}
 
 	closedir(removal->dirp);
@@ -141,86 +163,51 @@ hny_removal_push(struct hny_removal *removal, const char *name, int *errcode) {
 	*namenul = '/';
 	removal->name = namenul + 1;
 	removal->count++;
-}
 
-static int
-hny_removal_pop(struct hny_removal *removal, int *errcode) {
-	DIR *dirp = hny_remove_opendirat(dirfd(removal->dirp), "..", errcode);
-
-	if(dirp == NULL) {
-		*errcode = errno;
-		return -1;
-	}
-
-	do {
-		removal->name--;
-	} while(removal->name[-1] != '/');
-
-	removal->count--;
-	if(unlinkat(dirfd(dirp), removal->name, AT_REMOVEDIR) == -1) {
-		*errcode = errno;
-		removal->locations[removal->count]++;
-	}
-
-	for(long i = 0; i < removal->locations[removal->count]
-		&& (errno = 0, readdir(dirp)) != NULL; i++);
-
-	if(errno != 0) {
-		*errcode = errno;
-		return -1;
-	}
-
-	closedir(removal->dirp);
-	removal->dirp = dirp;
+	warnx("Directory: %s", name);
 
 	return 0;
 }
 
 static int
-hny_removal_remove(struct hny_removal *removal, int *errcode) {
+hny_removal_next(struct hny_removal *removal) {
 	struct dirent *entry = (errno = 0, readdir(removal->dirp));
 
 	if(entry == NULL) {
-		if(errno != 0) {
-			*errcode = errno;
-		}
-
-		if(removal->count == 0) {
-			return -1;
-		}
-
-		return hny_removal_pop(removal, errcode);
+		return errno != 0 ? -1
+			: hny_removal_leave_directory(removal);
 	} else if(entry->d_type == DT_DIR) {
-		if(hny_remove_is_dot_or_dot_dot(entry->d_name)) {
-			removal->locations[removal->count]++;
+		if(!hny_remove_is_dot_or_dot_dot(entry->d_name)) {
+			return hny_removal_enter_directory(removal, entry->d_name);
 		} else {
-			hny_removal_push(removal, entry->d_name, errcode);
+			removal->locations[removal->count]++;
+			return 0;
 		}
-	} else if(unlinkat(dirfd(removal->dirp), entry->d_name, 0) == -1) {
-		*errcode = errno;
-		removal->locations[removal->count]++;
+	} else {
+		warnx("File: %s", entry->d_name);
+		if(unlinkat(dirfd(removal->dirp), entry->d_name, 0) == -1) {
+			removal->locations[removal->count]++;
+		}
+		return 0;
 	}
-
-	return 0;
 }
 
 static int
 hny_remove_package(struct hny *hny, const char *package) {
 	struct hny_removal removal;
-	int errcode = 0;
 
-	if(hny_removal_init(&removal, hny, package, &errcode) == 0) {
+	if(hny_removal_init(&removal, hny, package) == 0) {
 
-		while(hny_removal_remove(&removal, &errcode) == 0);
-
-		if(unlinkat(dirfd(hny->dirp), package, AT_REMOVEDIR) == -1) {
-			errcode = errno;
-		}
+		while(hny_removal_next(&removal) == 0);
 
 		hny_removal_deinit(&removal);
 	}
 
-	return errcode;
+	errno = 0;
+
+	unlinkat(dirfd(hny->dirp), package, AT_REMOVEDIR);
+
+	return errno;
 }
 
 int
