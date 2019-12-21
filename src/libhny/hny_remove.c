@@ -15,8 +15,6 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include <err.h>
-
 #define HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE 128
 #define HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE 16
 
@@ -164,8 +162,6 @@ hny_removal_enter_directory(struct hny_removal *removal, const char *name) {
 	removal->name = namenul + 1;
 	removal->count++;
 
-	warnx("Directory: %s", name);
-
 	return 0;
 }
 
@@ -184,7 +180,6 @@ hny_removal_next(struct hny_removal *removal) {
 			return 0;
 		}
 	} else {
-		warnx("File: %s", entry->d_name);
 		if(unlinkat(dirfd(removal->dirp), entry->d_name, 0) == -1) {
 			removal->locations[removal->count]++;
 		}
