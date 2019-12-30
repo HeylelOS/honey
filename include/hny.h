@@ -32,7 +32,6 @@
 
 /**
  * Opaque data type to represent a honey prefix
- * thread-safe through the library
  */
 struct hny;
 
