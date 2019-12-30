@@ -17,9 +17,10 @@ shell script providers, recovery or advanced users.
 The format is documented in the repository. Supposing the archive name is in _$PACKAGE_
 you may respectively create and extract honey packages with the following commands:
 
-	cpio -c -o | xz -C crc32 --lzma2 > "$PACKAGE"
-
-	unxz -C crc32 --lzma2 < "$PACKAGE" | cpio -c -i
+````sh
+cpio -c -o | xz -C crc32 --lzma2 > "$PACKAGE"
+unxz -C crc32 --lzma2 < "$PACKAGE" | cpio -c -i
+```
 
 Note: You can also replace `crc32` with `none`.
 
@@ -35,14 +36,14 @@ make
 ## Documentation
 
 man pages for the command line utility is built using
-[uman](https://github.com/HeylelOS/srcutils):
+[uman](https://github.com/HeylelOS/uman):
 
-	make man
+	uman -o man/hny.1 uman/hny.1.md
 
 HTML documentation for the library are built using
 [Doxygen](https://github.com/doxygen/doxygen):
 
-	make documentation
+	doxygen
 
 ## Tests
 
