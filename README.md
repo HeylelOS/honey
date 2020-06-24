@@ -42,7 +42,7 @@ HTML documentation for the library are built using
 
 ## Tests
 
-You should be able to run tests by executing:
+You should be able to test the currently installed version by executing:
 
 	cd test/hny/ && ./test.sh
 
