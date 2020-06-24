@@ -1,7 +1,5 @@
 #!/bin/sh
 
-CONFIG_DEBUG=1
-
 while getopts hrd opt
 do
 	case $opt in
@@ -16,65 +14,110 @@ VAR=VALUE.  See below for descriptions of some of the useful variables.
 Defaults for the options are specified in brackets.
 
 Configuration:
-  -h                      display this help and exit
+  -h               display this help and exit
 
 Optional Features:
-  -d                      configure a debug build (default)
-  -r                      configure a release build
+  -d               configure a debug build (default)
+  -r               configure a release build
 
 Some influential environment variables:
-  CC              C compiler command [clang gcc cc]
-  CFLAGS          C compiler flags [-O3 -Wall -fPIC] when -r specified, [-g -Wall -fPIC] else
-  LDFLAGS         linker flags []
-
-  BUILDDIR        where the binaries and documentations will be built [`pwd`/build]
+  BINARIES         where binary executables are built.
+  LIBRARIES        where libraries are built.
+  OBJECTS          where intermediate object files are built.
+  MKDIR            tool used to create objects subdirectories.
+  LD               linker to use.
+  LDFLAGS          arguments to pass to the linker.
+  CC               C compiler to use, default [clang gcc tcc cc].
+  CFLAGS           C compiler flags [-O -Wall -fPIC -DNDEBUG -Iinclude] when -r specified, [-g -Wall -fPIC -Iinclude] else.
+  LIBHNYFLAGS
+  HNYFLAGS
 
 Use these variables to override the choices made by \`configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
 Report bugs to the package provider.
 EOF
-		exit 2 ;;
-	r) unset CONFIG_DEBUG ;;
-	d) CONFIG_DEBUG=1 ;;
-	?) echo "Unknown option: $opt" ;;
+		exit 1 ;;
+	r) NDEBUG="${opt}" ;;
+	d) unset NDEBUG ;;
+	?) echo "Unknown option: ${opt}" ;;
 	esac
 done
 
 shift $((OPTIND - 1))
 [ ! -z "$*" ] && export -- "$@"
 
-# Compilation
-if [ -z "$CC" ]
+case "`uname -s`" in
+Darwin) [ -z "${LDFLAGS}" ] && LDFLAGS='-lSystem' ;;
+Linux) [ -z "${LDFLAGS}" ] && LDFLAGS='-lc' ;;
+*) printf 'Unsupported operating system\n' && exit 1 ;;
+esac
+
+if [ -z "${CC}" ]
 then
-	for CC in clang gcc cc
-	do [ ! -z `which "$CC"` ] && break
+	for CC in clang gcc tcc cc
+	do command -v "${CC}" && break
 	done
 fi
 
-if [ ! -z "$CC" ]
-then echo "Using C compiler '$CC'"
-else echo "Unable to find C compiler" ; exit 1
+if [ ! -z "${CC}" ]
+then printf "Using C compiler '%s'\n" "${CC}"
+else printf 'Unable to find C compiler\n' ; exit 1
 fi
 
-if [ -z "$CFLAGS" ]
+if [ -z "${CFLAGS}" ]
 then
-	if [ ! -z "$CONFIG_DEBUG" ]
-	then CFLAGS='-g -Wall -fPIC'
-	else CFLAGS='-O3 -Wall -fPIC'
+	if [ -z "${NDEBUG}" ]
+	then CFLAGS='-g -Wall -fPIC -Iinclude'
+	else CFLAGS='-O -Wall -fPIC -DNDEBUG -Iinclude'
 	fi
 fi
-echo "Using C flags '$CFLAGS'"
+printf "Using C compiler flags '%s'\n" "${CFLAGS}"
 
-echo "Using Linker flags: '$LDFLAGS'"
+if [ -z "${MKDIR}" ]
+then
+	for MKDIR in mkdir
+	do command -v "${MKDIR}" && break
+	done
+fi
 
-[ -z "$BUILDDIR" ] && BUILDDIR="`pwd`/build"
+if [ ! -z "${MKDIR}" ]
+then printf "Using mkdir '%s'\n" "${MKDIR}"
+else printf 'Unable to find mkdir\n' ; exit 1
+fi
 
-cat - Makefile.part <<EOF > Makefile
-CC=$CC
-CFLAGS=$CFLAGS
-LDFLAGS=$LDFLAGS
+if [ -z "${LD}" ]
+then
+	for LD in ld gold
+	do command -v "${LD}" && break
+	done
+fi
 
-BUILDDIR=$BUILDDIR
+if [ ! -z "${LD}" ]
+then printf "Using linker '%s'\n" "${LD}"
+else printf 'Unable to find linker\n' ; exit 1
+fi
+
+[ -z "${LIBHNYFLAGS}" ] && LIBHNYFLAGS="-shared"
+[ -z "${HNYFLAGS}" ] && HNYFLAGS=""
+
+[ -z "${BINARIES}" ] && BINARIES="build/bin"
+[ -z "${LIBRARIES}" ] && LIBRARIES="build/lib"
+[ -z "${OBJECTS}" ] && OBJECTS="build/objects"
+mkdir -p "${BINARIES}" "${LIBRARIES}" "${OBJECTS}"
+
+cat - Makefile.rules <<EOF > Makefile
+BINARIES=${BINARIES}
+LIBRARIES=${LIBRARIES}
+OBJECTS=${OBJECTS}
+
+MKDIR=${MKDIR}
+LD=${LD}
+LDFLAGS=${LDFLAGS}
+CC=${CC}
+CFLAGS=${CFLAGS}
+
+LIBHNYFLAGS=${LIBHNYFLAGS}
+HNYFLAGS=${HNYFLAGS}
+
 EOF
-
