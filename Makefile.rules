@@ -1,13 +1,13 @@
 .PHONY: all clean
 all:
 $(OBJECTS)/hny:
-	$(MKDIR) $@
+	$(MKDIR) -p $@
 $(OBJECTS)/hny/main.o: src/hny/main.c $(OBJECTS)/hny
 	$(CC) $(CFLAGS) -c -o $@ $<
 $(BINARIES)/hny: $(OBJECTS)/hny/main.o $(LIBRARIES)/libhny.so
 	$(LD) $(LDFLAGS) $(HNYFLAGS) -o $@ $^
 $(OBJECTS)/libhny:
-	$(MKDIR) $@
+	$(MKDIR) -p $@
 $(OBJECTS)/libhny/hny_extraction.o: src/libhny/hny_extraction.c $(OBJECTS)/libhny
 	$(CC) $(CFLAGS) -c -o $@ $<
 $(OBJECTS)/libhny/hny_extraction_cpio.o: src/libhny/hny_extraction_cpio.c $(OBJECTS)/libhny
