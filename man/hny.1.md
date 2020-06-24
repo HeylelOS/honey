@@ -29,6 +29,9 @@ This command line interface is only meant to be used in shell scripts or by adva
 - check [\<entry\>...] : Executes the **check** routine for the specified **entry**.
 - purge [\<entry\>...] : Executes the **purge** routine for the specified **entry**.
 
+## ENVIRONMENT
+- HNY\_PREFIX : Indicates the defaut honey prefix, else **/hub** is used.
+
 ## AUTHOR
 Valentin Debon (valentin.debon@heylelos.org)
 

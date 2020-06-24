@@ -35,11 +35,6 @@ make
 
 ## Documentation
 
-man pages for the command line utility is built using
-[uman](https://github.com/HeylelOS/uman):
-
-	uman -o man/hny.1 uman/hny.1.md
-
 HTML documentation for the library are built using
 [Doxygen](https://github.com/doxygen/doxygen):
 
@@ -49,5 +44,5 @@ HTML documentation for the library are built using
 
 You should be able to run tests by executing:
 
-	make test
+	cd test/hny/ && ./test.sh
 
