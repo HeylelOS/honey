@@ -32,24 +32,24 @@ test_hny() {
 }
 
 mktest_archive() {
-	(cd "$1" && cpio -co < ../name-list | xz -C crc32 --lzma2) > "${testdir}/$1.hny"
+	cd "${testdir}/$1"
+	cpio -co < ../name-list | xz -C crc32 --lzma2 > "../$1.hny"
 }
 
-printf 'Honey test\n'
-date
-
-testdir="`mktemp -d $PWD/hny-test.XXXXXX`"
+testdir="$PWD/`dirname $0`"
 export HNY_PREFIX="${testdir}/hub"
 mkdir -p "${HNY_PREFIX}"
 
-printf 'Creating test archives in %s\n' "${testdir}"
+printf 'Honey test at %s\n' "${testdir}"
+date
 
-printf 'Running test in directory %s\n' "${HNY_PREFIX}"
+printf 'Creating test archives\n'
 
-mktest_archive 'test_archive-1'
-mktest_archive 'test_archive-2'
+(mktest_archive 'test_archive-1')
+(mktest_archive 'test_archive-2')
 
+printf 'Running tests\n'
 (test_hny "${testdir}/test_archive-1.hny" "${testdir}/test_archive-2.hny")
 
-rm -r "${testdir}"
+rm -r "${testdir}/hub" "${testdir}"/*.hny
 

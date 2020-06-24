@@ -33,6 +33,10 @@ You should be able to configure and build it with:
 make
 ```
 
+Note sometimes configure might fail because ld requires runtime components.
+You can easily solve this by setting the LD to the used compiler.
+The latest usually encapsulates linking well.
+
 ## Documentation
 
 HTML documentation for the library are built using
@@ -42,7 +46,7 @@ HTML documentation for the library are built using
 
 ## Tests
 
-You should be able to test the currently installed version by executing:
+You should be able to test the currently installed version by executing, just change your PATH to test another:
 
-	cd test/hny/ && ./test.sh
+	./test/hny/test.sh
 
