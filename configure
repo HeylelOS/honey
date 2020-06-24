@@ -48,8 +48,14 @@ shift $((OPTIND - 1))
 [ ! -z "$*" ] && export -- "$@"
 
 case "`uname -s`" in
-Darwin) [ -z "${LDFLAGS}" ] && LDFLAGS='-lSystem' ;;
-Linux) [ -z "${LDFLAGS}" ] && LDFLAGS='-lc' ;;
+Darwin)
+	[ -z "${LDFLAGS}" ] && LDFLAGS='-lSystem'
+	LDSHARED='-dylib'
+	;;
+Linux)
+	[ -z "${LDFLAGS}" ] && LDFLAGS='-lc'
+	LDSHARED='-shared'
+	;;
 *) printf 'Unsupported operating system\n' && exit 1 ;;
 esac
 
@@ -98,7 +104,7 @@ then printf "Using linker '%s'\n" "${LD}"
 else printf 'Unable to find linker\n' ; exit 1
 fi
 
-[ -z "${LIBHNYFLAGS}" ] && LIBHNYFLAGS="-shared"
+[ -z "${LIBHNYFLAGS}" ] && LIBHNYFLAGS="${LDSHARED}"
 [ -z "${HNYFLAGS}" ] && HNYFLAGS=""
 
 [ -z "${BINARIES}" ] && BINARIES="build/bin"
