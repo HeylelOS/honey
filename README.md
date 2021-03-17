@@ -51,7 +51,12 @@ make doc
 
 ## Tests
 
-You should be able to test the currently installed version by executing, just change your PATH to test another:
+CMake is also used to manage the test suite:
 
-	./test/hny/test.sh
+```sh
+mkdir -p build && cd build
+cmake ../
+make
+ctest
+```
 
