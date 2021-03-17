@@ -17,7 +17,7 @@ shell script providers, recovery or advanced users.
 The format is documented in the repository. Supposing the archive name is in _$PACKAGE_
 you may respectively create and extract honey packages with the following commands:
 
-````sh
+```sh
 cpio -c -o | xz -C crc32 --lzma2 > "$PACKAGE"
 unxz -C crc32 --lzma2 < "$PACKAGE" | cpio -c -i
 ```
