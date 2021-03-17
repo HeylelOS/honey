@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -e
+
+# We must sort to keep consistency as hny doesn't list alphabetically
+"${TEST_BIN}" list | sort
+

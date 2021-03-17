@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+rm -rf -- "${HNY_PREFIX}"
+mkdir -p -- "${HNY_PREFIX}"
+
+"${TEST_BIN}" extract 'archive-1.0.0' "${TEST_ARCHIVE}"
+
+[ -d "${HNY_PREFIX}/archive-1.0.0" ]
+[ -d "${HNY_PREFIX}/archive-1.0.0/hny" ]
+[ -f "${HNY_PREFIX}/archive-1.0.0/hny/clean" ]
+[ -f "${HNY_PREFIX}/archive-1.0.0/hny/setup" ]
+[ -x "${HNY_PREFIX}/archive-1.0.0/hny/clean" ]
+[ -x "${HNY_PREFIX}/archive-1.0.0/hny/setup" ]
+

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+"${TEST_BIN}" remove 'arxiv'
+
+# Check if it didn't remove associated geister
+[ ! -h "${HNY_PREFIX}/arxiv" ]
+[ -h "${HNY_PREFIX}/archive" ]
+[ -d "${HNY_PREFIX}/archive-1.0.0" ]
+
+"${TEST_BIN}" remove 'archive' 'archive-1.0.0'
+
+[ ! -h "${HNY_PREFIX}/archive" ]
+[ ! -d "${HNY_PREFIX}/archive-1.0.0" ]
+
+[ -z `ls -1 "${HNY_PREFIX}"` ]
