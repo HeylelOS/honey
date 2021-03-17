@@ -1,0 +1,55 @@
+#!/bin/sh
+
+set -e
+
+while getopts 'E:D:' opt
+do
+	case "${opt}" in
+	E) TEST_BIN="${OPTARG}" ;;
+	D) TEST_DIR="${OPTARG}" ;;
+	?) printf 'Unknown option: %s\n' "${opt}" && exit 1 ;;
+	esac
+done
+
+if [ ! -x "${TEST_BIN}" ]
+then
+	echo "CONNARD" ${TEST_BIN}
+	printf 'Missing test binary\n'
+	exit 1
+fi
+
+if [ -z "${TEST_DIR}" ]
+then
+	printf 'Missing test directory\n'
+	exit 1
+fi
+
+export TEST_BIN
+export TEST_ARCHIVE="${PWD}/archive.hny"
+export HNY_PREFIX="${PWD}/HoneyTestPrefix"
+
+shift $((OPTIND - 1))
+
+if [ ! -f "${TEST_ARCHIVE}" ]
+then
+	archive_cpio() {
+		printf '070707004021002167040755%.6o%.6o0000020000000000000000000000500000000000hny/\0' `id -u` `id -g`
+		printf '070707004021002170100755%.6o%.6o0000020000000000000000000001200000000046hny/clean\0#!/bin/sh\necho "Test Archive - Clean"\n' `id -u` `id -g`
+		printf '070707004021002170100755%.6o%.6o0000020000000000000000000001200000000046hny/setup\0#!/bin/sh\necho "Test Archive - Setup"\n' `id -u` `id -g`
+		printf '0707070000000000000000000000000000000000010000000000000000000001300000000000TRAILER!!!\0'
+	}
+
+	archive_cpio | xz -C crc32 --lzma2 > "${TEST_ARCHIVE}"
+fi
+
+for TEST in $@
+do
+	TEST_SCRIPT="${TEST_DIR}/${TEST}"
+	EXPECTED_OUTPUT="${TEST_SCRIPT}.expected"
+
+	if [ -f "${EXPECTED_OUTPUT}" ]
+	then "${TEST_SCRIPT}" | diff - "${EXPECTED_OUTPUT}"
+	else "${TEST_SCRIPT}"
+	fi
+done
+

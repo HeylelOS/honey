@@ -1,4 +1,4 @@
-# honey
+# Honey
   
 honey is intended to be a unix-like OS package manager and
 archive structure format for packages. It is distributed under BSD 3-Clause
@@ -24,25 +24,30 @@ unxz -C crc32 --lzma2 < "$PACKAGE" | cpio -c -i
 
 Note: You can also replace `crc32` with `none`.
 
-## Build
+## Configure, build and install
 
-You should be able to configure and build it with:
+CMake is used to configure, build and install binaires and documentations, version 3.14 minimum is required:
 
 ```sh
-./configure
-make
+mkdir -p build && cd build
+cmake ../
+cmake --build .
+cmake --install .
 ```
-
-Note sometimes configure might fail because ld requires runtime components.
-You can easily solve this by setting the LD to the used compiler.
-The latest usually encapsulates linking well.
 
 ## Documentation
 
-HTML documentation for the library are built using
-[Doxygen](https://github.com/doxygen/doxygen):
+HTML documentation for the library are built using [Doxygen](https://github.com/doxygen/doxygen).
+Doxygen version 1.8.0 minimum is required (markdown support for `docs/` files).
+Depending on your generator, cmake will expose documentation through the `doc` target.
 
-	doxygen
+For example, if your default generator is make-based:
+
+```sh
+mkdir -p build && cd build
+cmake ../
+make doc
+```
 
 ## Tests
 

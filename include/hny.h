@@ -216,7 +216,7 @@ hny_extraction_destroy(struct hny_extraction *extraction);
  * Extracts an archive from a byte stream
  * @param extraction extraction handler
  * @param buffer bytes to extract
- * @param size size of @buffer
+ * @param size size of @p buffer
  * @param errcode Potential error code. Interpretation depends on returned value.
  * @return #HNY_EXTRACTION_STATUS_OK if extracting, #HNY_EXTRACTION_STATUS_END
  * when successfull extraction is done. Else the step in which an error occurred.
@@ -238,7 +238,7 @@ hny_shift(struct hny *hny,
 	const char *target);
 
 /**
- * Depending on type of @entry, it will unlink a #HNY_TYPE_GEIST
+ * Depending on type of @p entry, it will unlink a #HNY_TYPE_GEIST
  * and recursively remove a #HNY_TYPE_PACKAGE.
  * @param hny honey prefix
  * @param entry entry to remove
@@ -251,11 +251,11 @@ hny_remove(struct hny *hny,
 #define HNY_SPAWN_STATUS_ERROR 127
 
 /**
- * Executes the given file associated to @entry
+ * Executes the given file associated with @p entry
  * the process will execute into the package prefix.
- * The argument list only contains the basename of @path.
- * The @hny absolute path is an environment variable named HNY_PREFIX.
- * The @entry is an environment variable named HNY_ENTRY.
+ * The argument list only contains the basename of @p path.
+ * The @p hny absolute path is an environment variable named HNY_PREFIX.
+ * The @p entry is an environment variable named HNY_ENTRY.
  * Note the execution can fail even if the return value is 0. In this case
  * the process returns with an exit code #HNY_SPAWN_STATUS_ERROR.
  * @param hny honey prefix

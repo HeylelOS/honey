@@ -9,13 +9,14 @@ hny - Command line utility to repair or access honey prefixes.
 - **hny** [-hb] [-p \<prefix\>] remove [\<entry\>...]
 - **hny** [-hb] [-p \<prefix\>] shift \<geist\> \<target\>
 - **hny** [-h] [-p \<prefix\>] status [\<geist\>...]
-- **hny** [-h] [-p \<prefix\>] \<command\> [\<entry\>...]
+- **hny** [-hv] [-p \<prefix\>] \<command\> [\<entry\>...]
 
 ## DESCRIPTION
 This command line interface is only meant to be used in shell scripts or by advanced users, either for fun or to repair a broken prefix.
 
 ## OPTIONS
 - -h : Prints usage and exits.
+- -v : Be verbose.
 - -b : Sets the honey blocking behavior to blocking, as it is non-blocking by default.
 - -p \<prefix\> : To specify a prefix manually, overrides the value in **HNY_PREFIX**.
 - extract [\<geist\>] \<file\> : Unpacks **file** in the prefix, with the specified **geist**, or its basename else.

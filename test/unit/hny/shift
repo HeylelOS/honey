@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+"${TEST_BIN}" shift 'archive' 'archive-1.0.0'
+"${TEST_BIN}" shift 'arxiv' 'archive'
+
+[ -h "${HNY_PREFIX}/archive" ]
+[ -h "${HNY_PREFIX}/arxiv" ]
+
+basename `realpath -- "${HNY_PREFIX}/archive"`
+basename `realpath -- "${HNY_PREFIX}/arxiv"`
+
+

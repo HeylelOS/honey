@@ -23,12 +23,16 @@
 
 #define HNY_STATUS_BUFFER_DEFAULT_SIZE 64
 
+#define VERBOSE(...) if(verbose) printf(__VA_ARGS__)
+
 struct hny_extract_file {
 	const char *package;
 	const char *name;
 	size_t blocksize;
 	int fd;
 };
+
+static bool verbose;
 
 static void
 hny_extract_file_init(struct hny_extract_file *file,
@@ -325,7 +329,7 @@ hny_action(struct hny *hny, const char *path, const char *action,
 			int errcode = hny_spawn(hny, entry, path, &pid);
 
 			if(errcode == 0) {
-				printf("%s: Started for '%s' with pid: %d\n", action, entry, pid);
+				VERBOSE("%s: Started for '%s' with pid: %d\n", action, entry, pid);
 			} else {
 				errno = errcode;
 				warn("%s: Unable to start for '%s'", action, entry);
@@ -345,18 +349,18 @@ hny_action(struct hny *hny, const char *path, const char *action,
 		switch(info.si_code) {
 		case CLD_EXITED:
 			if(info.si_status == 0) {
-				printf("%s: process %d successful\n", action, info.si_pid);
+				VERBOSE("%s: process %d successful\n", action, info.si_pid);
 			} else {
-				printf("%s: process %d terminated with exit status %d\n", action, info.si_pid, info.si_status);
+				VERBOSE("%s: process %d terminated with exit status %d\n", action, info.si_pid, info.si_status);
 				failed++;
 			}
 			break;
 		case CLD_KILLED:
-			printf("%s: process %d killed by signal (%d)\n", action, info.si_pid, info.si_status);
+			VERBOSE("%s: process %d killed by signal (%d)\n", action, info.si_pid, info.si_status);
 			failed++;
 			break;
 		case CLD_DUMPED:
-			printf("%s: process %d dumped core (%d)\n", action, info.si_pid, info.si_status);
+			VERBOSE("%s: process %d dumped core (%d)\n", action, info.si_pid, info.si_status);
 			failed++;
 			break;
 		default:
@@ -415,10 +419,13 @@ hny_parse_args(int argc, char **argv) {
 	struct hny *hny;
 	int c;
 
-	while((c = getopt(argc, argv, ":habp:")) != -1) {
+	while((c = getopt(argc, argv, ":hvabp:")) != -1) {
 		switch(c) {
 		case 'h':
 			hny_usage(*argv, EXIT_SUCCESS);
+		case 'v':
+			verbose = true;
+			break;
 		case 'b':
 			flags |= HNY_FLAGS_BLOCK;
 			break;
