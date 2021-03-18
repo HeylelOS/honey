@@ -11,7 +11,7 @@ set(CMAKE_C_STANDARD_REQUIRED True)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(include)
 
 file(GLOB_RECURSE HNY_SOURCES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/hny/*.c)
 add_executable(hny ${HNY_SOURCES})
