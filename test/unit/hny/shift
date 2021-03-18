@@ -8,7 +8,7 @@ set -e
 [ -h "${HNY_PREFIX}/archive" ]
 [ -h "${HNY_PREFIX}/arxiv" ]
 
-basename `realpath -- "${HNY_PREFIX}/archive"`
-basename `realpath -- "${HNY_PREFIX}/arxiv"`
+basename -- `readlink -- "${HNY_PREFIX}/archive"`
+basename -- `readlink -- "${HNY_PREFIX}/arxiv"`
 
 
