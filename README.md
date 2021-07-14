@@ -40,13 +40,12 @@ cmake --install .
 HTML documentation for the library are built using [Doxygen](https://github.com/doxygen/doxygen).
 Doxygen version 1.8.0 minimum is required (markdown support for `docs/` files).
 Depending on your generator, cmake will expose documentation through the `doc` target.
-
-For example, if your default generator is make-based:
+CMake will expose documentation through the `doc` target.
 
 ```sh
 mkdir -p build && cd build
 cmake ../
-make doc
+cmake --build . --target doc
 ```
 
 ## Tests
@@ -56,7 +55,7 @@ CMake is also used to manage the test suite:
 ```sh
 mkdir -p build && cd build
 cmake ../
-make
+cmake --build .
 ctest
 ```
 
