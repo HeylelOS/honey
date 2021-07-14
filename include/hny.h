@@ -71,8 +71,7 @@ hny_close(struct hny *hny);
  * @return Previous flags
  */
 int
-hny_flags(struct hny *hny,
-	int flags);
+hny_flags(struct hny *hny, int flags);
 
 /**
  * Get absolute path of the honey prefix
@@ -202,8 +201,7 @@ hny_extraction_create(struct hny_extraction **extractionp,
  */
 int
 hny_extraction_create2(struct hny_extraction **extractionp,
-	struct hny *hny, const char *package,
-	size_t buffersize, size_t dictionarymax);
+	struct hny *hny, const char *package, size_t buffersize, size_t dictionarymax);
 
 /**
  * Destroys a previously hny_extraction_create()'d extraction handler
@@ -233,9 +231,7 @@ hny_extraction_extract(struct hny_extraction *extraction,
  * @return 0 on success, an error code else.
  */
 int
-hny_shift(struct hny *hny,
-	const char *geist,
-	const char *target);
+hny_shift(struct hny *hny, const char *geist, const char *target);
 
 /**
  * Depending on type of @p entry, it will unlink a #HNY_TYPE_GEIST
@@ -245,8 +241,7 @@ hny_shift(struct hny *hny,
  * @return 0 on success, an error code else.
  */
 int
-hny_remove(struct hny *hny,
-	const char *entry);
+hny_remove(struct hny *hny, const char *entry);
 
 #define HNY_SPAWN_STATUS_ERROR 127
 
@@ -265,8 +260,7 @@ hny_remove(struct hny *hny,
  * @return 0 on success, an error code else.
  */
 int
-hny_spawn(struct hny *hny, const char *entry,
-	const char *path, pid_t *pid);
+hny_spawn(struct hny *hny, const char *entry, const char *path, pid_t *pid);
 
 /********************
   UTILITIES SECTION

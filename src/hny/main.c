@@ -377,22 +377,22 @@ hny_action(struct hny *hny, const char *path, const char *action,
 
 static void
 hny_command_setup(struct hny *hny, char **argpos, char **argend) {
-	hny_action(hny, "hny/setup", "setup", argpos, argend);
+	hny_action(hny, "pkg/setup", "setup", argpos, argend);
 }
 
 static void
 hny_command_clean(struct hny *hny, char **argpos, char **argend) {
-	hny_action(hny, "hny/clean", "clean", argpos, argend);
+	hny_action(hny, "pkg/clean", "clean", argpos, argend);
 }
 
 static void
 hny_command_reset(struct hny *hny, char **argpos, char **argend) {
-	hny_action(hny, "hny/reset", "reset", argpos, argend);
+	hny_action(hny, "pkg/reset", "reset", argpos, argend);
 }
 
 static void
 hny_command_check(struct hny *hny, char **argpos, char **argend) {
-	hny_action(hny, "hny/check", "check", argpos, argend);
+	hny_action(hny, "pkg/check", "check", argpos, argend);
 }
 
 static void

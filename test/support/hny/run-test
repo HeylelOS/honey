@@ -13,7 +13,6 @@ done
 
 if [ ! -x "${TEST_BIN}" ]
 then
-	echo "CONNARD" ${TEST_BIN}
 	printf '%s: Missing test binary\n' "$0"
 	exit 1
 fi

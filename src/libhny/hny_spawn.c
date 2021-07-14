@@ -15,8 +15,7 @@
 #include <err.h>
 
 int
-hny_spawn(struct hny *hny, const char *entry,
-	const char *path, pid_t *pid) {
+hny_spawn(struct hny *hny, const char *entry, const char *path, pid_t *pid) {
 	int errcode = 0;
 	pid_t spawned;
 
@@ -25,24 +24,22 @@ hny_spawn(struct hny *hny, const char *entry,
 	}
 
 	if((spawned = fork()) == 0) {
-		char *argv[2] = { strdup(entry), NULL };
+		char *argv[2] = { strdup(path), NULL };
 
-		if(argv[0] == NULL) {
+		if(*argv == NULL) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to create arguments list");
 		}
-		argv[0] = basename(argv[0]);
+		*argv = basename(*argv);
 
-		if(setenv("HNY_PREFIX", hny->path, 1) == -1
-			|| setenv("HNY_ENTRY", entry, 1) == -1) {
+		if(setenv("HNY_PREFIX", hny->path, 1) == -1 || setenv("HNY_ENTRY", entry, 1) == -1) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to setup environment variables");
 		}
 
-		if(fchdir(dirfd(hny->dirp)) == -1
-			|| chdir(entry) == -1) {
+		if(fchdir(dirfd(hny->dirp)) == -1 || chdir(entry) == -1) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to chdir %s/%s", hny->path, entry);
 		}
 
-		if(execv(path, (argv[0] = basename(argv[0]), argv)) == -1) {
+		if(execv(path, argv) == -1) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to execv '%s' for %s", path, entry);
 		}
 	} else if(spawned > 0) {
