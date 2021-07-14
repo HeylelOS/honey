@@ -24,11 +24,11 @@ This command line interface is only meant to be used in shell scripts or by adva
 - remove [\<entry\>...] : Removes **entry**, unlinks it if a symlink, removes files if a package.
 - shift \<geist\> \<target\> : Associates **target** to **geist**.
 - status [\<geist\>...] : Returns which package **geist** points too.
-- setup [\<entry\>...] : Executes the **setup** routine for the specified **entry**.
-- clean [\<entry\>...] : Executes the **clean** routine for the specified **entry**.
-- reset [\<entry\>...] : Executes the **reset** routine for the specified **entry**.
-- check [\<entry\>...] : Executes the **check** routine for the specified **entry**.
-- purge [\<entry\>...] : Executes the **purge** routine for the specified **entry**.
+- setup [\<entry\>...] : Executes the **pkg/setup** routine for the specified **entry**.
+- clean [\<entry\>...] : Executes the **pkg/clean** routine for the specified **entry**.
+- reset [\<entry\>...] : Executes the **pkg/reset** routine for the specified **entry**.
+- check [\<entry\>...] : Executes the **pkg/check** routine for the specified **entry**.
+- purge [\<entry\>...] : Executes the **pkg/purge** routine for the specified **entry**.
 
 ## ENVIRONMENT
 - HNY\_PREFIX : Indicates the defaut honey prefix, else **/hub** is used.

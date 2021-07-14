@@ -8,9 +8,9 @@ mkdir -p -- "${HNY_PREFIX}"
 "${TEST_BIN}" extract 'archive-1.0.0' "${TEST_ARCHIVE}"
 
 [ -d "${HNY_PREFIX}/archive-1.0.0" ]
-[ -d "${HNY_PREFIX}/archive-1.0.0/hny" ]
-[ -f "${HNY_PREFIX}/archive-1.0.0/hny/clean" ]
-[ -f "${HNY_PREFIX}/archive-1.0.0/hny/setup" ]
-[ -x "${HNY_PREFIX}/archive-1.0.0/hny/clean" ]
-[ -x "${HNY_PREFIX}/archive-1.0.0/hny/setup" ]
+[ -d "${HNY_PREFIX}/archive-1.0.0/pkg" ]
+[ -f "${HNY_PREFIX}/archive-1.0.0/pkg/clean" ]
+[ -f "${HNY_PREFIX}/archive-1.0.0/pkg/setup" ]
+[ -x "${HNY_PREFIX}/archive-1.0.0/pkg/clean" ]
+[ -x "${HNY_PREFIX}/archive-1.0.0/pkg/setup" ]
 
