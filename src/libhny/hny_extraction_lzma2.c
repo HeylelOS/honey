@@ -1,10 +1,5 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
 /*
-	hny_extraction_lzma2.c
-	Copyright (c) 2018, Valentin Debon
-
-	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE
-
 	Derivated from an original work of Lasse Collin and Igor Pavlov
 	put into public domain.
 */

@@ -1,10 +1,4 @@
-/*
-	hny_extraction_cpio.c
-	Copyright (c) 2018, Valentin Debon
-
-	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE
-*/
+/* SPDX-License-Identifier: BSD-3-Clause */
 #include "hny_extraction_cpio.h"
 
 #include <stdlib.h>
@@ -15,6 +9,17 @@
 #include <cpio.h>
 #include <errno.h>
 #include <err.h>
+
+#include "config.h"
+
+#define HNY_EXTRACTION_CPIO_HEADER_SIZE 76
+#define HNY_EXTRACTION_CPIO_MIN(a, b) ((a) < (b) ? (a) : (b))
+
+struct hny_extraction_cpio_input {
+	int *errcode;
+	const char *buffer;
+	size_t size;
+};
 
 #ifdef __APPLE__
 /* "Solution" to non existant *at for Darwin */
@@ -69,22 +74,11 @@ mknodat(int dirfd, const char *path, mode_t mode, dev_t dev) {
 }
 #endif
 
-#define HNY_EXTRACTION_CPIO_HEADER_SIZE 76
-#define HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY 32
-
-#define HNY_EXTRACTION_CPIO_MIN(a, b) ((a) < (b) ? (a) : (b))
-
-struct hny_extraction_cpio_input {
-	int *errcode;
-	const char *buffer;
-	size_t size;
-};
-
 int
 hny_extraction_cpio_init(struct hny_extraction_cpio *cpio, int dirfd, const char *path) {
 	int errcode;
 
-	cpio->capacity = HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY;
+	cpio->capacity = CONFIG_HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY;
 	if((cpio->filename = malloc(cpio->capacity)) == NULL) {
 		errcode = errno;
 		goto hny_extraction_cpio_init_err0;

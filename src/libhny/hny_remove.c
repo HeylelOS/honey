@@ -1,10 +1,4 @@
-/*
-	hny_remove.c
-	Copyright (c) 2018, Valentin Debon
-
-	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE
-*/
+/* SPDX-License-Identifier: BSD-3-Clause */
 #include "hny_internal.h"
 
 #include <stdlib.h>
@@ -15,8 +9,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE 128
-#define HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE 16
+#include "config.h"
 
 struct hny_removal {
 	DIR *dirp;       /**< Current directory being explored */
@@ -60,18 +53,18 @@ hny_removal_init(struct hny_removal *removal,
 	}
 
 	removal->count = 0;
-	removal->capacity = HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE;
+	removal->capacity = CONFIG_HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE;
 	if((removal->locations = malloc(sizeof(*removal->locations) * removal->capacity)) == NULL) {
 		goto hny_removal_init_err1;
 	}
 	*removal->locations = 0;
 
-	if((removal->path = malloc(sizeof(*removal->path) * HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE)) == NULL) {
+	if((removal->path = malloc(sizeof(*removal->path) * CONFIG_HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE)) == NULL) {
 		goto hny_removal_init_err2;
 	}
 	*removal->path = '/';
 	removal->name = removal->path + 1;
-	removal->pathend = removal->path + HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE;
+	removal->pathend = removal->path + CONFIG_HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE;
 
 	return 0;
 hny_removal_init_err2:
@@ -108,8 +101,9 @@ hny_removal_leave_directory(struct hny_removal *removal) {
 			removal->locations[removal->count]++;
 		}
 
-		for(long i = 0; i < removal->locations[removal->count];
-			readdir(dirp), i++);
+		for(long i = 0; i < removal->locations[removal->count]; i++) {
+			readdir(dirp);
+		}
 
 		closedir(removal->dirp);
 		removal->dirp = dirp;

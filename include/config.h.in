@@ -1,0 +1,48 @@
+/* SPDX-License-Identifier: BSD-3-Clause */
+#ifndef CONFIG_H
+#define CONFIG_H
+
+/* The following is for allowing *_MAX macros */
+#include <stdint.h>
+
+/********************
+ * Platform support *
+ ********************/
+
+#ifdef __APPLE__
+#define CONFIG_HAS_GETPROGNAME
+#define CONFIG_HAS_SETPROGNAME
+#endif
+
+/*****************
+ * Honey library *
+ *****************/
+
+/* libhny/hny_extraction.c */
+
+#define CONFIG_HNY_EXTRACTION_BUFFERSIZE_DEFAULT @CONFIG_HNY_EXTRACTION_BUFFERSIZE_DEFAULT@
+#define CONFIG_HNY_EXTRACTION_BUFFERSIZE_MIN @CONFIG_HNY_EXTRACTION_BUFFERSIZE_MIN@
+#define CONFIG_HNY_EXTRACTION_DICTIONARYMAX_DEFAULT @CONFIG_HNY_EXTRACTION_DICTIONARYMAX_DEFAULT@
+
+/* libhny/hny_extraction_cpio.c */
+
+#define CONFIG_HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY @CONFIG_HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY@
+
+/* libhny/hny_remove.c */
+
+#define CONFIG_HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE @CONFIG_HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE@
+#define CONFIG_HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE @CONFIG_HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE@
+
+/***************************
+ * Honey command line tool *
+ ***************************/
+
+/* hny/main.c */
+
+/**
+ * Macro specifiying the default capacity of the buffer used to read status symlinks.
+ */
+#define CONFIG_HNY_STATUS_BUFFER_DEFAULT_CAPACITY @CONFIG_HNY_STATUS_BUFFER_DEFAULT_CAPACITY@
+
+/* CONFIG_H */
+#endif

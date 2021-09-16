@@ -1,10 +1,4 @@
-/*
-	hny_extraction_xz.c
-	Copyright (c) 2018, Valentin Debon
-
-	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE
-*/
+/* SPDX-License-Identifier: BSD-3-Clause */
 #include "hny_extraction_xz.h"
 
 #include <stdlib.h>
@@ -17,7 +11,6 @@
 
 #define HNY_EXTRACTION_XZ_STREAM_HEADER_SIZE 12
 #define HNY_EXTRACTION_XZ_STREAM_FOOTER_SIZE 12
-
 #define HNY_EXTRACTION_XZ_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 /*****************************************************************

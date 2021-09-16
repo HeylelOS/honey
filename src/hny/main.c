@@ -1,29 +1,27 @@
-/*
-	main.c
-	Copyright (c) 2018, Valentin Debon
+/* SPDX-License-Identifier: BSD-3-Clause */
+#include <hny.h>
 
-	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE
-*/
-#include "hny.h"
-
-#include <dirent.h>
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <stdnoreturn.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
-#include <unistd.h>
+#include <signal.h>
+#include <dirent.h>
+#include <libgen.h>
+#include <errno.h>
+#include <err.h>
 
-#define HNY_STATUS_BUFFER_DEFAULT_SIZE 64
+#include "config.h"
 
-#define VERBOSE(...) if(verbose) printf(__VA_ARGS__)
+struct hny_command {
+	const char *name;
+	void (*run)(struct hny *, char **, char **);
+};
 
 struct hny_extract_file {
 	const char *package;
@@ -32,20 +30,22 @@ struct hny_extract_file {
 	int fd;
 };
 
-static bool verbose;
+struct hny_buffer {
+	char *data;
+	size_t capacity;
+};
 
 static void
-hny_extract_file_init(struct hny_extract_file *file,
-	char **argpos, char **argend) {
+hny_extract_file_init(struct hny_extract_file *file, char **argpos, char **argend) {
 
 	switch(argend - argpos) {
 	case 0:
 		errx(EXIT_FAILURE, "extract: Expected arguments");
 	case 1: {
-		char *base = basename(*argpos);
-		char *dot = strrchr(base, '.');
+		const char *base = basename(*argpos);
+		const char *dot = strrchr(base, '.');
 
-		file->package = dot != NULL ? strndup(base, dot - base) : base;
+		file->package = dot != NULL ? strndup(base, dot - base) : base; /* Intended memory leak here */
 		file->name = *argpos;
 	} break;
 	case 2:
@@ -56,7 +56,8 @@ hny_extract_file_init(struct hny_extract_file *file,
 		errx(EXIT_FAILURE, "extract: Too much arguments");
 	}
 
-	if((file->fd = open(file->name, O_RDONLY)) == -1) {
+	file->fd = open(file->name, O_RDONLY);
+	if(file->fd == -1) {
 		err(EXIT_FAILURE, "extract: Unable to open '%s'", file->name);
 	}
 
@@ -69,32 +70,37 @@ hny_command_extract(struct hny *hny, char **argpos, char **argend) {
 	struct hny_extract_file file;
 
 	hny_extract_file_init(&file, argpos, argend);
-	if((errno = hny_extraction_create(&extraction, hny, file.package)) != 0) {
+	if(errno = hny_extraction_create(&extraction, hny, file.package), errno != 0) {
 		err(EXIT_FAILURE, "extract: Unable to extract '%s'", file.name);
 	}
 
-	if((errno = hny_lock(hny)) != 0) {
+	if(errno = hny_lock(hny), errno != 0) {
 		err(EXIT_FAILURE, "extract: Unable to lock prefix '%s'", file.name);
 	}
 
 	char buffer[file.blocksize];
 	enum hny_extraction_status status;
 	ssize_t readval;
+	int errcode;
 	while((readval = read(file.fd, buffer, file.blocksize)) > 0
-		&& (status = hny_extraction_extract(extraction, buffer, readval, &errno))
-			== HNY_EXTRACTION_STATUS_OK);
+		&& (status = hny_extraction_extract(extraction, buffer, readval, &errcode)) == HNY_EXTRACTION_STATUS_OK);
 
-	int errcode = errno;
+	if(readval == -1) {
+		errcode = errno;
+	}
+
 	hny_unlock(hny);
-	errno = errcode;
 
 	if(readval == -1) {
 		err(EXIT_FAILURE, "extract: Unable to read from '%s'", file.name);
-	} else if(HNY_EXTRACTION_STATUS_IS_ERROR(status)) {
+	}
+
+	if(HNY_EXTRACTION_STATUS_IS_ERROR(status)) {
 		if(HNY_EXTRACTION_STATUS_IS_ERROR_XZ(status)) {
 			errx(EXIT_FAILURE, "extract: Unable to extract '%s', error while uncompressing", file.name);
 		} else if(HNY_EXTRACTION_STATUS_IS_ERROR_CPIO(status)) {
 			if(HNY_EXTRACTION_STATUS_IS_ERROR_CPIO_SYSTEM(status)) {
+				errno = errcode;
 				err(EXIT_FAILURE, "extract: Unable to extract '%s', error while unarchiving", file.name);
 			} else {
 				errx(EXIT_FAILURE, "extract: Unable to extract '%s', error while unarchiving", file.name);
@@ -107,7 +113,6 @@ hny_command_extract(struct hny *hny, char **argpos, char **argend) {
 
 static inline bool
 hny_list_is_dot_or_dot_dot(const char *name) {
-
 	return name[0] == '.' && (name[1] == '\0' || (name[1] == '.' && name[2] == '\0'));
 }
 
@@ -116,8 +121,7 @@ hny_command_list(struct hny *hny, char **argpos, char **argend) {
 	struct {
 		unsigned packages : 1;
 		unsigned geister : 1;
-	} listing = { 0, 0 };
-	DIR *dirp;
+	} listing = { };
 
 	switch(argend - argpos) {
 	case 0:
@@ -134,244 +138,246 @@ hny_command_list(struct hny *hny, char **argpos, char **argend) {
 		}
 		break;
 	default:
-		errx(EXIT_FAILURE, "list: Too much arguments");
+		errx(EXIT_FAILURE, "list: Too many arguments");
 	}
 
-	if((dirp = opendir(hny_path(hny))) != NULL) {
-		struct dirent *entry;
-
-		while((errno = 0, entry = readdir(dirp))) {
-			if(entry->d_type == DT_LNK) {
-				if(hny_type_of(entry->d_name) == HNY_TYPE_GEIST) {
-					if(listing.geister == 1) {
-						puts(entry->d_name);
-					}
-				} else {
-					warnx("list: Symbolic link entry '%s' doesn't conform to a geist name", entry->d_name);
-				}
-			} else if(entry->d_type == DT_DIR) {
-				if(!hny_list_is_dot_or_dot_dot(entry->d_name) && listing.packages == 1) {
-					if(hny_type_of(entry->d_name) == HNY_TYPE_PACKAGE) {
-						puts(entry->d_name);
-					} else {
-						warnx("list: Directory entry '%s' doesn't conform to a package name", entry->d_name);
-					}
-				}
-			} else {
-				warnx("list: Unexpected file type in prefix for '%s'", entry->d_name);
-			}
-		}
-
-		if(errno != 0) {
-			warn("list: Unable to read directory entry");
-		}
-	} else {
+	DIR *dirp = opendir(hny_path(hny));
+	if(dirp == NULL) {
 		err(EXIT_FAILURE, "list: Unable to open '%s' for listing", hny_path(hny));
+	}
+
+	struct dirent *entry;
+	while(errno = 0, entry = readdir(dirp)) {
+		switch(entry->d_type) {
+		case DT_LNK:
+			if(hny_type_of(entry->d_name) != HNY_TYPE_GEIST) {
+				errx(EXIT_FAILURE, "list: Inconsistency, symbolic link entry '%s' doesn't conform to a geist name", entry->d_name);
+			}
+			if(listing.geister == 1) {
+				puts(entry->d_name);
+			}
+			break;
+		case DT_DIR:
+			if(!hny_list_is_dot_or_dot_dot(entry->d_name)) {
+				if(hny_type_of(entry->d_name) != HNY_TYPE_PACKAGE) {
+					errx(EXIT_FAILURE, "list: Inconsistency, directory entry '%s' doesn't conform to a package name", entry->d_name);
+				}
+				if(listing.packages == 1) {
+					puts(entry->d_name);
+				}
+			}
+			break;
+		default:
+			errx(EXIT_FAILURE, "list: Inconsistency, unexpected file type in prefix for '%s'", entry->d_name);
+		}
+	}
+
+	if(errno != 0) {
+		err(EXIT_FAILURE, "list: Unable to read directory entry");
 	}
 }
 
 static void
 hny_command_remove(struct hny *hny, char **argpos, char **argend) {
-
-	if(argpos != argend) {
-		while(argpos != argend) {
-			if((errno = hny_lock(hny)) == 0) {
-				errno = hny_remove(hny, *argpos);
-				hny_unlock(hny);
-
-				if(errno != 0) {
-					warn("Unable to remove '%s'", *argpos);
-				}
-			} else {
-				warn("shift: Unable to lock prefix");
-			}
-
-			argpos++;
-		}
-	} else {
+	if(argpos == argend) {
 		errx(EXIT_FAILURE, "remove: Expected arguments");
+	}
+
+	while(argpos != argend) {
+		const char *entry = *argpos;
+		int errcode;
+
+		if(errno = hny_lock(hny), errno != 0) {
+			err(EXIT_FAILURE, "remove: Unable to lock prefix");
+		}
+
+		errcode = hny_remove(hny, entry);
+		hny_unlock(hny);
+
+		if(errcode != 0) {
+			errno = errcode;
+			err(EXIT_FAILURE, "remove: Unable to remove '%s'", entry);
+		}
+
+		argpos++;
 	}
 }
 
 static void
 hny_command_shift(struct hny *hny, char **argpos, char **argend) {
+	const char *geist, *target;
+	int errcode;
 
-	if(argend - argpos == 2) {
-		const char *geist = *argpos,
-			*target = argpos[1];
-
-		if(hny_type_of(geist) != HNY_TYPE_GEIST) {
-			errx(EXIT_FAILURE, "shift: '%s' is not a valid geist name", geist);
-		}
-
-		if(hny_type_of(target) == HNY_TYPE_NONE) {
-			errx(EXIT_FAILURE, "shift: '%s' is not a valid entry name", target);
-		}
-
-		if(hny_lock(hny) == 0) {
-			errno = hny_shift(hny, geist, target);
-			hny_unlock(hny);
-
-			if(errno != 0) {
-				errx(EXIT_FAILURE, "shift: Unable to shift '%s' to '%s'", geist, target);
-			}
-		} else {
-			warn("shift: Unable to lock prefix");
-		}
-	} else {
+	if(argend - argpos != 2) {
 		errx(EXIT_FAILURE, "shift: Expected 2 arguments");
 	}
-}
 
-static int
-hny_buffer_expand(char **bufferp, size_t *sizep) {
-	char *newbuffer = realloc(*bufferp, sizeof(*newbuffer) * *sizep * 2);
+	geist = *argpos;
+	if(hny_type_of(geist) != HNY_TYPE_GEIST) {
+		errx(EXIT_FAILURE, "shift: '%s' is not a valid geist name", geist);
+	}
 
-	if(newbuffer != NULL) {
-		*bufferp = newbuffer;
-		*sizep = *sizep * 2;
-		return 0;
-	} else {
-		return -1;
+	target = argpos[1];
+	if(hny_type_of(target) == HNY_TYPE_NONE) {
+		errx(EXIT_FAILURE, "shift: '%s' is not a valid entry name", target);
+	}
+
+	if(errno = hny_lock(hny), errno != 0) {
+		err(EXIT_FAILURE, "shift: Unable to lock prefix");
+	}
+
+	errcode = hny_shift(hny, geist, target);
+	hny_unlock(hny);
+
+	if(errcode != 0) {
+		errno = errcode;
+		err(EXIT_FAILURE, "shift: Unable to shift '%s' to '%s'", geist, target);
 	}
 }
 
+static void
+hny_buffer_init(struct hny_buffer *buffer) {
+
+	buffer->capacity = CONFIG_HNY_STATUS_BUFFER_DEFAULT_CAPACITY;
+	buffer->data = malloc(buffer->capacity);
+
+	if(buffer->data == NULL) {
+		err(EXIT_FAILURE, "status: Unable to allocate memory buffer of %lu bytes", buffer->capacity);
+	}
+}
+
+static void
+hny_buffer_expand(struct hny_buffer *buffer) {
+	const size_t newcapacity = buffer->capacity * 2;
+	char *newdata = realloc(buffer->data, newcapacity);
+
+	if(newdata == NULL) {
+		err(EXIT_FAILURE, "status: Unable to expand memory buffer up to %lu bytes", newcapacity);
+	}
+
+	buffer->data = newdata;
+	buffer->capacity = newcapacity;
+}
+
 static int
-hny_status_resolve(int dirfd, const char *geist,
-	char **buffer1p, size_t *buffer1sizep,
-	char **buffer2p, size_t *buffer2sizep) {
-	ssize_t length;
+hny_status_resolve(int dirfd, const char *geist, struct hny_buffer *buffer1, struct hny_buffer *buffer2) {
 
-	while(stpncpy(*buffer1p, geist, *buffer1sizep) >= *buffer1p + *buffer1sizep
-		&& hny_buffer_expand(buffer1p, buffer1sizep) == 0);
-
-	if((*buffer1p)[*buffer1sizep - 1] != '\0') {
-		err(EXIT_FAILURE, "status: Unable to expand buffer");
-		return -1;
+	/* Fill buffer 1 with first geist */
+	while(stpncpy(buffer1->data, geist, buffer1->capacity) >= buffer1->data + buffer1->capacity) {
+		hny_buffer_expand(buffer1);
 	}
 
-	do {
-		char *swap = *buffer2p;
-		size_t swapsize = *buffer2sizep;
+	/* While buffer 1 targets a geist */
+	while(hny_type_of(buffer1->data) == HNY_TYPE_GEIST) {
+		ssize_t length;
 
-		*buffer2p = *buffer1p;
-		*buffer2sizep = *buffer1sizep;
-		*buffer1p = swap;
-		*buffer1sizep = swapsize;
+		/* Resolve buffer 1 in buffer 2, expanding it if necessary */
+		while(length = readlinkat(dirfd, buffer1->data, buffer2->data, buffer2->capacity),
+			length != -1 && length >= buffer2->capacity) {
+			hny_buffer_expand(buffer2);
+		}
 
-		length = readlinkat(dirfd, *buffer2p, *buffer1p, *buffer1sizep);
-	} while(length != -1
-		&& (length < *buffer1sizep || hny_buffer_expand(buffer1p, buffer1sizep) == 0)
-		&& ((*buffer1p)[length] = '\0', hny_type_of(*buffer1p) == HNY_TYPE_GEIST));
+		/* If we weren't able to readlink, return error, buffer 1 holds the latest entry */
+		if(length == -1) {
+			return -1;
+		}
 
-	if(length == -1) {
-		warn("status: Unable to readlink '%s'", *buffer2p);
-		return -1;
-	} else if(length == *buffer1sizep) {
-		err(EXIT_FAILURE, "status: Unable to expand buffer");
-		return -1;
-	} else {
-		return 0;
+		/* Don't forget to terminate the string, readlink doesn't do it for us */
+		buffer2->data[length] = '\0';
+
+		/* Swap buffer 1 & 2 so buffer 1 holds latest */
+		struct hny_buffer swap = *buffer2;
+		*buffer2 = *buffer1;
+		*buffer1 = swap;
 	}
+
+	return 0;
 }
 
 static void
 hny_command_status(struct hny *hny, char **argpos, char **argend) {
 	DIR *dirp = opendir(hny_path(hny));
+	struct hny_buffer buffer1, buffer2;
 
-	if(dirp != NULL) {
-		size_t buffer1size = HNY_STATUS_BUFFER_DEFAULT_SIZE,
-			buffer2size = HNY_STATUS_BUFFER_DEFAULT_SIZE;
-		char *buffer1 = malloc(buffer1size), *buffer2 = malloc(buffer2size);
-
-		if(buffer1 == NULL || buffer2 == NULL) {
-			err(EXIT_FAILURE, "status: Unable to allocate buffer");
-		}
-
-		while(argpos != argend) {
-			if(hny_type_of(*argpos) == HNY_TYPE_GEIST) {
-				if(hny_status_resolve(dirfd(dirp), *argpos,
-					&buffer1, &buffer1size,
-					&buffer2, &buffer2size) == 0) {
-					struct stat st;
-
-					if(fstatat(dirfd(dirp), buffer1, &st, AT_SYMLINK_NOFOLLOW) == 0) {
-						if(S_ISDIR(st.st_mode)) {
-							puts(buffer1);
-						} else {
-							warnx("status: '%s' is not a directory", buffer1);
-						}
-					} else {
-						warn("status: stat '%s'", buffer1);
-					}
-				}
-			} else {
-				warnx("status: '%s' is not a valid geist name", *argpos);
-			}
-
-			argpos++;
-		}
-	} else {
+	if(dirp == NULL) {
 		err(EXIT_FAILURE, "status: Unable to open '%s'", hny_path(hny));
 	}
-}
 
-static void
-hny_action(struct hny *hny, const char *path, const char *action,
-	char **argpos, char **argend) {
-	int failed = 0;
+	hny_buffer_init(&buffer1);
+	hny_buffer_init(&buffer2);
 
 	while(argpos != argend) {
-		char *entry = *argpos;
+		const char *geist = *argpos;
 
-		if(hny_type_of(entry) != HNY_TYPE_NONE) {
-			pid_t pid;
-			int errcode = hny_spawn(hny, entry, path, &pid);
+		if(hny_status_resolve(dirfd(dirp), geist, &buffer1, &buffer2) == 0) {
+			const char *package = buffer1.data;
+			struct stat st;
 
-			if(errcode == 0) {
-				VERBOSE("%s: Started for '%s' with pid: %d\n", action, entry, pid);
+			if(fstatat(dirfd(dirp), package, &st, AT_SYMLINK_NOFOLLOW) == 0) {
+				if(S_ISDIR(st.st_mode)) {
+					puts(package);
+				} else {
+					errx(EXIT_FAILURE, "status: '%s' is not a directory", package);
+				}
 			} else {
-				errno = errcode;
-				warn("%s: Unable to start for '%s'", action, entry);
-				failed++;
+				err(EXIT_FAILURE, "status: stat '%s'", package);
 			}
 		} else {
-			warnx("%s: '%s' is not a valid entry name", action, entry);
+			err(EXIT_FAILURE, "status: Unable to readlink '%s'", buffer1.data);
 		}
 
 		argpos++;
 	}
 
-	int count = argend - argpos;
-	siginfo_t info;
+	free(buffer1.data);
+	free(buffer2.data);
+	closedir(dirp);
+}
 
-	while(waitid(P_ALL, 0, &info, WEXITED) == 0) {
-		switch(info.si_code) {
-		case CLD_EXITED:
-			if(info.si_status == 0) {
-				VERBOSE("%s: process %d successful\n", action, info.si_pid);
-			} else {
-				VERBOSE("%s: process %d terminated with exit status %d\n", action, info.si_pid, info.si_status);
-				failed++;
-			}
-			break;
-		case CLD_KILLED:
-			VERBOSE("%s: process %d killed by signal (%d)\n", action, info.si_pid, info.si_status);
-			failed++;
-			break;
-		case CLD_DUMPED:
-			VERBOSE("%s: process %d dumped core (%d)\n", action, info.si_pid, info.si_status);
-			failed++;
-			break;
-		default:
-			break;
+static void
+hny_action(struct hny *hny, const char *path, const char *action, char **argpos, char **argend) {
+
+	while(argpos != argend) {
+		const char *entry = *argpos;
+		siginfo_t info;
+		int errcode;
+		pid_t pid;
+
+		/* Checking if it's a valid entry name */
+		if(hny_type_of(entry) == HNY_TYPE_NONE) {
+			errx(EXIT_FAILURE, "%s: '%s' is not a valid entry name", action, entry);
 		}
-	}
 
-	if(errno != ECHILD) {
-		err(EXIT_FAILURE, "%s: waitid", action);
-	} else if(failed != 0) {
-		err(EXIT_FAILURE, "%s: %d out of %d failed\n", action, failed, count);
+		/* Spawning child */
+		printf("%s: Starting for '%s'\n", action, entry);
+		fflush(stdout);
+
+		errcode = hny_spawn(hny, entry, path, &pid);
+		if(errcode != 0) {
+			errno = errcode;
+			err(EXIT_FAILURE, "%s: Unable to start for '%s'", action, entry);
+		}
+
+		/* Waiting for child termination immediately */
+		while(waitid(P_PID, pid, &info, WEXITED) == 0) {
+			switch(info.si_code) {
+			case CLD_EXITED:
+				if(info.si_status != 0) {
+					errx(EXIT_FAILURE, "%s: Terminated with exit status %d\n", action, info.si_status);
+				}
+				break;
+			case CLD_KILLED:
+				errx(EXIT_FAILURE, "%s: Process killed by signal %s (%d)\n", action, strsignal(info.si_status), info.si_status);
+				break;
+			case CLD_DUMPED:
+				errx(EXIT_FAILURE, "%s: Process dumped core (%d)\n", action, info.si_status);
+				break;
+			default:
+				break;
+			}
+		}
+
+		argpos++;
 	}
 }
 
@@ -397,35 +403,44 @@ hny_command_check(struct hny *hny, char **argpos, char **argend) {
 
 static void
 hny_command_purge(struct hny *hny, char **argpos, char **argend) {
-	hny_action(hny, "hny/purge", "purge", argpos, argend);
+	hny_action(hny, "pkg/purge", "purge", argpos, argend);
 }
 
-static void
-hny_usage(const char *hnyname, int status) {
+static void noreturn
+hny_usage(int status) {
+	const char * const progname
+#ifdef CONFIG_HAS_GETPROGNAME
+		= getprogname();
+#else
+		= "hny";
+#endif
 
 	fprintf(stderr, "usage: %s [-hb] [-p <prefix>] extract [<geist>] <file>\n"
 		"       %s [-h] [-p <prefix>] list [packages|geister]\n"
 		"       %s [-hb] [-p <prefix>] remove [<entry>...]\n"
 		"       %s [-hb] [-p <prefix>] shift <geist> <target>\n"
-		"       %s [-h] [-p <prefix>] status [<geist>...]\n",
-		hnyname, hnyname, hnyname, hnyname, hnyname);
+		"       %s [-h] [-p <prefix>] status [<geist>...]\n"
+		"       %s [-h] [-p <prefix>] <command> [<entry>...]\n",
+		progname, progname, progname, progname, progname, progname);
+
 	exit(status);
 }
 
 static struct hny *
 hny_parse_args(int argc, char **argv) {
-	char *prefix = getenv("HNY_PREFIX");
+	const char *prefix = getenv("HNY_PREFIX");
 	int flags = HNY_FLAGS_NONE;
 	struct hny *hny;
 	int c;
 
-	while((c = getopt(argc, argv, ":hvabp:")) != -1) {
+#ifdef CONFIG_HAS_SETPROGNAME
+	setprogname(*argv);
+#endif
+
+	while(c = getopt(argc, argv, ":hbp:"), c != -1) {
 		switch(c) {
 		case 'h':
-			hny_usage(*argv, EXIT_SUCCESS);
-		case 'v':
-			verbose = true;
-			break;
+			hny_usage(EXIT_SUCCESS);
 		case 'b':
 			flags |= HNY_FLAGS_BLOCK;
 			break;
@@ -434,64 +449,66 @@ hny_parse_args(int argc, char **argv) {
 			break;
 		case ':':
 			warnx("Option -%c requires an operand\n", optopt);
-			hny_usage(*argv, EXIT_FAILURE);
+			hny_usage(EXIT_FAILURE);
 		case '?':
 			warnx("Unrecognized option -%c\n", optopt);
-			hny_usage(*argv, EXIT_FAILURE);
+			hny_usage(EXIT_FAILURE);
 		}
+	}
+
+	if(optind == argc) {
+		warnx("Expected command");
+		hny_usage(EXIT_FAILURE);
 	}
 
 	if(prefix == NULL) {
 		prefix = "/hub";
 	}
 
-	if((errno = hny_open(&hny, prefix, flags)) != 0) {
+	if(errno = hny_open(&hny, prefix, flags), errno != 0) {
 		err(EXIT_FAILURE, "Unable to open honey prefix '%s'", prefix);
 	}
 
 	return hny;
 }
 
-static const struct hny_command {
-	const char *command;
-	void (*handle)(struct hny *, char **, char **);
-} hnycommands[] = {
-	{ "extract", hny_command_extract },
-	{ "list", hny_command_list },
-	{ "remove", hny_command_remove },
-	{ "shift", hny_command_shift },
-	{ "status", hny_command_status },
-	{ "setup", hny_command_setup },
-	{ "clean", hny_command_clean },
-	{ "reset", hny_command_reset },
-	{ "check", hny_command_check },
-	{ "purge", hny_command_purge },
-	{ NULL, NULL },
-};
+static const struct hny_command *
+hny_find_command(const char *name) {
+	static const struct hny_command commands[] = {
+		{ "extract", hny_command_extract },
+		{ "list", hny_command_list },
+		{ "remove", hny_command_remove },
+		{ "shift", hny_command_shift },
+		{ "status", hny_command_status },
+		{ "setup", hny_command_setup },
+		{ "clean", hny_command_clean },
+		{ "reset", hny_command_reset },
+		{ "check", hny_command_check },
+		{ "purge", hny_command_purge },
+	};
+	const struct hny_command *current = commands,
+		* const end = commands + sizeof(commands) / sizeof(*commands);
+
+	while(current != end && strcmp(current->name, name) != 0) {
+		current++;
+	}
+
+	if(current == end) {
+		warnx("Invalid command '%s'", name);
+		hny_usage(EXIT_FAILURE);
+	}
+
+	return current;
+}
 
 int
 main(int argc, char **argv) {
 	struct hny *hny = hny_parse_args(argc, argv);
-	char **argpos = argv + optind, ** const argend = argv + argc;
+	const struct hny_command *command = hny_find_command(argv[optind]);
 
-	if(argpos != argend) {
-		const struct hny_command *current = hnycommands;
+	command->run(hny, argv + optind + 1, argv + argc);
 
-		while(current->command != NULL
-			&& strcmp(current->command, *argpos) != 0) {
-			current++;
-		}
-
-		if(current->command != NULL) {
-			current->handle(hny, argpos + 1, argend);
-		} else {
-			warnx("Invalid command '%s'", *argpos);
-			hny_usage(*argv, EXIT_FAILURE);
-		}
-	} else {
-		warnx("Expected command");
-		hny_usage(*argv, EXIT_FAILURE);
-	}
+	hny_close(hny);
 
 	return EXIT_SUCCESS;
 }

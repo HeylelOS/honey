@@ -1,10 +1,4 @@
-/*
-	hny_extraction_lzma2.h
-	Copyright (c) 2018, Valentin Debon
-
-	This file is part of the honey package manager
-	subject the BSD 3-Clause License, see LICENSE
-*/
+/* SPDX-License-Identifier: BSD-3-Clause */
 #ifndef HNY_EXTRACTION_LZMA2_H
 #define HNY_EXTRACTION_LZMA2_H
 
