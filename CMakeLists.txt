@@ -19,8 +19,7 @@ set(CONFIG_HNY_EXTRACTION_BUFFERSIZE_DEFAULT 4096 CACHE STRING "Honey extraction
 set(CONFIG_HNY_EXTRACTION_BUFFERSIZE_MIN 512 CACHE STRING "Honey extraction minimal internal buffer size")
 set(CONFIG_HNY_EXTRACTION_DICTIONARYMAX_DEFAULT UINT32_MAX CACHE STRING "Honey LZMA2 dictionary max size default")
 set(CONFIG_HNY_EXTRACTION_CPIO_FILENAME_DEFAULT_CAPACITY 32 CACHE STRING "Honey default filename buffer capacity when extracting cpio")
-set(CONFIG_HNY_REMOVE_RECURSION_PATH_DEFAULT_SIZE 128 CACHE STRING "Honey remove default path buffer size")
-set(CONFIG_HNY_REMOVE_RECURSION_LOCATIONS_DEFAULT_SIZE 16 CACHE STRING "Honey remove recursion locations buffer default size")
+set(CONFIG_HNY_REMOVE_DIRSTACK_DEFAULT_CAPACITY 10 CACHE STRING "Honey remove directory stack default capacity")
 set(CONFIG_HNY_STATUS_BUFFER_DEFAULT_CAPACITY 120 CACHE STRING "Honey status readlink buffer default capacity")
 
 # Configurations

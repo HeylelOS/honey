@@ -17,25 +17,26 @@ hny_spawn(struct hny *hny, const char *entry, const char *path, pid_t *pid) {
 		return EINVAL;
 	}
 
-	if((spawned = fork()) == 0) {
-		char *argv[2] = { strdup(path), NULL };
+	spawned = fork();
+	if(spawned == 0) {
+		char pathcopy[strlen(path) + 1];
+		char *argv[2] = { strncpy(pathcopy, path, sizeof(pathcopy)), NULL };
 
 		if(*argv == NULL) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to create arguments list");
 		}
 		*argv = basename(*argv);
 
-		if(setenv("HNY_PREFIX", hny->path, 1) == -1 || setenv("HNY_ENTRY", entry, 1) == -1) {
+		if(setenv("HNY_PREFIX", hny->path, 1) != 0 || setenv("HNY_ENTRY", entry, 1) != 0) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to setup environment variables");
 		}
 
-		if(fchdir(dirfd(hny->dirp)) == -1 || chdir(entry) == -1) {
+		if(fchdir(dirfd(hny->dirp)) != 0 || chdir(entry) != 0) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to chdir %s/%s", hny->path, entry);
 		}
 
-		if(execv(path, argv) == -1) {
-			err(HNY_SPAWN_STATUS_ERROR, "Unable to execv '%s' for %s", path, entry);
-		}
+		execv(path, argv);
+		err(HNY_SPAWN_STATUS_ERROR, "Unable to execv '%s' for %s", path, entry);
 	} else if(spawned > 0) {
 		*pid = spawned;
 	} else {

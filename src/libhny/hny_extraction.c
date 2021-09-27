@@ -16,18 +16,15 @@ struct hny_extraction {
 };
 
 int
-hny_extraction_create(struct hny_extraction **extractionp,
-	struct hny *hny, const char *package) {
+hny_extraction_create(struct hny_extraction **extractionp, struct hny *hny, const char *package) {
 
 	return hny_extraction_create2(extractionp, hny, package,
-		CONFIG_HNY_EXTRACTION_BUFFERSIZE_DEFAULT,
-		CONFIG_HNY_EXTRACTION_DICTIONARYMAX_DEFAULT);
+		CONFIG_HNY_EXTRACTION_BUFFERSIZE_DEFAULT, CONFIG_HNY_EXTRACTION_DICTIONARYMAX_DEFAULT);
 }
 
 int
 hny_extraction_create2(struct hny_extraction **extractionp,
-	struct hny *hny, const char *package,
-	size_t buffersize, size_t dictionarymax) {
+	struct hny *hny, const char *package, size_t buffersize, size_t dictionarymax) {
 	struct hny_extraction *extraction;
 	int errcode;
 
@@ -35,19 +32,26 @@ hny_extraction_create2(struct hny_extraction **extractionp,
 		buffersize = CONFIG_HNY_EXTRACTION_BUFFERSIZE_MIN;
 	}
 
-	if((errno = EINVAL, hny_type_of(package) != HNY_TYPE_PACKAGE)
-		|| (extraction = malloc(sizeof(*extraction) + buffersize)) == NULL) {
+	if(hny_type_of(package) != HNY_TYPE_PACKAGE) {
+		errcode = EINVAL;
+		goto hny_extraction_create_err0;
+	}
+
+	extraction = malloc(sizeof(*extraction) + buffersize);
+	if(extraction == NULL) {
 		errcode = errno;
 		goto hny_extraction_create_err0;
 	}
 
 	extraction->buffersize = buffersize;
 
-	if((errcode = hny_extraction_xz_init(&extraction->xz, dictionarymax)) != 0) {
+	errcode = hny_extraction_xz_init(&extraction->xz, dictionarymax);
+	if(errcode != 0) {
 		goto hny_extraction_create_err1;
 	}
 
-	if((errcode = hny_extraction_cpio_init(&extraction->cpio, dirfd(hny->dirp), package)) != 0) {
+	errcode = hny_extraction_cpio_init(&extraction->cpio, dirfd(hny->dirp), package);
+	if(errcode != 0) {
 		goto hny_extraction_create_err2;
 	}
 
@@ -71,8 +75,7 @@ hny_extraction_destroy(struct hny_extraction *extraction) {
 }
 
 enum hny_extraction_status
-hny_extraction_extract(struct hny_extraction *extraction,
-	const char *buffer, size_t size, int *errcode) {
+hny_extraction_extract(struct hny_extraction *extraction, const char *buffer, size_t size, int *errcode) {
 	enum hny_extraction_status status;
 	struct hny_extraction_xz_io buffers = {
 		.input = buffer, .inputsize = size,

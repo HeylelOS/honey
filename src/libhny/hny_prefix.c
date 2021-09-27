@@ -7,9 +7,7 @@
 #include <errno.h>
 
 int
-hny_open(struct hny **hnyp,
-	const char *path,
-	int flags) {
+hny_open(struct hny **hnyp, const char *path, int flags) {
 	int errcode;
 
 	if(*path != '/') {
@@ -59,8 +57,7 @@ hny_close(struct hny *hny) {
 }
 
 int
-hny_flags(struct hny *hny,
-	int flags) {
+hny_flags(struct hny *hny, int flags) {
 	int oldflags = hny->flags;
 
 	hny->flags = flags;
@@ -78,11 +75,11 @@ int
 hny_lock(struct hny *hny) {
 	int flags = LOCK_EX;
 
-	if((hny->flags & HNY_FLAGS_BLOCK) == 0) {
+	if(!(hny->flags & HNY_FLAGS_BLOCK)) {
 		flags |= LOCK_NB;
 	}
 
-	if(flock(dirfd(hny->dirp), flags) == -1) {
+	if(flock(dirfd(hny->dirp), flags) != 0) {
 		return errno;
 	}
 

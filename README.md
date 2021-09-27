@@ -1,8 +1,7 @@
 # Honey
   
-honey is intended to be a unix-like OS package manager and
-archive structure format for packages. It is distributed under BSD 3-Clause
-license, see [LICENSE](https://github.com/ValentinDebon/honey/blob/master/LICENSE).
+honey is intended to be a unix-like OS package manager and archive structure
+format for packages. It is distributed under BSD 3-Clause license, see LICENSE.
 
 It is meant to be composed of a C library and a command line utility.
 
