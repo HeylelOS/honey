@@ -1,7 +1,0 @@
-#!/bin/sh
-
-set -e
-
-"${TEST_BIN}" status 'archive'
-"${TEST_BIN}" status 'arxiv'
-

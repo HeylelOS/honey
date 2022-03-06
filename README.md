@@ -25,36 +25,27 @@ Note: You can also replace `crc32` with `none`.
 
 ## Configure, build and install
 
-CMake is used to configure, build and install binaires and documentations, version 3.14 minimum is required:
+Meson is used to configure, build and install binaires and documentations:
 
 ```sh
-mkdir -p build && cd build
-cmake ../
-cmake --build .
-cmake --install .
+meson setup build
+meson compile -C build
+meson install -C build
 ```
 
 ## Documentation
 
-HTML documentation for the library are built using [Doxygen](https://github.com/doxygen/doxygen).
-Doxygen version 1.8.0 minimum is required (markdown support for `docs/` files).
-Depending on your generator, cmake will expose documentation through the `doc` target.
-CMake will expose documentation through the `doc` target.
+HTML documentation for the library is built using [Doxygen](https://github.com/doxygen/doxygen).
+The documentation is built through the `doc` target.
 
 ```sh
-mkdir -p build && cd build
-cmake ../
-cmake --build . --target doc
+meson compile -C build doc
 ```
 
 ## Tests
 
-CMake is also used to manage the test suite:
+Meson is also used to manage the test suite:
 
 ```sh
-mkdir -p build && cd build
-cmake ../
-cmake --build .
-ctest
+meson test -C build
 ```
-

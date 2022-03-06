@@ -275,6 +275,8 @@ hny_extraction_xz_decode_stream_block_or_index(struct hny_extraction_xz *xz, str
 		xz->block.header.state = HNY_EXTRACTION_XZ_STREAM_BLOCK_HEADER_FLAGS;
 		xz->block.header.crc32 = hny_extraction_xz_crc32_update(hny_extraction_xz_crc32_init, &encodedsize, 1);
 		xz->block.header.realsize = (encodedsize + 1) * 4;
+		xz->block.uncompressedsize = 0;
+		xz->block.compressedsize = 0;
 	} else {
 		xz->state = HNY_EXTRACTION_XZ_STREAM_INDEX;
 		xz->multibyteindex = 0;
