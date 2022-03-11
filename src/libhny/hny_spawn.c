@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
-#include "hny_internal.h"
+#include "hny_prefix.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,31 +13,26 @@ hny_spawn(struct hny *hny, const char *entry, const char *path, pid_t *pid) {
 	int errcode = 0;
 	pid_t spawned;
 
-	if(hny_type_of(entry) == HNY_TYPE_NONE) {
+	if (hny_type_of(entry) == HNY_TYPE_NONE) {
 		return EINVAL;
 	}
 
 	spawned = fork();
-	if(spawned == 0) {
+	if (spawned == 0) {
 		char pathcopy[strlen(path) + 1];
-		char *argv[2] = { strncpy(pathcopy, path, sizeof(pathcopy)), NULL };
+		char * const argv[] = { basename(strncpy(pathcopy, path, sizeof (pathcopy))), NULL };
 
-		if(*argv == NULL) {
-			err(HNY_SPAWN_STATUS_ERROR, "Unable to create arguments list");
-		}
-		*argv = basename(*argv);
-
-		if(setenv("HNY_PREFIX", hny->path, 1) != 0 || setenv("HNY_ENTRY", entry, 1) != 0) {
+		if (setenv("HNY_PREFIX", hny->path, 1) != 0 || setenv("HNY_ENTRY", entry, 1) != 0) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to setup environment variables");
 		}
 
-		if(fchdir(dirfd(hny->dirp)) != 0 || chdir(entry) != 0) {
+		if (fchdir(dirfd(hny->dirp)) != 0 || chdir(entry) != 0) {
 			err(HNY_SPAWN_STATUS_ERROR, "Unable to chdir %s/%s", hny->path, entry);
 		}
 
 		execv(path, argv);
 		err(HNY_SPAWN_STATUS_ERROR, "Unable to execv '%s' for %s", path, entry);
-	} else if(spawned > 0) {
+	} else if (spawned > 0) {
 		*pid = spawned;
 	} else {
 		errcode = errno;
@@ -45,4 +40,3 @@ hny_spawn(struct hny *hny, const char *entry, const char *path, pid_t *pid) {
 
 	return errcode;
 }
-

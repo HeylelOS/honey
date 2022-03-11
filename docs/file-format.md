@@ -6,8 +6,7 @@ The package is a simple archive which may follow the suggested hierarchy locatio
 The honey package file format is an _XZ stream with one lzma2 filter and crc32 or no check_ compressing an _odc cpio file archive_.
 The choice for such a specific archive is to make honey packages as embeddable as possible without adding a huge backend to handle it.
 Notes concerning CPIO:
-- A pathname cannot contain a `..` component.
-- If an absolute pathname is specified, it will be considered relative.
+- Paths from the archive are 'normalized', removing `.` and `..` entries, and prefix `/`. An empty entry or one resolving to `/` is considered invalid.
 - Every directory must be explicitly declared and precede in declaration any file/directory it contains, to allow a continuous streamable extraction.
 
 ## Hierarchy suggested locations

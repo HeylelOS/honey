@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
-#include "hny_internal.h"
+#include "hny_prefix.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -23,26 +23,25 @@ struct hny_dirstack {
 
 static int
 hny_dirstack_push(struct hny_dirstack *stack, int dirfd, const char *path) {
-	const int newtop = stack->top + 1,
-		fd = openat(dirfd, path, O_RDONLY);
+	const int newtop = stack->top + 1, fd = openat(dirfd, path, O_RDONLY);
 	DIR *dirp;
 
-	if(fd < 0) {
+	if (fd < 0) {
 		return errno;
 	}
 
 	dirp = fdopendir(fd);
-	if(dirp == NULL) {
+	if (dirp == NULL) {
 		const int errcode = errno;
 		close(fd);
 		return errcode;
 	}
 
-	if(newtop == stack->capacity) {
+	if (newtop == stack->capacity) {
 		const size_t newcapacity = stack->capacity * 2;
-		struct hny_dir *newdirs = realloc(stack->dirs, newcapacity * sizeof(*newdirs));
+		struct hny_dir * const newdirs = realloc(stack->dirs, newcapacity * sizeof (*newdirs));
 
-		if(newdirs == NULL) {
+		if (newdirs == NULL) {
 			const int errcode = errno;
 			closedir(dirp);
 			return errcode;
@@ -78,41 +77,39 @@ hny_remove_package(struct hny *hny, const char *package) {
 	/* Stack initialization */
 	stack.top = -1;
 	stack.capacity = 1;
-	stack.dirs = malloc(stack.capacity * sizeof(*stack.dirs));
-	if(stack.dirs == NULL) {
+	stack.dirs = malloc(stack.capacity * sizeof (*stack.dirs));
+	if (stack.dirs == NULL) {
 		return errno;
 	}
 	errcode = hny_dirstack_push(&stack, dirfd(hny->dirp), package);
 
-	if(errcode == 0) {
+	if (errcode == 0) {
 		/* Iteration */
-		while(errno = 0, stack.dirs[stack.top].current = readdir(stack.dirs[stack.top].dirp),
-			stack.dirs[stack.top].current != NULL || stack.top != 0) {
+		while (errno = 0, stack.dirs[stack.top].current = readdir(stack.dirs[stack.top].dirp), stack.dirs[stack.top].current != NULL || stack.top != 0) {
 
-			if(stack.dirs[stack.top].current != NULL) {
+			if (stack.dirs[stack.top].current != NULL) {
 				/* If we have an entry */
 				const struct dirent * const entry = stack.dirs[stack.top].current;
 				DIR * const dirp = stack.dirs[stack.top].dirp;
 
-				if(entry->d_type != DT_DIR) {
+				if (entry->d_type != DT_DIR) {
 					/* If the entry is not a directory, unlink it */
-					if(unlinkat(dirfd(dirp), entry->d_name, 0) != 0) {
+					if (unlinkat(dirfd(dirp), entry->d_name, 0) != 0) {
 						errcode = errno;
 						break;
 					}
-				} else if(!hny_is_dot_or_dot_dot(entry->d_name)) {
+				} else if (!hny_is_dot_or_dot_dot(entry->d_name)) {
 					/* If the entry is an effective directory, push it */
 					errcode = hny_dirstack_push(&stack, dirfd(dirp), entry->d_name);
-					if(errcode != 0) {
+					if (errcode != 0) {
 						break;
 					}
 				}
-			} else if(errno == 0) {
+			} else if (errno == 0) {
 				/* Reached directory end, pop it and rmdir it from its parent */
 				hny_dirstack_pop(&stack);
 
-				if(unlinkat(dirfd(stack.dirs[stack.top].dirp),
-					stack.dirs[stack.top].current->d_name, AT_REMOVEDIR) != 0) {
+				if (unlinkat(dirfd(stack.dirs[stack.top].dirp), stack.dirs[stack.top].current->d_name, AT_REMOVEDIR) != 0) {
 					errcode = errno;
 					break;
 				}
@@ -125,14 +122,14 @@ hny_remove_package(struct hny *hny, const char *package) {
 	}
 
 	/* Stack cleanup */
-	while(stack.top > 0) {
+	while (stack.top > 0) {
 		hny_dirstack_pop(&stack);
 	}
 	free(stack.dirs);
 
 	/* Removing the package directory if everything was removed */
-	if(errcode == 0) {
-		if(unlinkat(dirfd(hny->dirp), package, AT_REMOVEDIR) != 0) {
+	if (errcode == 0) {
+		if (unlinkat(dirfd(hny->dirp), package, AT_REMOVEDIR) != 0) {
 			errcode = errno;
 		}
 	}
@@ -144,16 +141,16 @@ int
 hny_remove(struct hny *hny, const char *entry) {
 	int errcode = 0;
 
-	switch(hny_type_of(entry)) {
+	switch (hny_type_of(entry)) {
 	case HNY_TYPE_PACKAGE:
 		errcode = hny_remove_package(hny, entry);
 		break;
 	case HNY_TYPE_GEIST:
-		if(unlinkat(dirfd(hny->dirp), entry, 0) != 0) {
+		if (unlinkat(dirfd(hny->dirp), entry, 0) != 0) {
 			errcode = errno;
 		}
 		break;
-	default: /* HNY_TYPE_NONE */
+	case HNY_TYPE_NONE:
 		errcode = EINVAL;
 		break;
 	}

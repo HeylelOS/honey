@@ -47,9 +47,7 @@ enum hny_flags {
  * @return 0 on success, an error code else.
  */
 int
-hny_open(struct hny **hnyp,
-	const char *path,
-	int flags);
+hny_open(struct hny **hnyp, const char *path, int flags);
 
 /**
  * Unhook a honey prefix.
@@ -77,6 +75,8 @@ hny_path(struct hny *hny);
 
 /**
  * Locks a prefix, must be used if you create/destroy/modify an entry in the directory
+ * The lock uses an exclusive flock(2), all implications concerning lifetimes
+ * and persistence/duplications through fork(2) and execve(2) are implied.
  * @param hny prefix to lock
  * @return 0 on success, an error code else.
  */
@@ -102,20 +102,17 @@ hny_unlock(struct hny *hny);
 /**
  * Macro shortcut to determine if a status is an error related to xz.
  */
-#define HNY_EXTRACTION_STATUS_IS_ERROR_XZ(s) ((s) >= HNY_EXTRACTION_STATUS_ERROR_XZ_HEADER_INVALID_MAGIC\
-	&& (s) <= HNY_EXTRACTION_STATUS_ERROR_XZ_FOOTER_INVALID_CRC32)
+#define HNY_EXTRACTION_STATUS_IS_ERROR_XZ(s) ((s) >= HNY_EXTRACTION_STATUS_ERROR_XZ_HEADER_INVALID_MAGIC && (s) <= HNY_EXTRACTION_STATUS_ERROR_XZ_FOOTER_INVALID_CRC32)
 
 /**
  * Macro shortcut to determine if a status is an error related to cpio.
  */
-#define HNY_EXTRACTION_STATUS_IS_ERROR_CPIO(s) ((s) >= HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_MAGIC\
-	&& (s) <= HNY_EXTRACTION_STATUS_ERROR_CPIO_WRITE)
+#define HNY_EXTRACTION_STATUS_IS_ERROR_CPIO(s) ((s) >= HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_MAGIC && (s) <= HNY_EXTRACTION_STATUS_ERROR_CPIO_WRITE)
 
 /**
  * Macro shortcut to determine if a status is an error related to cpio and a system interface.
  */
-#define HNY_EXTRACTION_STATUS_IS_ERROR_CPIO_SYSTEM(s) ((s) >= HNY_EXTRACTION_STATUS_ERROR_CPIO_MKDIR\
-	&& (s) <= HNY_EXTRACTION_STATUS_ERROR_CPIO_WRITE)
+#define HNY_EXTRACTION_STATUS_IS_ERROR_CPIO_SYSTEM(s) ((s) >= HNY_EXTRACTION_STATUS_ERROR_CPIO_MKDIR && (s) <= HNY_EXTRACTION_STATUS_ERROR_CPIO_WRITE)
 
 /**
  * Opaque data type to represent a package extraction
@@ -160,9 +157,9 @@ enum hny_extraction_status {
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_MAGIC,
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_BYTE,
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_HEADER_INVALID_NAMESIZE,
-	HNY_EXTRACTION_STATUS_ERROR_CPIO_FILENAME_MEMORY_EXHAUSTED,
-	HNY_EXTRACTION_STATUS_ERROR_CPIO_FILENAME_IS_EMPTY,
-	HNY_EXTRACTION_STATUS_ERROR_CPIO_FILENAME_HAS_DOT_DOT,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_MEMORY_EXHAUSTED,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_FILENAME_INVALID,
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_SYMLINK_TARGET_INVALID,
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_MKDIR,
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_MKFIFO,
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_CREAT,
@@ -170,7 +167,7 @@ enum hny_extraction_status {
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_SYMLINK,
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_CHOWN,
 	HNY_EXTRACTION_STATUS_ERROR_CPIO_CHMOD,
-	HNY_EXTRACTION_STATUS_ERROR_CPIO_WRITE
+	HNY_EXTRACTION_STATUS_ERROR_CPIO_WRITE,
 };
 
 /**
@@ -181,21 +178,19 @@ enum hny_extraction_status {
  * @return 0 on success, an error code else.
  */
 int
-hny_extraction_create(struct hny_extraction **extractionp,
-	struct hny *hny, const char *package);
+hny_extraction_create(struct hny_extraction **extractionp, struct hny *hny, const char *package);
 
 /**
  * Create an extraction handler.
  * @param extractionp pointer to the handler.
  * @param hny prefix of the package.
  * @param package name of the package.
- * @param buffersize size of the intermediate buffer between xz and cpio steps.
+ * @param size size of the intermediate buffer between xz and cpio steps.
  * @param dictionarymax maximum size of the lzma2 dictionary.
  * @return 0 on success, an error code else.
  */
 int
-hny_extraction_create2(struct hny_extraction **extractionp,
-	struct hny *hny, const char *package, size_t buffersize, size_t dictionarymax);
+hny_extraction_create2(struct hny_extraction **extractionp, struct hny *hny, const char *package, size_t size, size_t dictionarymax);
 
 /**
  * Destroys a previously hny_extraction_create()'d extraction handler
@@ -209,13 +204,19 @@ hny_extraction_destroy(struct hny_extraction *extraction);
  * @param extraction extraction handler
  * @param buffer bytes to extract
  * @param size size of @p buffer
- * @param errcode Potential error code. Interpretation depends on returned value.
  * @return #HNY_EXTRACTION_STATUS_OK if extracting, #HNY_EXTRACTION_STATUS_END
  * when successfull extraction is done. Else the step in which an error occurred.
  */
 enum hny_extraction_status
-hny_extraction_extract(struct hny_extraction *extraction,
-	const char *buffer, size_t size, int *errcode);
+hny_extraction_extract(struct hny_extraction *extraction, const char *buffer, size_t size);
+
+/**
+ * Get previous error's code, and reset to 0.
+ * @param extraction extraction handler
+ * @return If a previous call to @ref hny_extraction_extract returned a syscall error, associated error code, 0 else.
+ */
+int
+hny_extraction_errcode(struct hny_extraction *extraction);
 
 /**
  * Replaces the target of a geist.

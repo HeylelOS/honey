@@ -1,32 +1,35 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
-#ifndef HNY_EXTRACTION_LZMA2_H
-#define HNY_EXTRACTION_LZMA2_H
+#ifndef LZMA2_DECODER_H
+#define LZMA2_DECODER_H
 
 #include <stddef.h>
 #include <stdint.h>
 
-enum hny_extraction_lzma2_status {
-	HNY_EXTRACTION_LZMA2_OK,
-	HNY_EXTRACTION_LZMA2_END,
-	HNY_EXTRACTION_LZMA2_ERROR_MEMORY_EXHAUSTED,
-	HNY_EXTRACTION_LZMA2_ERROR_MEMORY_LIMIT,
-	HNY_EXTRACTION_LZMA2_ERROR_INVALID_DICTIONARY_BITS,
-	HNY_EXTRACTION_LZMA2_ERROR_CORRUPTED_DATA
+enum lzma2_decoder_status {
+	LZMA2_DECODER_STATUS_OK,
+	LZMA2_DECODER_STATUS_END,
+	LZMA2_DECODER_STATUS_ERROR_MEMORY_EXHAUSTED,
+	LZMA2_DECODER_STATUS_ERROR_MEMORY_LIMIT,
+	LZMA2_DECODER_STATUS_ERROR_INVALID_DICTIONARY_BITS,
+	LZMA2_DECODER_STATUS_ERROR_CORRUPTED_DATA
 };
 
-enum hny_extraction_lzma2_mode {
-	HNY_EXTRACTION_LZMA2_MODE_PREALLOC,
-	HNY_EXTRACTION_LZMA2_MODE_DYNAMIC
+enum lzma2_decoder_mode {
+	LZMA2_DECODER_MODE_PREALLOC,
+	LZMA2_DECODER_MODE_DYNAMIC
 };
 
-struct hny_extraction_lzma2_io {
-	const uint8_t *input;
-	size_t inputposition;
-	size_t inputsize;
-
-	uint8_t *output;
-	size_t outputposition;
-	size_t outputsize;
+struct lzma2_stream {
+	struct {
+		const uint8_t *buffer;
+		size_t position;
+		size_t size;
+	} input;
+	struct {
+		uint8_t *buffer;
+		size_t position;
+		size_t size;
+	} output;
 };
 
 #define POS_STATES_MAX (1 << 4)
@@ -83,16 +86,18 @@ struct dictionary {
 	uint32_t size;
 	uint32_t sizelimit;
 	uint32_t allocated;
-	enum hny_extraction_lzma2_mode mode;
+	enum lzma2_decoder_mode mode;
 };
 
 struct range_decoder {
 	uint32_t range;
 	uint32_t code;
 	uint32_t initbytesleft;
-	const uint8_t *in;
-	size_t inputposition;
-	size_t inputlimit;
+	struct {
+		const uint8_t *buffer;
+		size_t position;
+		size_t limit;
+	} input;
 };
 
 struct length_decoder {
@@ -141,7 +146,7 @@ struct lzma {
 	uint16_t literal[LITERAL_CODERS_MAX][LITERAL_CODER_SIZE];
 };
 
-struct hny_extraction_lzma2 {
+struct lzma2_decoder {
 	struct range_decoder rangedecoder;
 	struct dictionary dictionary;
 	struct {
@@ -171,17 +176,17 @@ struct hny_extraction_lzma2 {
 };
 
 int
-hny_extraction_lzma2_init(struct hny_extraction_lzma2 *decoder,
-	enum hny_extraction_lzma2_mode mode, uint32_t dictionarymax);
+lzma2_decoder_init(struct lzma2_decoder *decoder,
+	enum lzma2_decoder_mode mode, uint32_t dictionarymax);
 
 void
-hny_extraction_lzma2_deinit(struct hny_extraction_lzma2 *decoder);
+lzma2_decoder_deinit(struct lzma2_decoder *decoder);
 
 int
-hny_extraction_lzma2_reset(struct hny_extraction_lzma2 *decoder, uint8_t properties);
+lzma2_decoder_reset(struct lzma2_decoder *decoder, uint8_t properties);
 
-enum hny_extraction_lzma2_status
-hny_extraction_lzma2_decode(struct hny_extraction_lzma2 *decoder, struct hny_extraction_lzma2_io *buffers);
+enum lzma2_decoder_status
+lzma2_decoder_decode(struct lzma2_decoder *decoder, struct lzma2_stream *stream);
 
-/* HNY_EXTRACTION_LZMA2_H */
+/* LZMA2_DECODER_H */
 #endif

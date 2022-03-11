@@ -183,7 +183,7 @@ test_hny(void) {
 		hny(cmd0);
 
 		cover_assert(lstat(HNY_TEST_PREFIX"/archive-1.0.0", &st) == 0, "stat archive-1.0.0");
-		cover_assert(st.st_mode == (S_IFDIR | 0755), "archive-1.0.0 is not a directory");
+		cover_assert(st.st_mode == (S_IFDIR | 0777), "archive-1.0.0 is not a directory");
 
 		cover_assert(lstat(HNY_TEST_PREFIX"/archive-1.0.0/pkg", &st) == 0, "stat archive-1.0.0/pkg");
 		cover_assert(st.st_mode == (S_IFDIR | 0755), "archive-1.0.0/pkg is not a directory");

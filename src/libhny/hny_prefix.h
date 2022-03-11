@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
-#ifndef HNY_INTERNAL_H
-#define HNY_INTERNAL_H
+#ifndef HNY_PREFIX_H
+#define HNY_PREFIX_H
 
 #include <hny.h>
 
@@ -12,5 +12,5 @@ struct hny {
 	int flags;
 };
 
-/* HNY_INTERNAL_H */
+/* HNY_PREFIX_H */
 #endif
